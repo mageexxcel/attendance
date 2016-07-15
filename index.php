@@ -3,7 +3,7 @@ require_once ("connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
 $de = date("m-d-Y");
-
+$error = array();
 if (isset($_FILES['image'])) {
 
     $file_name = $_FILES['image']['name'];
@@ -11,12 +11,25 @@ if (isset($_FILES['image'])) {
     $file_tmp = $_FILES['image']['tmp_name'];
     $file_type = $_FILES['image']['type'];
     // $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
-
+    //
+echo $file_name;
+echo "<br>";
+echo $_POST['total'];
+die;
+  if($file_name == "AGL_001.TXT"){
     if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
-        echo "File Not uploaded";
-        die;
+        $error[] = "File Not uploaded some error occured";
+        //die;
     }
-    $sendmessage = true;
+  }
+  if($file_name != "AGL_001.TXT"){
+      $error = "Wrong File uploaded";
+  }
+  if(!preg_match("/(1[012]|0[0-9]):([0-5][0-9])/", $_POST['total'])){
+      $error[]="Check total working hour format";
+  }
+  
+   // $sendmessage = true;
     $attendance = array();
     $query = "SELECT * FROM attendance";
     $row = mysqli_query($link, $query) or die();
@@ -56,10 +69,13 @@ if (isset($_FILES['image'])) {
         }
         $i++;
     }
+ // die;
 }
+echo "<pre>";
+print_r($error);
 
 $time_table2 = array();
-//$de = "07-11-2016";
+$de = "07-05-2016";
 if (isset($_POST['date'])) {
     $de = $_POST['date'];
     $de = str_replace("/", "-", $de);
@@ -99,8 +115,8 @@ if (isset($sendmessage)) {
 
 
     $time_table6 = array();
-   // $date = "2016-07-11";
-    $date = date("Y-m-d");
+    $date = "2016-07-05";
+   // $date = date("Y-m-d");
 
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
 
@@ -134,6 +150,7 @@ if (isset($sendmessage)) {
     $string2 = "";
     $string3 = "";
     $string4 = "";
+    $string5 = "";
     //echo "<pre>";
     // print_r($ttable);
     // die;
@@ -157,6 +174,7 @@ if (isset($sendmessage)) {
                 $string1 = $string1 . $valo['name'] . ":  was absent on " . $day . "\n";
             }
             if (strtotime($a1) != strtotime('00:00') && strtotime($c) < strtotime('09:00')) {
+                if($a1 != $b1){
                 $ed = strtotime('09:00') - strtotime($c);
                 $te = $ed / 60;
                 $q = mysqli_query($link, "SELECT * FROM `compensate` WHERE `email_id` = '$email' AND `date` = '$pdate'");
@@ -167,15 +185,23 @@ if (isset($sendmessage)) {
                     $ins = "INSERT INTO compensate (email_id, date, total_time, time_compensate) VALUES ('$email', '$pdate', '$te', '0')";
                     mysqli_query($link, $ins) or die(mysqli_error($link));
                 }
-                $string4 = $string4 . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
+                $string4 = $string4 . $valo['name'] . ": Total hours on ".$day." " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
+                }
+                if($a1 == $b1){
+                     $string4 = $string4 . $valo['name'] . ": Haven't enter entry or exit time on ".$day." \n";
+                }
+                
             }
             if (strtotime($a1) != strtotime('00:00') && strtotime($c) > strtotime('09:00')) {
                 $ed = strtotime($c) - strtotime('09:00');
                 $te = $ed / 60;
                 $q = mysqli_query($link, "SELECT * FROM `compensate` WHERE `email_id` = '$email' AND `date` = '$pdate'");
                 if (mysqli_num_rows($q) <= 0) {
+                    $rat = get_compensate_time($email,$link);
+                   if($rat > 0 && $te >= 10){
                     $ins2 = "INSERT INTO compensate (email_id, date, total_time, time_compensate) VALUES ('$email', '$pdate', '0', '$te')";
                     mysqli_query($link, $ins2) or die(mysqli_error($link));
+                   }
                 }
 
                 $string = $string . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
@@ -294,7 +320,17 @@ if (isset($sendmessage)) {
                         $bb = end($time_arr['timing']);
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
-                      
+                     //get previous days list of no putting exit time. 
+                        $ar = array();
+                        $qry = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `exit_time` = '0'");
+                            if (mysqli_num_rows($qry) > 0) {
+                              while ($ss = mysqli_fetch_assoc($qry)) {
+                                  $ar[] = $ss;
+                                  $msg = $msg . "You didn't put in your exit time on " . $ss['date'] . ", Please contact HR immediately or this day will be considered as a leave.\n";
+                              }
+                            }
+                    
+                      //end
                         if ($bb == $aa && strtotime($bb) != strtotime("12:00 AM")) {
                             
                             $msg = $msg . "You didn't put in your exit time on " . $ada . ", Please contact HR immediately or this day will be considered as a leave.\n";
@@ -308,11 +344,18 @@ if (isset($sendmessage)) {
                         }
                         if ($bb == $aa && $bb == "12:00 AM") {
 
-                            $msg = $msg . "You were on leave on " . $ada . ",\n";
+                            $msg = $msg . "You were on leave on " . $pdate . ",\n";
                         }
                         if ($bb != $aa) {
                             $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";
+                             $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
+                            if (mysqli_num_rows($q1) <= 0) {
+                                $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '$bb','$pdate')";
+                             
+                                mysqli_query($link, $ins3) or die(mysqli_error($link));
+                            }
                         }
+                        
                     }
                     $c_id = get_channel_id($f, $cid_array);
                     //     if ($f == "U0FJZ0KDM" ) {
@@ -331,12 +374,14 @@ if (isset($sendmessage)) {
                         $hr6 = "hrfile6";
                         //   send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != "12:00 AM" && strtotime($d1) < strtotime('10:30')) {
-                        echo "hss";
+                        
                         $msg = $msg . "Today's Entry Time " . $d1;
                         //  send_slack_message($c_id, $token, $msg);
                     }
 
                     //  }
+//                    echo $msg;
+//                    echo "<hr>";
                 }
             }
         }
@@ -467,6 +512,49 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
 }
 //function  end
 
+function get_compensate_time($email,$link){
+    $d = date("m-Y");
+    $query = "SELECT * from compensate where date like '%$d%' AND email_id = '$email' ";
+
+$array = array();
+$w = mysqli_query($link, $query) or die(mysqli_error($link));
+while ($s = mysqli_fetch_assoc($w)) {
+    $sid = $s['email_id'];
+    $dd = $s['date'];
+    //echo $sid;
+    //echo $dd."  --  $sid<br>";
+   // $array[] = $s;
+    if (array_key_exists($sid, $array)) {
+        
+       // echo $sid;
+            //$array[$sid] = $s;
+            $array[$sid]['ptime'][]=$s['total_time'];
+            $array[$sid]['ctime'][]  = $s['time_compensate'];
+        }
+    else {
+        
+         //$array[$sid] = $s;
+         $array[$sid]['ptime'][]=$s['total_time'];
+         $array[$sid]['ctime'][]=$s['time_compensate'];
+        
+    }    
+}
+
+//print_r($array);
+foreach($array as $val){
+   $pending = array_sum($val['ptime']);
+    $compensate = array_sum($val['ctime']);
+    $result = $pending - $compensate;
+    if($result > 0){
+       return $result;
+    }
+    else {
+      $result = 0;
+      return $result;
+    }
+}
+}
+
 //die;
 ?>
 <html>
@@ -506,6 +594,11 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
                         <label>Upload File</label>
                         <input type="file" name="image" />
                     </div>
+                    <div class="form-group">
+                        <label>Previous working day total hours: </label>
+                        <input type="text" name="total" value="09:00">
+                    </div>
+                   
                     <button type="submit" name="submit" class="btn btn-default">upload</button>
                 </form>
             </div>
@@ -531,9 +624,9 @@ if (sizeof($time_table) > 0) {
 
 
     foreach ($time_table as $val) {
-        $time1 = str_replace("PM", "", current($val['timing']));
+        $time1 = current($val['timing']);
         $time1 = strtotime(str_replace("-", "/", $time1));
-        $time2 = str_replace("PM", "", end($val['timing']));
+        $time2 = end($val['timing']);
         $time2 = strtotime(str_replace("-", "/", $time2));
         $time3 = $time2 - $time1;
         $time3 = date("H:i:s", $time3);

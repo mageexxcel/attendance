@@ -3,6 +3,10 @@ require_once ("connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
 $de = date("m-Y");
+$current_date = date("Y-m-d");
+$current_month = date("2016-06");
+$next_month = date('Y-m', strtotime($current_month . ' +1 month'));
+
 
 $qv = "SELECT * from admin";
 $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
@@ -27,12 +31,12 @@ $url = "https://slack.com/api/im.list?token=".$token;
     } else {
         $channelid_list = json_decode($result, true);
         $cid_array = $channelid_list['ims'];
-//        echo "<pre>";
-//        print_r($cid_array);
-//        echo "<hr>";
+        echo "<pre>";
+        print_r($cid_array);
+        echo "<hr>";
     }
     curl_close($ch);
-//die;
+die;
 
     $url = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
 
@@ -56,7 +60,7 @@ $url = "https://slack.com/api/im.list?token=".$token;
 //die;
     curl_close($ch);
 //
-
+if(isset($_GET['pending'])){
 $query = "SELECT * from hr_data where date like '%$de%'";
 
 $array = array();
@@ -167,7 +171,7 @@ foreach($arr2 as $key=>$value){
       }
       
   }
-  //print_r($rep);
+ // print_r($rep);
   echo "<hr>";
   if($to_compensate > 0){
       echo $to_compensate;
@@ -178,7 +182,7 @@ foreach($arr2 as $key=>$value){
                 //$f = $foo['id'];
                 $f = "U0FJZ0KDM";
 
-                $c_id = get_channel_id($f, $cid_array);
+               // $c_id = get_channel_id($f, $cid_array);
 
                 $r = date('H:i', mktime(0, $to_compensate));
                 //  echo $key."----".$f."-----".$c_id;
@@ -195,13 +199,71 @@ foreach($arr2 as $key=>$value){
                     }
                 }
 
-                  send_slack_message($c_id, $token, $msg);
+                //  send_slack_message($c_id, $token, $msg);
                 echo $msg;
                 echo "<br>";
             }
         }
     }
   
+}
+}
+//Applied leave messages to Hr
+if(isset($_GET['leave'])){
+    $raw= array();
+   $ss = "SELECT leaves.*,user_profile.name FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%'";
+  
+$sw = mysqli_query($link, $ss) or die(mysqli_error($link));
+while ($row = mysqli_fetch_assoc($sw)) {
+   $raw[]=$row;
+   
+}
+//echo "<pre>";
+//print_r($raw);
+//echo "<br>";
+//die;
+$msg1 = "";
+$msg2 = "";
+$msg3 ="";
+foreach($raw as $vale){
+    
+    $from1 = date('Y-m-d', strtotime($vale['from_date'] . ' -7 day'));
+    $from2 = date('Y-m-d', strtotime($vale['from_date'] . ' -3 day'));
+    $from3 = date('Y-m-d', strtotime($vale['from_date'] . ' -1 day'));
+    $changefrom = date('dS M(D)', strtotime($vale['from_date']));
+    $changeto = date('dS M(D)', strtotime($vale['to_date']));
+    if($from1 == $current_date){
+      $msg1 = $msg1.$vale['name']." had appplied for leave from ".$changefrom." to ".$changeto.". Reason : ".$vale['reason']." (".$vale['status'].") \n"; 
+      
+    }
+    if($from2 == $current_date){
+        $msg2 = $msg2. $vale['name']." had appplied for leave from ".$changefrom." to ".$changeto.". Reason : ".$vale['reason']." (".$vale['status'].") \n"; 
+      
+        
+    }
+    if($from3 == $current_date){
+       $msg3 = $msg3. $vale['name']." had appplied for leave from ".$changefrom." to ".$changeto.". Reason : ".$vale['reason']." (".$vale['status'].") \n";
+      
+        
+    }
+}
+
+if ($msg1 != "") {
+        $hr1 = "hrfile1";
+          send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
+    }
+    if ($msg2 != "") {
+        $hr2 = "hrfile2";
+          send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+    }
+  
+    if ($msg3 != "") {
+        $hr3 = "hrfile3";
+          send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+    }
+
+echo $msg1."<br>".$msg2."<br>".$msg3."<br>";
+
 }
 
 function get_channel_id($data, $array) {
@@ -217,6 +279,19 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
    
 
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
+    
+    if (isset($s) && $s == "hrfile1") {
+
+        $message = '[{"text": "' . $sir . '",  "author_name": " 7 Day before leave notification ", "fallback": "Message Send to Hr Channel", "color": "#00C1F2"}]';
+    }
+    if (isset($s) && $s == "hrfile2") {
+
+        $message = '[{"text": "' . $sir . '",  "author_name": " 3 Day before leave notification ", "fallback": "Message Send to Hr Channel", "color": "#F2801D"}]';
+    }
+    if (isset($s) && $s == "hrfile3") {
+
+        $message = '[{"text": "' . $sir . '",  "author_name": " 1 Day before leave notification ", "fallback": "Message Send to Hr Channel", "color": "#C61E0B"}]';
+    }
     
 
     $room = $channelid;
