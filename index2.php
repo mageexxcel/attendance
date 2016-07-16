@@ -59,7 +59,7 @@ if (isset($_FILES['image'])) {
 }
 
 $time_table2 = array();
-//$de = "07-13-2016";
+//$de = "07-12-2016";
 if (isset($_POST['date'])) {
     $de = $_POST['date'];
     $de = str_replace("/", "-", $de);
@@ -88,33 +88,36 @@ while ($s = mysqli_fetch_assoc($w)) {
 
 //$sendmessage = "Hello";
 if (isset($sendmessage)) {
-    
+
     $qv = "SELECT * from admin";
-$qw = mysqli_query($link, $qv) or die(mysqli_error($link));
-while ($qs = mysqli_fetch_assoc($qw)) {
-   $client_id = $qs['client_id'];
-   $client_secret = $qs['client_secret'];
-   $token = $qs['token'];
-}
-    
+    $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
+    while ($qs = mysqli_fetch_assoc($qw)) {
+        $client_id = $qs['client_id'];
+        $client_secret = $qs['client_secret'];
+        $token = $qs['token'];
+    }
+
 
     $time_table6 = array();
-   // $date = "2016-07-13";
-    $date = date("Y-m-d");
+   //$date = "2016-07-12";
+   $date = date("Y-m-d");
 
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
+
+
     $hr = "hrfile";
     $hr2 = "hrfile2";
 
     $time_table6 = get_time_array($prev_date, $link, $hr);
-    // echo "<pre>";
-   // print_r($time_table6);
-   // echo "<hr>";
+//     echo "<pre>";
+//    print_r($time_table6);
+//    echo "<hr>";
 //    die;
     $ada = $time_table6['date'];
     $pdate = date("d-m-Y", strtotime(str_replace("-", "/", $ada)));
-    $day = date('l', strtotime($pdate));
-   // echo $ada."--".$day;
+
+    $day = date('l', strtotime($time_table6['date']));
+    // echo $day;
     $w = mysqli_query($link, $query2) or die(mysqli_error($link));
     while ($s = mysqli_fetch_assoc($w)) {
         $sid = $s['id'];
@@ -125,41 +128,64 @@ while ($qs = mysqli_fetch_assoc($qw)) {
             $ttable[$sid] = $s;
             $ttable[$sid]['timing'][] = "";
         }
-        
     }
     $string = "";
     $string1 = "";
     $string2 = "";
     $string3 = "";
     $string4 = "";
-   // echo "<pre>";
-   // print_r($ttable);
-    //die;
+    //echo "<pre>";
+    // print_r($ttable);
+    // die;
     foreach ($ttable as $valo) {
-        
+        //$a = str_replace("PM", "", current($valo['timing']));
         $a = current($valo['timing']);
         $a = strtotime(str_replace("-", "/", $a));
         $a1 = date("H:i", $a);
-       
+        //$b = str_replace("PM", "", end($valo['timing']));
         $b = end($valo['timing']);
         $b = strtotime(str_replace("-", "/", $b));
         $b1 = date("H:i", $b);
         $c = $b - $a;
         $c = date("H:i", $c);
-        if( current($valo['timing']) == ""){
-            $a1 = $b1 = 0;
-          }
+        $email = $valo['work_email'];
 
 
         if ($valo['name'] != "" && $valo['name'] != "Admin") {
 //             echo $valo['name']."---".$a1."<br>";
-            if ($a1 == 0) {
+            if (strtotime($a1) == strtotime('00:00')) {
                 $string1 = $string1 . $valo['name'] . ":  was absent on " . $day . "\n";
             }
-            if (strtotime($a1) > strtotime('10:30') && $a1 != 0) {
-                $string4 = $string4 . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
+            if (strtotime($a1) != strtotime('00:00') && strtotime($c) < strtotime('09:00')) {
+                if($a1 != $b1){
+                $ed = strtotime('09:00') - strtotime($c);
+                $te = $ed / 60;
+                $q = mysqli_query($link, "SELECT * FROM `compensate` WHERE `email_id` = '$email' AND `date` = '$pdate'");
+              
+                if (mysqli_num_rows($q) <= 0) {
+
+                    $ins = "INSERT INTO compensate (email_id, date, total_time, time_compensate) VALUES ('$email', '$pdate', '$te', '0')";
+                    mysqli_query($link, $ins) or die(mysqli_error($link));
+                }
+                $string4 = $string4 . $valo['name'] . ": Total hours on ".$day." " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
+                }
+                if($a1 == $b1){
+                     $string4 = $string4 . $valo['name'] . ": Haven't enter entry or exit time on ".$day." \n";
+                }
+                
             }
-            if ($a1 != 0 && strtotime($a1) < strtotime('10:30')) {
+            if (strtotime($a1) != strtotime('00:00') && strtotime($c) > strtotime('09:00')) {
+                $ed = strtotime($c) - strtotime('09:00');
+                $te = $ed / 60;
+                $q = mysqli_query($link, "SELECT * FROM `compensate` WHERE `email_id` = '$email' AND `date` = '$pdate'");
+                if (mysqli_num_rows($q) <= 0) {
+                    $rat = get_compensate_time($email,$link);
+                   if($rat > 0 && $te >= 10){
+                    $ins2 = "INSERT INTO compensate (email_id, date, total_time, time_compensate) VALUES ('$email', '$pdate', '0', '$te')";
+                    mysqli_query($link, $ins2) or die(mysqli_error($link));
+                   }
+                }
+
                 $string = $string . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
             }
         }
@@ -169,18 +195,15 @@ while ($qs = mysqli_fetch_assoc($qw)) {
         $j = str_replace("PM", "", current($t['timing']));
         $j = strtotime(str_replace("-", "/", $j));
         $j1 = date("H:i", $j);
-           if(current($t['timing']) == ""){
-          $j1 = 0;
-       }
         if ($t['name'] != "" && $t['name'] != "Admin") {
 
-            if ($j1 == 0) {
+            if (strtotime($j1) == strtotime('00:00')) {
                 $string5 = $string5 . $t['name'] . ": Did not Come Yet! \n";
             }
-            if ($j1!= 0 && strtotime($j1) < strtotime('10:30')) {
+            if (strtotime($j1) != strtotime('00:00') && strtotime($j1) < strtotime('10:30')) {
                 $string2 = $string2 . $t['name'] . ":  Entry Time: " . $j1 . "\n";
             }
-            if ( $j1!= 0 && strtotime($j1) > strtotime('10:30')) {
+            if (strtotime($j1) > strtotime('10:30')) {
                 $string3 = $string3 . $t['name'] . ":  Entry Time: " . $j1 . "\n";
             }
         }
@@ -191,43 +214,31 @@ while ($qs = mysqli_fetch_assoc($qw)) {
 //echo "<hr>";
 //echo $string;
 //echo "<hr>";
-//echo "<hr>";
-//echo $string2;
-//echo "<hr>";
-//echo $string3;
-//echo "<hr>";
-//echo $string5;
-//echo "<hr>";
-//echo "<br>";
 //die;
-      send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
+    //  send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
 
     if ($string4 != "") {
         $hr4 = "hrfile4";
-           send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
+        //  send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
     }
     if ($string1 != "") {
-       $hr1 = "hrfile1";
-      
-          send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
+        $hr1 = "hrfile1";
+        //  send_slack_message($c_id = 'hr', $token, $token, $string1, $hr1, $day);
     }
-    send_slack_message($c_id = 'hr', $token, $string2, $hr2);
+    // send_slack_message($c_id = 'hr', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-          send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
+        //  send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-          send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
+        //  send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
     }
 
-//    $token = "xoxp-15636967698-15636967730-56513350243-f70365b66f";
-//    $client_id = "15636967698.55360920161";
-//    $client_secret = "25d0606ecdce87d9a44b8c6c619c7d54";
 
-//die;
+// curl operation to get list of all user's channel id from slack.
 
-    $url = "https://slack.com/api/im.list?token=".$token;
+    $url = "https://slack.com/api/im.list?token=" . $token;
     $cid_array = array();
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -241,13 +252,13 @@ while ($qs = mysqli_fetch_assoc($qw)) {
     } else {
         $channelid_list = json_decode($result, true);
         $cid_array = $channelid_list['ims'];
-      // echo "<pre>";
-       // print_r($cid_array);
-        //echo "<hr>";
+        // echo "<pre>";
+        // print_r($cid_array);
+        // echo "<hr>";
     }
     curl_close($ch);
 //die;
-
+// curl operation to get list of all user from slack.
     $url = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
 
     $ch = curl_init();
@@ -263,12 +274,13 @@ while ($qs = mysqli_fetch_assoc($qw)) {
     } else {
         $fresult = json_decode($result, true);
         //echo "<pre>";
-       // print_r($fresult);
-       // echo "<hr>";
+        // print_r($fresult);
+        // echo "<hr>";
     }
- //  print_r($ttable); 
+  curl_close($ch);
 //die;
-    curl_close($ch);
+  
+ 
 
     if (sizeof($time_table) > 0) {
         foreach ($time_table as $value) {
@@ -279,82 +291,87 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                 $msg = "";
                 if ($e == $foo['profile']['email'] && $e != "") {
                     $f = $foo['id'];
-                  //  echo $value['id'] . "--" . $f . "--" . $e . "<br>";
+                    //  echo $value['id'] . "--" . $f . "--" . $e . "<br>";
                     if (array_key_exists($id, $ttable)) {
                         $time_arr = $ttable[$id];
-                        
+
                         $aa = current($time_arr['timing']);
                         $aa = strtotime(str_replace("-", "/", $aa));
-                        
+
                         $aa = date("h:i A", $aa);
                         $bb = end($time_arr['timing']);
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
-                   //     echo $ada;
-                        if(current($time_arr['timing']) == ""){
-                          $aa = $bb = 0;
-                         }
-                        if($bb == $aa && $bb != 0){
+                     //get previous days list of no putting exit time. 
+                        $ar = array();
+                        $qry = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `exit_time` = '0'");
+                            if (mysqli_num_rows($qry) > 0) {
+                              while ($ss = mysqli_fetch_assoc($qry)) {
+                                  $ar[] = $ss;
+                                  $msg = $msg . "You didn't put in your exit time on " . $ss['date'] . ", Please contact HR immediately or this day will be considered as a leave.\n";
+                              }
+                            }
+                    
+                      //end
+                        if ($bb == $aa && strtotime($bb) != strtotime("12:00 AM")) {
                             
-                          $msg = $msg . "You didn't put in your exit time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";
-                           $q = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
+                            $msg = $msg . "You didn't put in your exit time on " . $ada . ", Please contact HR immediately or this day will be considered as a leave.\n";
+                            
+                            $q = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
                             if (mysqli_num_rows($q) <= 0) {
                                 $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '0','$pdate')";
                              
                                 mysqli_query($link, $ins2) or die(mysqli_error($link));
-                            }   
+                            }
                         }
-                        if($bb == $aa && $bb == 0){
-                            
-                          $msg = $msg . "You were on leave on ".$pdate.",\n";   
+                        if ($bb == $aa && $bb == "12:00 AM") {
+
+                            $msg = $msg . "You were on leave on " . $pdate . ",\n";
                         }
-                        if($bb != $aa){
-                           $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";
-                          $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
+                        if ($bb != $aa) {
+                            $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";
+                             $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
                             if (mysqli_num_rows($q1) <= 0) {
                                 $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '$bb','$pdate')";
                              
                                 mysqli_query($link, $ins3) or die(mysqli_error($link));
-                            }    
+                            }
                         }
-                       
+                        
                     }
                     $c_id = get_channel_id($f, $cid_array);
-                  //     if ($f == "U0FJZ0KDM" ) {
-                  //  echo $f . "--" . $e . "--" .current($value['timing']) . "<br>";
+                    //     if ($f == "U0FJZ0KDM" ) {
 
-                  //  echo "---".current($value['timing'])."---";
                     $d = str_replace("PM", "", current($value['timing']));
                     $d = strtotime(str_replace("-", "/", $d));
                     $d1 = date("h:i A", $d);
-                    if (current($value['timing']) == ""){
-                       $d1 = 0;
-                     }
-                    if ($d1 == 0 ) {
-                        $msg = $msg . "You have not entered time Today ";
-                        send_slack_message($c_id, $token, $msg);
+                    
+                    if ($d1 == "12:00 AM") {
+                        $msg = $msg . "You have not entered time Today";
+                        // send_slack_message($c_id, $token, $msg);
                     }
-                    if ( $d1 != 0 && strtotime($d1) >= strtotime('10:30 AM')) {
-                        
+                    if (strtotime($d1) >= strtotime('10:30 AM')) {
+
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                         send_slack_message($c_id, $token, $msg, $hr6);
-                    } if ($d1 != 0 && strtotime($d1) < strtotime('10:30')) {
+                        //   send_slack_message($c_id, $token, $msg, $hr6);
+                    } if ($d1 != "12:00 AM" && strtotime($d1) < strtotime('10:30')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
-                         send_slack_message($c_id, $token, $msg);
+                        //  send_slack_message($c_id, $token, $msg);
                     }
-                 
-                    //echo $msg;
-                   //echo "<hr>";
 
-                  //  }
+                    //  }
+//                    echo $msg;
+//                    echo "<hr>";
                 }
             }
         }
     }
 }
 
+
+// function to get office entry and exit time of working day
 function get_time_array($date, $link, $hr = false) {
 
     $final = array();
@@ -381,21 +398,20 @@ function get_time_array($date, $link, $hr = false) {
                 $tim[$u_id][] = $er['timing'];
                 $final[$u_id]['oppo'] = $tim[$u_id];
             }
-        $final['date'] = $date;
+            $final['date'] = $date;
         }
     }
-   
-    
+
+
 
     if (sizeof($final) == 0 && $hr == "hrfile") {
-        
+
         $date = str_replace("-", "/", $date);
         $date = date('Y-m-d', strtotime($date));
         $dat = date('m-d-Y', strtotime($date . ' -1 day'));
         $dayz = date('l', strtotime($dat));
         $final = get_time_array($dat, $link, $hr);
- 
-   }
+    }
 //    if (sizeof($final) != 0 ) {
 //        echo sizeof($final);
 //        echo $dat;
@@ -405,6 +421,7 @@ function get_time_array($date, $link, $hr = false) {
     return $final;
 }
 
+//function to get channel id's of different slack users
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
         if ($data == $val['user']) {
@@ -413,9 +430,12 @@ function get_channel_id($data, $array) {
         }
     }
 }
+//function  end
 
-function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false ) {
-   
+//function to send message to different channels in slack
+
+function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
+
 
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if ($sir == "You have not Entered your time Today") {
@@ -453,7 +473,7 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
 
     $icon = ":boom:";
 
-    $url = "https://slack.com/api/chat.postMessage?token=".$token."&attachments=" . urlencode($message) . "&channel=" . $room;
+    $url = "https://slack.com/api/chat.postMessage?token=" . $token . "&attachments=" . urlencode($message) . "&channel=" . $room;
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -471,6 +491,50 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
 
     curl_close($ch);
+}
+//function  end
+
+function get_compensate_time($email,$link){
+    $d = date("m-Y");
+    $query = "SELECT * from compensate where date like '%$d%' AND email_id = '$email' ";
+
+$array = array();
+$w = mysqli_query($link, $query) or die(mysqli_error($link));
+while ($s = mysqli_fetch_assoc($w)) {
+    $sid = $s['email_id'];
+    $dd = $s['date'];
+    //echo $sid;
+    //echo $dd."  --  $sid<br>";
+   // $array[] = $s;
+    if (array_key_exists($sid, $array)) {
+        
+       // echo $sid;
+            //$array[$sid] = $s;
+            $array[$sid]['ptime'][]=$s['total_time'];
+            $array[$sid]['ctime'][]  = $s['time_compensate'];
+        }
+    else {
+        
+         //$array[$sid] = $s;
+         $array[$sid]['ptime'][]=$s['total_time'];
+         $array[$sid]['ctime'][]=$s['time_compensate'];
+        
+    }    
+}
+
+//print_r($array);
+foreach($array as $val){
+   $pending = array_sum($val['ptime']);
+    $compensate = array_sum($val['ctime']);
+    $result = $pending - $compensate;
+    if($result > 0){
+       return $result;
+    }
+    else {
+      $result = 0;
+      return $result;
+    }
+}
 }
 //die;
 ?>
@@ -572,4 +636,5 @@ if (sizeof($time_table) > 0) {
 
     </body>
 </html>
+
 

@@ -59,7 +59,7 @@ if (isset($_FILES['image'])) {
 }
 
 $time_table2 = array();
-//$de = "07-13-2016";
+//$de = "07-01-2016";
 if (isset($_POST['date'])) {
     $de = $_POST['date'];
     $de = str_replace("/", "-", $de);
@@ -99,7 +99,7 @@ while ($qs = mysqli_fetch_assoc($qw)) {
     
 
     $time_table6 = array();
-   // $date = "2016-07-13";
+    //$date = "2016-07-01";
     $date = date("Y-m-d");
 
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
@@ -136,11 +136,11 @@ while ($qs = mysqli_fetch_assoc($qw)) {
    // print_r($ttable);
     //die;
     foreach ($ttable as $valo) {
-        
+        //$a = str_replace("PM", "", current($valo['timing']));
         $a = current($valo['timing']);
         $a = strtotime(str_replace("-", "/", $a));
         $a1 = date("H:i", $a);
-       
+        //$b = str_replace("PM", "", end($valo['timing']));
         $b = end($valo['timing']);
         $b = strtotime(str_replace("-", "/", $b));
         $b1 = date("H:i", $b);
@@ -296,26 +296,14 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                          }
                         if($bb == $aa && $bb != 0){
                             
-                          $msg = $msg . "You didn't put in your exit time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";
-                           $q = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
-                            if (mysqli_num_rows($q) <= 0) {
-                                $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '0','$pdate')";
-                             
-                                mysqli_query($link, $ins2) or die(mysqli_error($link));
-                            }   
+                          $msg = $msg . "You didn't put in your exit time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";   
                         }
                         if($bb == $aa && $bb == 0){
                             
                           $msg = $msg . "You were on leave on ".$pdate.",\n";   
                         }
                         if($bb != $aa){
-                           $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";
-                          $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
-                            if (mysqli_num_rows($q1) <= 0) {
-                                $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '$bb','$pdate')";
-                             
-                                mysqli_query($link, $ins3) or die(mysqli_error($link));
-                            }    
+                           $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";    
                         }
                        
                     }
@@ -332,21 +320,21 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                      }
                     if ($d1 == 0 ) {
                         $msg = $msg . "You have not entered time Today ";
-                        send_slack_message($c_id, $token, $msg);
+                       // send_slack_message($c_id, $token, $msg);
                     }
                     if ( $d1 != 0 && strtotime($d1) >= strtotime('10:30 AM')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                         send_slack_message($c_id, $token, $msg, $hr6);
+                       //  send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) < strtotime('10:30')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
-                         send_slack_message($c_id, $token, $msg);
+                        // send_slack_message($c_id, $token, $msg);
                     }
                  
-                    //echo $msg;
-                   //echo "<hr>";
+                   // echo $msg;
+                  // echo "<hr>";
 
                   //  }
                 }
