@@ -199,7 +199,7 @@ foreach($arr2 as $key=>$value){
                     }
                 }
 
-                 // send_slack_message($c_id = 'hr', $token, $msg);
+                  send_slack_message($c_id = 'hr', $token, $msg);
                 echo $msg;
                 echo "<br>";
             }
@@ -250,16 +250,16 @@ foreach($raw as $vale){
 
 if ($msg1 != "") {
         $hr1 = "hrfile1";
-         // send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
+          send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
     }
     if ($msg2 != "") {
         $hr2 = "hrfile2";
-         // send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+          send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
     }
   
     if ($msg3 != "") {
         $hr3 = "hrfile3";
-        //  send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+          send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
     }
 
 echo $msg1."<br>".$msg2."<br>".$msg3."<br>";
