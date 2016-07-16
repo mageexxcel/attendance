@@ -1,10 +1,10 @@
 <?php
-require_once ("connection.php");
+require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
 $de = date("m-Y");
 $current_date = date("Y-m-d");
-$current_month = date("2016-06");
+$current_month = date("Y-m");
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
 
 
@@ -31,12 +31,12 @@ $url = "https://slack.com/api/im.list?token=".$token;
     } else {
         $channelid_list = json_decode($result, true);
         $cid_array = $channelid_list['ims'];
-        echo "<pre>";
-        print_r($cid_array);
-        echo "<hr>";
+      //  echo "<pre>";
+      //  print_r($cid_array);
+       // echo "<hr>";
     }
     curl_close($ch);
-die;
+//die;
 
     $url = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
 
@@ -173,7 +173,7 @@ foreach($arr2 as $key=>$value){
   }
  // print_r($rep);
   echo "<hr>";
-  if($to_compensate > 0){
+  if($to_compensate > 10){
       echo $to_compensate;
       echo "<br>";
       $msg = "";
@@ -183,7 +183,7 @@ foreach($arr2 as $key=>$value){
                 $f = "U0FJZ0KDM";
 
                // $c_id = get_channel_id($f, $cid_array);
-
+                
                 $r = date('H:i', mktime(0, $to_compensate));
                 //  echo $key."----".$f."-----".$c_id;
                 $msg = $msg."Hi " . $foo['real_name'] . " You have to compensate " . $r . " minutes \n";
@@ -199,7 +199,7 @@ foreach($arr2 as $key=>$value){
                     }
                 }
 
-                //  send_slack_message($c_id, $token, $msg);
+                 // send_slack_message($c_id = 'hr', $token, $msg);
                 echo $msg;
                 echo "<br>";
             }
@@ -250,16 +250,16 @@ foreach($raw as $vale){
 
 if ($msg1 != "") {
         $hr1 = "hrfile1";
-          send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
+         // send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
     }
     if ($msg2 != "") {
         $hr2 = "hrfile2";
-          send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+         // send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
     }
   
     if ($msg3 != "") {
         $hr3 = "hrfile3";
-          send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+        //  send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
     }
 
 echo $msg1."<br>".$msg2."<br>".$msg3."<br>";
