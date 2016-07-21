@@ -86,7 +86,7 @@ if (isset($_GET['dailynotify'])) {
         if ($msg != "") {
             $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
             echo $newmsg;
-             send_slack_message($c_id, $token, $newmsg);
+             send_slack_message($c_id = 'hr', $token, $newmsg);
         }
     }
 }
