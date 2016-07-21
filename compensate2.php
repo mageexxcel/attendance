@@ -86,9 +86,40 @@ if (isset($_GET['dailynotify'])) {
         if ($msg != "") {
             $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
             echo $newmsg;
-             send_slack_message($c_id = 'hr', $token, $newmsg);
+            send_slack_message($c_id, $token, $newmsg);
         }
     }
+    
+  //-- get one or two month employee completed slack message on hr channel----- 
+     $one_month = date('Y-m-d', strtotime($current_date . ' -1 month'));
+   $two_month = date('Y-m-d', strtotime($current_date . ' -2 month'));
+  
+   $q = "SELECT users.*,user_profile.name,user_profile.work_email,user_profile.dateofjoining FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND (user_profile.dateofjoining ='".$one_month."' OR user_profile.dateofjoining ='".$two_month."')";
+  //echo $q;
+   $rq = mysqli_query($link, $q) or die(mysqli_error($link));
+   if(mysqli_num_rows($rq)> 0){
+       $newmes = "";
+       while ($row = mysqli_fetch_assoc($rq)){
+      // print_r($row);
+         $key = $row['work_email'];
+         $name = $row['name'];
+         $join_date = $row['dateofjoining'];
+                     
+                        if ($join_date == $one_month) {
+                            $msg = $name . " has completed one month as per date ".date("d-m-Y", strtotime(str_replace("-", "/", $join_date)))."\n";
+                        } else {
+
+                            $msg = $name . " has completed two month as per date ".date("d-m-Y", strtotime(str_replace("-", "/", $join_date)))."\n";
+                        }
+                       $newmes = $newmes." ".$msg;
+                    }
+    
+                echo $newmes;
+              send_slack_message($c_id = 'hr', $token, $newmes);
+   }
+   //--end get one or two month employee completed slack message on hr channel-----
+    
+    
 }
 
 //--- Compensation time slack notification--------------
@@ -265,8 +296,8 @@ if (isset($_GET['pending'])) {
             $msg2 = "";
             foreach ($fresult['members'] as $foo) {
                 if ($key == $foo['profile']['email'] && $key != "") {
-                    //$f = $foo['id'];
-                    $f = "U0FJZ0KDM";
+                    $f = $foo['id'];
+                   // $f = "U0FJZ0KDM";
                     $rname = $foo['real_name'];
                     $c_id = get_channel_id($f, $cid_array);
 
@@ -275,7 +306,7 @@ if (isset($_GET['pending'])) {
                     $msg2 = $msg2 . $mm ."Please apply asap on HR System" ;
 
 
-                    send_slack_message($c_id = 'hr', $token, $msg2);
+                    send_slack_message($c_id, $token, $msg2);
                     echo $msg2;
                     echo "<br>";
                 }
