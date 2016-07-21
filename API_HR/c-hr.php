@@ -349,6 +349,36 @@
             return $return;
         }
 
+        public static function updateDayWorkingHours( $date, $time ){  //API CALL FUNCTION
+            //date = Y-m-d
+            $q = "SELECT * FROM working_hours WHERE `date`='$date'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+
+            echo $q.'<br>';
+            echo '<pre>';
+            print_r( $row );
+
+            $message = "";
+
+            if( is_array($rows) && sizeof( $rows ) > 0 ){
+                $q = "UPDATE working_hours set working_hours='$time' WHERE `date` = '$date' ";
+                self::DBrunQuery($q);
+                $message = "Success Update";
+            }else{
+                $q = "INSERT into working_hours ( working_hours, `date`  ) VALUES ( '$time', '$date' )";
+                self::DBrunQuery($q);
+                $message = "Success Insert";
+            }
+            $r_error = 0;
+            $return = array();
+            $r_data = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $message;
+            $return['data'] = $r_data;
+            return $return;
+        }
+
         // add keys required for a day summary
         public static function _addRequiredKeysForADay( $days ){
             $return = array();

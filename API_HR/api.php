@@ -85,6 +85,18 @@
 		$year = $PARAMS['year'];
 		$month = $PARAMS['month'];
         $res = HR::getWorkingHoursSummary( $year, $month );
+	}else if( $action == 'update_day_working_hours' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		// if( $loggedUserInfo['role'] == 'Guest' ){
+		// 	$res['error'] = 1;
+  //           $res['data']['message'] = "You don't have permission to update";
+		// }else{
+			$date = $PARAMS['date'];
+			$time = $PARAMS['time'];
+			$res = HR::updateDayWorkingHours( $date, $time );
+		// }
 	}
 
 
