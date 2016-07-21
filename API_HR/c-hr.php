@@ -6,7 +6,7 @@
 
     class HR extends DATABASE {
 
-        const DEFAULT_WORKING_HOURS = 9;
+        const DEFAULT_WORKING_HOURS = "09:00";
 
         private static $SLACK_client_id = '';
         private static $SLACK_client_secret = '';
@@ -272,6 +272,25 @@
             }
             return $list;
         }
+        // get month working hours times
+        public static function getWorkingHoursOfMonth( $year, $month ){
+            $q = "SELECT * FROM working_hours";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            $list = array();
+            foreach( $rows as $pp ){
+                $h_date = $pp['date'];
+                $h_month = date('m',strtotime($h_date));
+                $h_year = date('Y',strtotime($h_date));
+                if( $h_year == $year && $h_month == $month ){
+                    $h_full_date = date( "Y-m-d", strtotime( $h_date ) );
+                    $h_date = date( "d", strtotime( $h_date ) );
+                    $pp['date'] = $h_date;
+                    $list[$h_date] = $pp;
+                }
+            }
+            return $list;
+        }
         // get month holidays list
         public static function getHolidaysOfMonth( $year, $month ){
             $q = "SELECT * FROM holidays";
@@ -355,10 +374,6 @@
             $runQuery = self::DBrunQuery($q);
             $rows = self::DBfetchRows($runQuery);
 
-            echo $q.'<br>';
-            echo '<pre>';
-            print_r( $row );
-
             $message = "";
 
             if( is_array($rows) && sizeof( $rows ) > 0 ){
@@ -409,6 +424,7 @@
             $daysOfMonth = self::_addRequiredKeysForADay( $daysOfMonth );
             $holidaysOfMonth = self::getHolidaysOfMonth( $year, $month );
             $weekendsOfMonth = self::getWeekendsOfMonth( $year, $month );
+            $workingHoursOfMonth = self::getWorkingHoursOfMonth( 2016, 07 ); // change thisis arun 
 
             if( sizeof( $holidaysOfMonth ) > 0 ){
                 foreach( $holidaysOfMonth as $hm_key => $hm ){
@@ -420,6 +436,11 @@
                 foreach( $weekendsOfMonth as $hm_key => $hm ){
                     $daysOfMonth[$hm_key]['day_type'] = 'NON_WORKING_DAY';
                     $daysOfMonth[$hm_key]['day_text'] = 'Weekend Off';
+                }
+            }
+            if( sizeof( $workingHoursOfMonth ) > 0 ){
+                foreach( $workingHoursOfMonth as $hm_key => $hm ){
+                    $daysOfMonth[$hm_key]['office_working_hours'] = $hm['working_hours'];
                 }
             }
             return $daysOfMonth;
