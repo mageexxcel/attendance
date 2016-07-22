@@ -32,7 +32,7 @@ $w = mysqli_query($link, $query) or die(mysqli_error($link));
 while ($s = mysqli_fetch_assoc($w)) {
     $sid = $s['email'];
     $d = strtotime($s['date']);
-    
+
     if (array_key_exists($sid, $array)) {
 
         $array[$sid][$d] = $s;
@@ -40,7 +40,6 @@ while ($s = mysqli_fetch_assoc($w)) {
 
         $array[$sid][$d] = $s;
     }
-  
 }
 echo "<pre>";
 //print_r($array);
@@ -53,10 +52,10 @@ foreach ($array as $k => $v) {
 
 if (isset($_GET['dailynotify'])) {
     foreach ($arr as $kk => $vv) {
-       
+
         $msg = "";
         foreach ($vv as $f) {
-            
+
             if ($f['entry_time'] == 0 || $f['exit_time'] == 0) {
                 $key = $f['email'];
                 $date = $f['date'];
@@ -89,13 +88,42 @@ if (isset($_GET['dailynotify'])) {
             // send_slack_message($c_id, $token, $newmsg);
         }
     }
+
+    //-- get one or two month employee completed slack message on hr channel----- 
+    $one_month = date('Y-m-d', strtotime($current_date . ' -1 month'));
+    $two_month = date('Y-m-d', strtotime($current_date . ' -2 month'));
+
+    $q = "SELECT users.*,user_profile.name,user_profile.work_email,user_profile.dateofjoining FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND (user_profile.dateofjoining ='" . $one_month . "' OR user_profile.dateofjoining ='" . $two_month . "')";
+    //echo $q;
+    $rq = mysqli_query($link, $q) or die(mysqli_error($link));
+    if (mysqli_num_rows($rq) > 0) {
+        $newmes = "";
+        while ($row = mysqli_fetch_assoc($rq)) {
+            // print_r($row);
+            $key = $row['work_email'];
+            $name = $row['name'];
+            $join_date = $row['dateofjoining'];
+
+            if ($join_date == $one_month) {
+                $msg = $name . " has completed one month as per date " . date("d-m-Y", strtotime(str_replace("-", "/", $join_date))) . "\n";
+            } else {
+
+                $msg = $name . " has completed two month as per date " . date("d-m-Y", strtotime(str_replace("-", "/", $join_date))) . "\n";
+            }
+            $newmes = $newmes . " " . $msg;
+        }
+
+        echo $newmes;
+        //    send_slack_message($c_id = 'hr', $token, $newmes);
+    }
+    //--end get one or two month employee completed slack message on hr channel-----
 }
 
 //--- Compensation time slack notification--------------
 if (isset($_GET['pending'])) {
-    
+
     //---------get all working day of current month.--------
-    
+
     $list = array();
     for ($d = 1; $d <= 31; $d++) {
         $time = mktime(12, 0, 0, date('m'), $d, date('Y'));
@@ -111,7 +139,8 @@ if (isset($_GET['pending'])) {
         }
     }
     array_pop($set);
-    
+    array_pop($set);
+
 //---- end-----------
 
 
@@ -122,28 +151,48 @@ if (isset($_GET['pending'])) {
             if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
                 $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
                 $te = date("h:i", $ed);
-                if (strtotime($te) < strtotime("04:30")) {
+                 $cdate = date('Y-m-d', strtotime($f['date']));
+                 $working_hour = getWorkingHours($cdate ,$link);
+               // echo $working_hour."<br>";
+                 if($working_hour != 0 && strtotime($working_hour) > strtotime("06:00")){
+                     
+                      if (strtotime($te) < strtotime("05:30")) {
                     $ed1 = strtotime('04:30') - strtotime($te);
                     $te1 = $ed1 / 60;
-                    $vv['ptime'][] = $te1;
-                    $vv['ctime'][] = 0;
+                    if ($te1 > 0) {
+                        $vv['ptime'][] = $te1;
+                        $vv['ctime'][] = 0;
+                        $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                    }
+
                     $vv['half'][] = date("m-d-Y", strtotime($f['date']));
-                    $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                 }
-                if (strtotime("04:30") <= strtotime($te) && strtotime($te) < strtotime("09:00")) {
-                    $ed1 = strtotime('09:00') - strtotime($te);
+                if (strtotime("05:30") <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
+                    $ed1 = strtotime($working_hour) - strtotime($te);
                     $te1 = $ed1 / 60;
                     $vv['ptime'][] = $te1;
                     $vv['ctime'][] = 0;
                     $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                 }
-                if (strtotime($te) > strtotime("09:00")) {
-                    $ed1 = strtotime($te) - strtotime('09:00');
+                if (strtotime($te) > strtotime($working_hour)) {
+                    $ed1 = strtotime($te) - strtotime($working_hour);
                     $te1 = $ed1 / 60;
                     $vv['ctime'][] = $te1;
                     $vv['ptime'][] = 0;
                     $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                 }
+                     
+                 }
+                 if($working_hour != 0 && strtotime($working_hour) < strtotime("06:00")) {
+                    $ed1 = strtotime($working_hour)- strtotime($te);
+                    $te1 = $ed1 / 60;
+                    if($te1>0){
+                    $vv['ctime'][] = $te1;
+                    $vv['ptime'][] = 0;
+                    $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date']; 
+                    }
+                 }
+               
             }
             $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
             $vv['userid'] = $f['user_id'];
@@ -153,10 +202,10 @@ if (isset($_GET['pending'])) {
 
         $arr2[$kk] = $vv;
     }
-//    echo "<pre>";
-//    print_r($arr2);
-//    echo "<br>";
-//    die;
+    echo "<pre>";
+    print_r($arr2);
+    echo "<br>";
+    die;
 
     foreach ($arr2 as $key => $value) {
         $pending = $value['ptime'];
@@ -221,7 +270,7 @@ if (isset($_GET['pending'])) {
                         }
                     }
 
-                    // send_slack_message($c_id = 'hr', $token, $msg);
+                    //  send_slack_message($c_id = 'hr', $token, $msg);
                     echo $msg;
                     echo "<br>";
                 }
@@ -247,26 +296,26 @@ if (isset($_GET['pending'])) {
 
         if (sizeof($half) > 0) {
             $arr = getLeaveNotification($uid, $link);
-           
+
             foreach ($half as $h) {
                 if (!in_array($h, $arr)) {
                     $mm = $mm . "You have not applied for halfday on " . date("d-m-Y", strtotime(str_replace("-", "/", $h))) . "\n";
                 }
             }
         }
-        
+
         if (!empty($mm)) {
             $msg2 = "";
             foreach ($fresult['members'] as $foo) {
                 if ($key == $foo['profile']['email'] && $key != "") {
-                    //$f = $foo['id'];
-                    $f = "U0FJZ0KDM";
+                    $f = $foo['id'];
+                    // $f = "U0FJZ0KDM";
                     $rname = $foo['real_name'];
                     $c_id = get_channel_id($f, $cid_array);
 
                     //  echo $key."----".$f."-----".$c_id;
                     $msg2 = $msg2 . "Hi " . $rname . "\n";
-                    $msg2 = $msg2 . $mm ."Please apply asap on HR System" ;
+                    $msg2 = $msg2 . $mm . "Please apply asap on HR System";
 
 
                     //send_slack_message($c_id, $token, $msg2);
@@ -278,8 +327,6 @@ if (isset($_GET['pending'])) {
     }
 }
 //--end compensate slack notification----------
-
-
 //---------Applied leave messages to Hr channel-------------
 if (isset($_GET['leave'])) {
     $raw = array();
@@ -322,13 +369,13 @@ if (isset($_GET['leave'])) {
 
     if ($msg3 != "") {
         $hr3 = "hrfile3";
-        // send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+        //send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
     }
 
     echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
 }
-//--end applied leave slack message to hr ------------------ 
 
+//--end applied leave slack message to hr ------------------ 
 //---get channel id of a user---------
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
@@ -396,6 +443,7 @@ function getData($data, $link) {
         return $result;
     }
 }
+
 //------Get leave detail of employee of current month.
 function getLeaveNotification($data, $link) {
     $date = date("Y-m");
@@ -419,6 +467,7 @@ function getLeaveNotification($data, $link) {
     }
     return $result;
 }
+
 // ----------Run curl url------
 function getCURL($url, $data = false) {
     $ch = curl_init();
@@ -438,4 +487,19 @@ function getCURL($url, $data = false) {
     }
     return $rest;
     curl_close($ch);
+}
+
+function getWorkingHours($data, $link) {
+   // echo $data;
+    $result = 0;
+    $qry = "select * from working_hours where date='$data'";
+   // echo $qry;
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    if (mysqli_num_rows($resl) > 0) {
+        while ($row = mysqli_fetch_assoc($resl)) {
+            $result = $row['working_hours'];
+        }
+    }
+
+    return $result;
 }

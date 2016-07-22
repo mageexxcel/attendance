@@ -1,4 +1,5 @@
 <?php
+
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
@@ -180,24 +181,24 @@ while ($qs = mysqli_fetch_assoc($qw)) {
 //echo "<br>";
 //D0KGJ5HPH
 //die;
-     // send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
+      send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
     if ($string4 != "") {
         $hr4 = "hrfile4";
-       //    send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
+           send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
     }
     if ($string1 != "") {
        $hr1 = "hrfile1";
       
-       //   send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
+          send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
     }
-  //  send_slack_message($c_id = 'hr', $token, $string2, $hr2);
+    send_slack_message($c_id = 'hr', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-       //   send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
+          send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-        //  send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
+          send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
     }
 //    $token = "xoxp-15636967698-15636967730-56513350243-f70365b66f";
 //    $client_id = "15636967698.55360920161";
@@ -304,20 +305,20 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                      }
                     if ($d1 == 0 ) {
                         $msg = $msg . "You have not entered time Today ";
-                     //   send_slack_message($c_id, $token, $msg);
+                        send_slack_message($c_id, $token, $msg);
                     }
                     if ( $d1 != 0 && strtotime($d1) >= strtotime('10:30 AM')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                        // send_slack_message($c_id, $token, $msg, $hr6);
+                         send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) < strtotime('10:30')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
-                       //  send_slack_message($c_id, $token, $msg);
+                         send_slack_message($c_id, $token, $msg);
                     }
                  
-                   // echo $msg;
+                    //echo $msg;
                   // echo "<hr>";
                   //  }
                 }
