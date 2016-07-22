@@ -25,8 +25,7 @@ $cid_array = getCURL($url, $data = 'ims');
 $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
 $fresult = getCURL($url2);
 
-$query = "SELECT * from hr_data where date like '%$de%'";
-
+$query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
 $array = array();
 $w = mysqli_query($link, $query) or die(mysqli_error($link));
 while ($s = mysqli_fetch_assoc($w)) {
@@ -114,7 +113,7 @@ if (isset($_GET['dailynotify'])) {
         }
 
         echo $newmes;
-        //    send_slack_message($c_id = 'hr', $token, $newmes);
+          //  send_slack_message($c_id = 'hr', $token, $newmes);
     }
     //--end get one or two month employee completed slack message on hr channel-----
 }
@@ -153,9 +152,9 @@ if (isset($_GET['pending'])) {
                 $te = date("h:i", $ed);
                 $cdate = date('Y-m-d', strtotime($f['date']));
                 $working_hour = getWorkingHours($cdate, $link);
-                $half_time = date("h:i",strtotime($working_hour)/2 + 3600);
-                
-                if ($working_hour != 0 ) {
+                $half_time = date("h:i", strtotime($working_hour) / 2 + 3600);
+
+                if ($working_hour != 0) {
 
                     if (strtotime($te) < strtotime($half_time)) {
                         $ed1 = strtotime($half_time) - strtotime($te);
@@ -183,7 +182,6 @@ if (isset($_GET['pending'])) {
                         $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                     }
                 }
-
             }
             $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
             $vv['userid'] = $f['user_id'];
@@ -311,7 +309,7 @@ if (isset($_GET['pending'])) {
                     $msg2 = $msg2 . $mm . "Please apply asap on HR System";
 
 
-                    //send_slack_message($c_id, $token, $msg2);
+                  //  send_slack_message($c_id, $token, $msg2);
                     echo $msg2;
                     echo "<br>";
                 }
@@ -357,12 +355,12 @@ if (isset($_GET['leave'])) {
     }
     if ($msg2 != "") {
         $hr2 = "hrfile2";
-        // send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+       //  send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
     }
 
     if ($msg3 != "") {
         $hr3 = "hrfile3";
-        //send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+       // send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
     }
 
     echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
@@ -483,10 +481,9 @@ function getCURL($url, $data = false) {
 }
 
 function getWorkingHours($data, $link) {
-    // echo $data;
+
     $result = 0;
     $qry = "select * from working_hours where date='$data'";
-    // echo $qry;
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
         while ($row = mysqli_fetch_assoc($resl)) {
