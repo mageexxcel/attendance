@@ -151,48 +151,39 @@ if (isset($_GET['pending'])) {
             if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
                 $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
                 $te = date("h:i", $ed);
-                 $cdate = date('Y-m-d', strtotime($f['date']));
-                 $working_hour = getWorkingHours($cdate ,$link);
-               // echo $working_hour."<br>";
-                 if($working_hour != 0 && strtotime($working_hour) > strtotime("06:00")){
-                     
-                      if (strtotime($te) < strtotime("05:30")) {
-                    $ed1 = strtotime('04:30') - strtotime($te);
-                    $te1 = $ed1 / 60;
-                    if ($te1 > 0) {
+                $cdate = date('Y-m-d', strtotime($f['date']));
+                $working_hour = getWorkingHours($cdate, $link);
+                $half_time = date("h:i",strtotime($working_hour)/2 + 3600);
+                
+                if ($working_hour != 0 ) {
+
+                    if (strtotime($te) < strtotime($half_time)) {
+                        $ed1 = strtotime($half_time) - strtotime($te);
+                        $te1 = $ed1 / 60;
+                        if ($te1 > 0) {
+                            $vv['ptime'][] = $te1;
+                            $vv['ctime'][] = 0;
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                        }
+
+                        $vv['half'][] = date("m-d-Y", strtotime($f['date']));
+                    }
+                    if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
+                        $ed1 = strtotime($working_hour) - strtotime($te);
+                        $te1 = $ed1 / 60;
                         $vv['ptime'][] = $te1;
                         $vv['ctime'][] = 0;
                         $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                     }
-
-                    $vv['half'][] = date("m-d-Y", strtotime($f['date']));
-                }
-                if (strtotime("05:30") <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
-                    $ed1 = strtotime($working_hour) - strtotime($te);
-                    $te1 = $ed1 / 60;
-                    $vv['ptime'][] = $te1;
-                    $vv['ctime'][] = 0;
-                    $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
-                }
-                if (strtotime($te) > strtotime($working_hour)) {
-                    $ed1 = strtotime($te) - strtotime($working_hour);
-                    $te1 = $ed1 / 60;
-                    $vv['ctime'][] = $te1;
-                    $vv['ptime'][] = 0;
-                    $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
-                }
-                     
-                 }
-                 if($working_hour != 0 && strtotime($working_hour) < strtotime("06:00")) {
-                    $ed1 = strtotime($working_hour)- strtotime($te);
-                    $te1 = $ed1 / 60;
-                    if($te1>0){
-                    $vv['ctime'][] = $te1;
-                    $vv['ptime'][] = 0;
-                    $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date']; 
+                    if (strtotime($te) > strtotime($working_hour)) {
+                        $ed1 = strtotime($te) - strtotime($working_hour);
+                        $te1 = $ed1 / 60;
+                        $vv['ctime'][] = $te1;
+                        $vv['ptime'][] = 0;
+                        $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                     }
-                 }
-               
+                }
+
             }
             $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
             $vv['userid'] = $f['user_id'];
@@ -202,10 +193,10 @@ if (isset($_GET['pending'])) {
 
         $arr2[$kk] = $vv;
     }
-    echo "<pre>";
-    print_r($arr2);
-    echo "<br>";
-    die;
+//    echo "<pre>";
+//    print_r($arr2);
+//    echo "<br>";
+//    die;
 
     foreach ($arr2 as $key => $value) {
         $pending = $value['ptime'];
@@ -277,7 +268,9 @@ if (isset($_GET['pending'])) {
             }
         }
         $uid = $value['userid'];
-
+//echo "<pre>";
+//print_r($wdate);
+//die;
         if (sizeof($wdate) > 0) {
             $diff = array_diff($set, $wdate);
 
@@ -490,10 +483,10 @@ function getCURL($url, $data = false) {
 }
 
 function getWorkingHours($data, $link) {
-   // echo $data;
+    // echo $data;
     $result = 0;
     $qry = "select * from working_hours where date='$data'";
-   // echo $qry;
+    // echo $qry;
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
         while ($row = mysqli_fetch_assoc($resl)) {
