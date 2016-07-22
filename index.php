@@ -1,5 +1,4 @@
 <?php
-
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
@@ -51,7 +50,7 @@ if (isset($_FILES['image'])) {
     }
 }
 $time_table2 = array();
-$de = "07-13-2016";
+//$de = "07-13-2016";
 if (isset($_POST['date'])) {
     $de = $_POST['date'];
     $de = str_replace("/", "-", $de);
@@ -85,8 +84,8 @@ while ($qs = mysqli_fetch_assoc($qw)) {
 }
     
     $time_table6 = array();
-    $date = "2016-07-13";
-   // $date = date("Y-m-d");
+    //$date = "2016-07-13";
+    $date = date("Y-m-d");
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
     $hr = "hrfile";
     $hr2 = "hrfile2";
@@ -318,7 +317,7 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                          send_slack_message($c_id, $token, $msg);
                     }
                  
-                    //echo $msg;
+                   // echo $msg;
                   // echo "<hr>";
                   //  }
                 }
@@ -526,4 +525,4 @@ if (sizeof($time_table) > 0) {
         </div>
 
     </body>
-</html>
+</html>zzz
