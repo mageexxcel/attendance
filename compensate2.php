@@ -25,8 +25,7 @@ $cid_array = getCURL($url, $data = 'ims');
 $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
 $fresult = getCURL($url2);
 
-$query = "SELECT * from hr_data where date like '%$de%'";
-
+$query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
 $array = array();
 $w = mysqli_query($link, $query) or die(mysqli_error($link));
 while ($s = mysqli_fetch_assoc($w)) {
