@@ -525,4 +525,4 @@ if (sizeof($time_table) > 0) {
         </div>
 
     </body>
-</html>zzz
+</html>
