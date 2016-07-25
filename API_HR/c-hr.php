@@ -908,6 +908,7 @@
 
         //----update in hr_data table
         public static function insertUpdateHr_data( $userid, $date, $entry_time, $exit_time ){
+
             //d-m-Y
             $q = "SELECT * FROM hr_data WHERE user_id = '$userid' AND `date`= '$date' ";
 
@@ -930,6 +931,19 @@
 
         //--start insert user in/out punchig time 
         public static function insertUserInOutTimeOfDay( $userid, $date, $inTime, $outTime, $reason ){
+
+
+            //start -- first get existing time details
+            $previous_entry_time = "";
+            $previous_exit_time = "";
+            $existingDetails = self::getUserDaySummary( $userid, $date );
+            if( isset( $existingDetails['data'] ) ){
+                $previous_entry_time = $existingDetails['data']['entry_time'];
+                $previous_exit_time = $existingDetails['data']['exit_time'];
+            }
+            //end -- first get existing time details
+            
+
             $r_error = 1;
             $r_message = "";
             $r_data = array();
@@ -955,7 +969,21 @@
                 $userInfo_name = $userInfo['name'];
                 $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                $message = "Hey $userInfo_name !!  \n Your timings is updated for date $h_date as below : \n Entry Time - $inTime \n Exit Time - $outTime \n Reason - $reason";
+                $message = "Hey $userInfo_name !!  \n Your timings is updated for date $h_date as below : \n ";
+                if( $previous_entry_time != '' && $previous_entry_time != $inTime ){
+                    $message .= "Entry Time - From $previous_entry_time to $inTime \n ";
+                }else{
+                    $message .= "Entry Time - $inTime \n ";    
+                }
+
+                if( $previous_exit_time != '' && $previous_exit_time != $outTime ){
+                    $message .= "Exit Time - From $previous_exit_time to $outTime \n ";
+                }else{
+                    $message .= "Exit Time - $outTime \n";
+                }
+
+                $message .= "Reason - $reason";
+
                 $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
             }
             
