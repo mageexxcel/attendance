@@ -385,11 +385,19 @@
                 self::DBrunQuery($q);
                 $message = "Success Insert";
             }
+
+
+            $monthYear = array(
+                'month' => date('m', strtotime( $date )),
+                'year' => date('Y', strtotime( $date )),
+            );
+
             $r_error = 0;
             $return = array();
             $r_data = array();
             $return['error'] = $r_error;
             $r_data['message'] = $message;
+            $r_data['monthYear'] = $monthYear;
             $return['data'] = $r_data;
             return $return;
         }
@@ -424,7 +432,7 @@
             $daysOfMonth = self::_addRequiredKeysForADay( $daysOfMonth );
             $holidaysOfMonth = self::getHolidaysOfMonth( $year, $month );
             $weekendsOfMonth = self::getWeekendsOfMonth( $year, $month );
-            $workingHoursOfMonth = self::getWorkingHoursOfMonth( 2016, 07 ); // change thisis arun 
+            $workingHoursOfMonth = self::getWorkingHoursOfMonth( $year, $month ); // change thisis arun 
 
             if( sizeof( $holidaysOfMonth ) > 0 ){
                 foreach( $holidaysOfMonth as $hm_key => $hm ){
