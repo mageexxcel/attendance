@@ -6,9 +6,19 @@ date_default_timezone_set('UTC');
 $de = date("m-Y");
 $current_date = date("Y-m-d");
 $current_month = date("Y-m");
+$cmonth_name = date("F Y");
+$current_day = date('l'); 
+//$current_day = 'Sunday';
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
+$second_sat = date('Y-m-d', strtotime('second sat of '.$cmonth_name));
+//$second_sat = '2016-07-25';
+$fourth_sat = date('Y-m-d', strtotime('fourth sat of '.$cmonth_name));
+//$fourth_sat = '2016-07-25';
+if($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat){
+ echo "Hello";
+}
 
-
+die;
 $qv = "SELECT * from admin";
 $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
 while ($qs = mysqli_fetch_assoc($qw)) {

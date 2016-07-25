@@ -6,7 +6,15 @@ date_default_timezone_set('UTC');
 $de = date("m-Y");
 $current_date = date("Y-m-d");
 $current_month = date("Y-m");
+$cmonth_name = date("F Y");
+$current_day = date('l'); 
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
+$second_sat = date('Y-m-d', strtotime('second sat of '.$cmonth_name));
+$fourth_sat = date('Y-m-d', strtotime('fourth sat of '.$cmonth_name));
+
+
+if($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat){
+
 
 
 $qv = "SELECT * from admin";
@@ -48,6 +56,8 @@ foreach ($array as $k => $v) {
     ksort($v);
     $arr[$k] = $v;
 }
+
+
 
 if (isset($_GET['dailynotify'])) {
     foreach ($arr as $kk => $vv) {
@@ -367,6 +377,10 @@ if (isset($_GET['leave'])) {
 }
 
 //--end applied leave slack message to hr ------------------ 
+
+}
+
+
 //---get channel id of a user---------
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
