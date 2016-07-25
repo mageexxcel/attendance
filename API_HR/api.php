@@ -97,6 +97,8 @@
 			$time = $PARAMS['time'];
 			$res = HR::updateDayWorkingHours( $date, $time );
 		}
+	}else if( $action == "get_holidays_list" ){
+		$res = HR::API_getYearHolidays( );
 	}
 
 

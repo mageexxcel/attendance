@@ -292,6 +292,7 @@
             return $list;
         }
         // get month holidays list
+       
         public static function getHolidaysOfMonth( $year, $month ){
             $q = "SELECT * FROM holidays";
             $runQuery = self::DBrunQuery($q);
@@ -1097,6 +1098,46 @@
                     }    
                 }
             }
+            return $return;
+        }
+
+
+         public static function API_getYearHolidays( $year = false ){  //API
+            if( $year == false ){
+                $year = date('Y', time() );
+            }
+            $q = "SELECT * FROM holidays";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            $list = array();
+
+            if( $year == false ){
+                $list = $rows;
+            }else{
+                foreach( $rows as $pp ){
+                    $h_date = $pp['date'];
+                    $h_year = date('Y',strtotime($h_date));
+                    if( $h_year == $year ){
+                        $list[] = $pp;
+                    }
+                }
+            }
+
+            if( sizeof( $list ) > 0 ){
+                foreach( $list as $key => $v ){
+                    $list[$key]['month'] = date('F', strtotime( $v['date']) );
+                    $list[$key]['dayOfWeek'] = date('l', strtotime( $v['date']) );
+                }
+            }
+
+
+            $r_error = 0;
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = "";
+            $r_data['holidays'] = $list;
+            $return['data'] = $r_data;
+
             return $return;
         }
 
