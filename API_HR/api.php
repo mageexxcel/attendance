@@ -115,6 +115,16 @@
 			$res['error'] = 1;
             $res['data']['message'] = "userid not found";
 		}
+	}else if( $action == 'get_all_leaves' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		// if( $loggedUserInfo['role'] == 'Guest' ){
+		// 	$res['error'] = 1;
+  //           $res['data']['message'] = "You don't have permission to update";
+		// }else{
+			$res = HR::getAllLeaves( );
+		//}
 	}
 
 

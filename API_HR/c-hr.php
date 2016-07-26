@@ -1183,6 +1183,32 @@
 
         }
 
+        public static function getAllLeaves(){     
+            //$q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
+
+            $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where users.status = 'Enabled' order by leaves.id DESC ";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            
+            if( sizeof( $rows ) > 0 ){
+                foreach( $rows as $k => $p ){
+                    //$userInfo = self::getUserInfo( $p['user_Id'] );
+                    //$rows[$k]['user_complete_info'];
+                    unset( $rows[$k]['password']);
+                }
+            }
+
+            $return = array();
+            $r_data = array();
+            $return['error'] = 0;
+            $r_data['message'] = '';
+            $r_data['leaves'] = $rows;
+            $return['data'] = $r_data;
+
+            return $return;
+            
+        }
+
 
     }
 
