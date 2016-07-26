@@ -93,7 +93,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
                 echo $newmsg;
-                  send_slack_message($c_id, $token, $newmsg);
+                send_slack_message($c_id, $token, $newmsg);
             }
         }
 
@@ -114,17 +114,15 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
                 if ($join_date == $one_month) {
                     $msg = $name . " has completed one month as per date " . date("d-m-Y", strtotime(str_replace("-", "/", $join_date))) . "\n";
-                   $newmes = $newmes . " " . $msg;
-                    
+                    $newmes = $newmes . " " . $msg;
                 } if ($join_date == $two_month) {
 
                     $msg = $name . " has completed two month as per date " . date("d-m-Y", strtotime(str_replace("-", "/", $join_date))) . "\n";
                     $newmes = $newmes . " " . $msg;
                 }
-                
             }
             $aa = getslacklist($fresult, $cid_array);
-            
+
             if (sizeof($aa) > 0) {
                 foreach ($aa as $av) {
                     if ($one_week == $av['date']) {
@@ -135,7 +133,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
 
             echo $newmes;
-               send_slack_message($c_id = 'hr', $token, $newmes);
+            send_slack_message($c_id = 'hr', $token, $newmes);
         }
         //--end get one or two month employee completed slack message on hr channel-----
     }
@@ -506,7 +504,7 @@ function getCURL($url, $data = false) {
 
 function getWorkingHours($data, $link) {
 
-    $result = 0;
+    $result = "09:00";
     $qry = "select * from working_hours where date='$data'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {

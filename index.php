@@ -268,11 +268,20 @@ while ($qs = mysqli_fetch_assoc($qw)) {
                           $aa = $bb = 0;
                          }
                         if($bb == $aa && $bb != 0){
+                            $q = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
                             
-                          $msg = $msg . "You didn't put in your exit time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";
-                           $q = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
+                                 if(strtotime($bb) <= strtotime("04:30 PM")){
+                                     $msg = $msg . "You didn't put in your exit time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";
+                                     $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '0','$pdate')";
+                                 }
+                                 else{
+                                   $msg = $msg . "You didn't put in your entry time on ".$pdate.", Please contact HR immediately or this day will be considered as a leave.\n";
+                                   $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '0', $bb,'$pdate')";
+                                 }
+                          
+                           
                             if (mysqli_num_rows($q) <= 0) {
-                                $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '0','$pdate')";
+                                
                              
                                 mysqli_query($link, $ins2) or die(mysqli_error($link));
                             }   
