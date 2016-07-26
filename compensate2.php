@@ -250,10 +250,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
                 if ($to_compensate <= 0) {
                     $to_compensate = 0;
+                     $rep = array();
                 }
             }
             // print_r($rep);
-            echo "<hr>";
+           // echo "<hr>";
             if ($to_compensate > 10) {
                 // echo $to_compensate;
                 // echo "<br>";

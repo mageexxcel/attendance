@@ -215,7 +215,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 //    echo "<pre>";
 //    print_r($arr2);
 //    echo "<br>";
-//    die;
+   // die;
 
         foreach ($arr2 as $key => $value) {
             $pending = $value['ptime'];
@@ -251,11 +251,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
                 if ($to_compensate <= 0) {
                     $to_compensate = 0;
+                    $rep = array();
                 }
             }
-            // print_r($rep);
-            echo "<hr>";
-            if ($to_compensate > 10) {
+//             print_r($rep);
+//            echo "<hr>";
+           // die;
+            if ($to_compensate >= 10) {
                 // echo $to_compensate;
                 // echo "<br>";
                 $msg = "";
@@ -276,7 +278,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
                                 $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Compensated: " . $r['cc'] . " minutes \n";
                             } else {
-                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Pending: " . $r['pp'] . " minutes \n";
+                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Extra: " . $r['pp'] . " minutes \n";
                             }
                         }
 
@@ -331,7 +333,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
 
                         //   send_slack_message($c_id, $token, $msg2);
-                        echo $msg2;
+                      //  echo $msg2;
                         echo "<br>";
                     }
                 }
@@ -404,7 +406,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $update_msg = $update_msg . " profile picture ";
                 }
                 $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
-               // echo $update_msg . "<hr>";
+                echo $update_msg . "<hr>";
                // send_slack_message($c_id, $token, $update_msg, $hr3);
             }
         }
