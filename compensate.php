@@ -31,7 +31,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
     $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
     $fresult = getCURL($url2);
 
-    $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
+    $query = "SELECT hr_testdata.*,users.status FROM hr_testdata LEFT JOIN users ON hr_testdata.user_id = users.id where users.status='Enabled' AND hr_testdata.date LIKE '%$de%'";
     $array = array();
     $w = mysqli_query($link, $query) or die(mysqli_error($link));
     while ($s = mysqli_fetch_assoc($w)) {
@@ -53,7 +53,9 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         ksort($v);
         $arr[$k] = $v;
     }
-
+//echo "<pre>";
+//print_r($arr);
+//die;
     if (isset($_GET['dailynotify'])) {
         foreach ($arr as $kk => $vv) {
 
@@ -331,7 +333,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
 
                         //  send_slack_message($c_id, $token, $msg2);
-                        echo $msg2;
+                      //  echo $msg2;
                         echo "<br>";
                     }
                 }
@@ -505,7 +507,7 @@ function getCURL($url, $data = false) {
 
 function getWorkingHours($data, $link) {
 
-    $result = 0;
+    $result = "09:00";
     $qry = "select * from working_hours where date='$data'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
