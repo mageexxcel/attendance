@@ -384,9 +384,37 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         }
 
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
+        
+                //--end applied leave slack message to hr ------------------ 
+//----update profile pic mad phone no. slack message-----    
+
+        foreach ($fresult['members'] as $vol) {
+            $update_msg = "";
+            if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
+//          $fr[] = $vol; 
+                $f = $vol['id'];
+                $update_msg = "Hi " . $vol['name'] . "\n You have not added your";
+                if ($vol['profile']['phone'] == "") {
+                    $update_msg = $update_msg . " phone number ";
+                }
+                if (!array_key_exists("image_original", $vol['profile'])) {
+                    if (strpos($update_msg, 'phone') !== false) {
+                        $update_msg = $update_msg . ",";
+                    }
+                    $update_msg = $update_msg . " profile picture ";
+                }
+                $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
+                $c_id = get_channel_id($f, $cid_array);
+                //echo $c_id."--".$update_msg . "<hr>";
+                
+                send_slack_message($c_id, $token, $update_msg, $hr3);
+            }
+        }
+
+//---end update profile pic and phone no. slack message--- 
+        
     }
 
-//--end applied leave slack message to hr ------------------ 
 }
 
 //---get channel id of a user---------
