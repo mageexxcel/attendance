@@ -1,6 +1,6 @@
 <?php
-	error_reporting(0);
-	ini_set('display_errors', 0);
+	//error_reporting(0);
+	//ini_set('display_errors', 0);
 
 	header("Access-Control-Allow-Origin: *");
 	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -99,6 +99,22 @@
 		}
 	}else if( $action == "get_holidays_list" ){
 		$res = HR::API_getYearHolidays( );
+	}else if( $action == "apply_leave" ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		if( isset($loggedUserInfo['id']) ){
+			$userid = $loggedUserInfo['id'];
+
+			$from_date = $PARAMS['from_date'];
+			$to_date = $PARAMS['to_date'];
+			$no_of_days = $PARAMS['no_of_days'];
+			$reason = $PARAMS['reason'];
+
+			$res = HR::applyLeave( $userid, $from_date, $to_date, $no_of_days, $reason );
+		}else{
+			$res['error'] = 1;
+            $res['data']['message'] = "userid not found";
+		}
 	}
 
 

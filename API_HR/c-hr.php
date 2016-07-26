@@ -1141,6 +1141,48 @@
             return $return;
         }
 
+        public static function applyLeave( $userid, $from_date, $to_date, $no_of_days, $reason ){
+            //date format = Y-m-d
+            $applied_date = date('Y-m-d');
+            $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on  ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date' )";
+            
+            $r_error = 0;
+            $r_message = "";
+
+            try{
+                self::DBrunQuery($q);
+                $success = true;
+                $r_message = "Leave applied.";
+            }catch( Exception $e ){
+                $r_error = 1;
+                $r_message = "Error in applying leave.";
+            }
+
+            if( $r_error == 0 ){
+                ////send  slack message to user && HR
+                $userInfo = self::getUserInfo( $userid );
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+            
+                //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+                //$slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
+            }else{
+
+            }
+            
+            $return = array();
+            $r_data = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
+
+        }
+
 
     }
 
