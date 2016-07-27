@@ -1191,6 +1191,30 @@
             return $rows;
         }
 
+        public static function getMyLeaves( $userid ){ //api call
+            $userLeaves = self::getUsersLeaves( $userid );
+
+            if( sizeof( $userLeaves) > 0 ){
+                foreach( $userLeaves as $k => $v ){
+                    $userLeaves[$k]['from_date'] = date('d-F-Y', strtotime( $v['from_date']) );
+                    $userLeaves[$k]['to_date'] = date('d-F-Y', strtotime( $v['to_date']) );
+                    $userLeaves[$k]['applied_on'] = date('d-F-Y', strtotime( $v['applied_on']) );
+                }
+
+            }
+
+            $return = array();
+            $r_data = array();
+            $return['error'] = 0;
+            $r_data['message'] = '';
+            $r_data['leaves'] = $userLeaves;
+            $return['data'] = $r_data;
+
+            return $return;
+
+
+        }
+
         public static function getAllLeaves(){     //api call
             //$q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
 

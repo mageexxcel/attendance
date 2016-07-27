@@ -131,6 +131,16 @@
 			$newstatus = $PARAMS['newstatus'];
 			$res = HR::updateLeaveStatus( $leaveid, $newstatus );
 		}
+	}else if( $action == "get_my_leaves" ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		if( isset($loggedUserInfo['id']) ){
+			$userid = $loggedUserInfo['id'];
+			$res = HR::getMyLeaves( $userid );
+		}else{
+			$res['error'] = 1;
+            $res['data']['message'] = "userid not found";
+		}
 	}
 
 
