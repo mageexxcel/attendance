@@ -179,7 +179,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         if (strtotime($te) < strtotime($half_time)) {
                             $ed1 = strtotime($half_time) - strtotime($te);
                             $te1 = $ed1 / 60;
-                            if ($te1 > 0) {
+                            if ($te1 >= 5) {
                                 $vv['ptime'][] = $te1;
                                 $vv['ctime'][] = 0;
                                 $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
@@ -190,16 +190,20 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
                             $ed1 = strtotime($working_hour) - strtotime($te);
                             $te1 = $ed1 / 60;
+                            if($te1 >= 5 ){
                             $vv['ptime'][] = $te1;
                             $vv['ctime'][] = 0;
                             $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            }
                         }
                         if (strtotime($te) > strtotime($working_hour)) {
                             $ed1 = strtotime($te) - strtotime($working_hour);
                             $te1 = $ed1 / 60;
+                            if($te1 >= 5 ){
                             $vv['ctime'][] = $te1;
                             $vv['ptime'][] = 0;
-                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];  
+                            }
                         }
                     }
                 }
@@ -255,7 +259,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             // print_r($rep);
            // echo "<hr>";
-            if ($to_compensate > 10) {
+            if ($to_compensate >= 10) {
                 // echo $to_compensate;
                 // echo "<br>";
                 $msg = "";
@@ -276,10 +280,10 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
                                 $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Compensated: " . $r['cc'] . " minutes \n";
                             } else {
-                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Pending: " . $r['pp'] . " minutes \n";
+                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Extra: " . $r['pp'] . " minutes \n";
                             }
                         }
-
+                        $msg = $msg . "Incase of issues, contact HR ";
                         send_slack_message($c_id = 'hr', $token, $msg);
                         echo $msg;
                         echo "<br>";
