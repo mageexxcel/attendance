@@ -306,6 +306,7 @@
                     $h_full_date = date( "Y-m-d", strtotime( $h_date ) );
                     $h_date = date( "d", strtotime( $h_date ) );
                     $pp['date'] = $h_date;
+                    $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
                     $list[$h_date] = $pp;
                 }
             }
@@ -1354,6 +1355,116 @@
 
             return $return;
             
+        }
+
+        public static function getDaysBetweenLeaves( $startDate, $endDate ){ // api calls
+            $allDates = self::_getDatesBetweenTwoDates( $startDate, $endDate );
+
+            //extract year and month of b/w dates
+            $yearMonth = array();
+
+            foreach( $allDates as $d ){
+                $m = date('m', strtotime( $d ));
+                $y = date('Y', strtotime( $d ));
+                $check_key  = $y.'_'.$m;
+                if( !array_key_exists($check_key, $yearMonth) ){
+                    $row = array(
+                        'year' => $y,
+                        'month' => $m,
+                    );    
+                    $yearMonth[$check_key] = $row;
+                }
+            }
+            //--all holidays between dates
+            $ALL_HOLIDAYS = array();
+            $ALL_WEEKENDS = array();
+
+            foreach( $yearMonth as $v ){
+                $my_holidays = self::getHolidaysOfMonth( $v['year'], $v['month'] );
+                $my_weekends = self::getWeekendsOfMonth( $v['year'], $v['month'] );
+
+                $ALL_HOLIDAYS = array_merge( $ALL_HOLIDAYS, $my_holidays );
+                $ALL_WEEKENDS = array_merge( $ALL_WEEKENDS, $my_weekends );
+            }
+            $finalDates = array();
+            foreach( $allDates as $ad ){
+                $row = array(
+                    'type' => 'working',
+                    'sub_type' => '',
+                    'sub_sub_type' => '',
+                    'full_date' => $ad
+                );
+                $finalDates[] = $row;
+            }
+
+            if( sizeof( $finalDates) > 0 && sizeof( $ALL_WEEKENDS) > 0 ){
+                foreach( $finalDates as $key => $ad ){
+                    foreach( $ALL_WEEKENDS as $aw ){
+                        if( $ad['full_date'] == $aw['full_date'] ){
+                            $row = array(
+                                'type' => 'non_working',
+                                'sub_type' => 'weekend',
+                                'sub_sub_type' => '',
+                                'date' => $ad['full_date']
+                            );
+                            $finalDates[$key] = $row;
+                            break;
+                        }
+                    }
+                }
+            }
+            if( sizeof( $finalDates) > 0 && sizeof( $ALL_HOLIDAYS) > 0 ){
+                foreach( $finalDates as $key => $ad ){
+                    foreach( $ALL_HOLIDAYS as $aw ){
+                        if( $ad['full_date'] == $aw['full_date'] ){
+                            $row = array(
+                                'type' => 'non_working',
+                                'sub_type' => 'holiday',
+                                'sub_sub_type' => $aw['name'],
+                                'date' => $ad['full_date']
+                            );
+                            $finalDates[$key] = $row;
+                            break;
+                        }
+                        
+                    }
+                }
+            }
+
+            //-----------------
+            $res_working_days = 0;
+            $res_holidays = 0;
+            $res_weekends = 0;
+
+            foreach( $finalDates as $f ){
+                if( $f['type'] == 'working' ){
+                    $res_working_days++; 
+                }else if( $f['type'] == 'non_working' ){
+                    if( $f['sub_type'] == 'holiday' ){
+                        $res_holidays++;
+                    }else if( $f['sub_type'] == 'weekend' ){
+                        $res_weekends++;
+                    }
+                }
+            }
+
+            $r_data = array();
+            $r_data['start_date'] = $startDate;
+            $r_data['end_date'] = $endDate;
+            $r_data['working_days'] = $res_working_days;
+            $r_data['holidays'] = $res_holidays;
+            $r_data['weekends'] = $res_weekends;
+            $r_data['days'] = $finalDates;
+
+
+            $return = array();
+            $return['error'] = 0;
+            $r_data['message'] = '';
+            $return['data'] = $r_data;
+
+            return $return;
+            
+
         }
 
 

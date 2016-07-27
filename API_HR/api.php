@@ -141,6 +141,10 @@
 			$res['error'] = 1;
             $res['data']['message'] = "userid not found";
 		}
+	}else if( $action == "get_days_between_leaves" ){
+		$start_date = $PARAMS['start_date'];
+		$end_date = $PARAMS['end_date'];
+        $res = HR::getDaysBetweenLeaves( $start_date, $end_date );
 	}
 
 
