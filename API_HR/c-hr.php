@@ -1183,26 +1183,89 @@
 
         }
 
-        public static function getAllLeaves(){      //api call
+        public static function getUsersLeaves( $userid ){
+            $list = array();
+            $q = "SELECT * FROM leaves Where user_Id = $userid order by id DESC";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            return $rows;
+        }
+
+        public static function getAllLeaves(){     //api call
             //$q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
 
             $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where users.status = 'Enabled' order by leaves.id DESC ";
             $runQuery = self::DBrunQuery($q);
             $rows = self::DBfetchRows($runQuery);
+
+            $pendingLeaves = array();
             
             if( sizeof( $rows ) > 0 ){
                 foreach( $rows as $k => $p ){
+                    $p_id = $p['id'];
                     //$userInfo = self::getUserInfo( $p['user_Id'] );
                     //$rows[$k]['user_complete_info'];
                     unset( $rows[$k]['password']);
+                     
+                        ///
+                     if( trim(strtolower($p['status'])) == 'pending' ){
+
+                        $lastLeaves = self::getUsersLeaves( $p['user_Id'] );
+                         if( sizeof( $lastLeaves) > 0 ){
+                            foreach( $lastLeaves as $lk => $lp ){
+                                if( $lp['id'] == $p_id ){
+                                    unset( $lastLeaves[$lk]);
+                                }
+                            }
+                            $lastLeaves = array_slice($lastLeaves, 0, 5 );
+                            $p['last_applied_leaves'] = $lastLeaves;
+                         }
+
+                        $pendingLeaves[] = $p;
+                        unset( $rows[$k] );
+                     }else{
+                        $row[$k]['last_applied_leaves'] = array();
+                     }
+                     
+                }
+            }
+            $newRows = $rows;
+
+            if( sizeof( $pendingLeaves > 0 )){
+                $newRows = array_merge( $pendingLeaves, $rows );
+            }
+
+            // date view change
+            if( sizeof( $newRows) > 0 ){
+                foreach( $newRows as $k => $v ){
+                    $newRows[$k]['from_date'] = date('d-F', strtotime( $v['from_date']) );
+                    $newRows[$k]['to_date'] = date('d-F', strtotime( $v['to_date']) );
+                    $newRows[$k]['applied_on'] = date('d-F-Y', strtotime( $v['applied_on']) );
                 }
             }
 
+
+            //----
+            if( sizeof($newRows) > 0 ){
+                $enabledUsersList = self::getEnabledUsersList();
+                foreach( $newRows as $k => $p ) {
+                    $p_userid = $p['user_Id'];
+                    foreach( $enabledUsersList as $ev ){
+                        if( $p_userid == $ev['user_Id'] ){
+                            $newRows[$k]['user_profile_name'] = $ev['name'];
+                            $newRows[$k]['user_profile_jobtitle'] = $ev['jobtitle'];
+                            $newRows[$k]['user_profile_image'] = $ev['slack_profile']['image_192'];
+                            break;
+                        }
+                    }
+                }
+            }
+            
             $return = array();
             $r_data = array();
             $return['error'] = 0;
             $r_data['message'] = '';
-            $r_data['leaves'] = $rows;
+            $r_data['leaves'] = $newRows;
             $return['data'] = $r_data;
 
             return $return;
