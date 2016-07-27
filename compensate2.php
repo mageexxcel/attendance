@@ -265,10 +265,10 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 $msg = "";
                 foreach ($fresult['members'] as $foo) {
                     if ($key == $foo['profile']['email'] && $key != "") {
-                        //$f = $foo['id'];
-                        $f = "U0FJZ0KDM";
+                        $f = $foo['id'];
+                        //$f = "U0FJZ0KDM";
                         //  $rname = $foo['real_name'];
-                        // $c_id = get_channel_id($f, $cid_array);
+                         $c_id = get_channel_id($f, $cid_array);
 
                         $r = date('H:i', mktime(0, $to_compensate));
                         //  echo $key."----".$f."-----".$c_id;
@@ -280,11 +280,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
                                 $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Compensated: " . $r['cc'] . " minutes \n";
                             } else {
-                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Extra: " . $r['pp'] . " minutes \n";
+                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Less: " . $r['pp'] . " minutes \n";
                             }
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
                         send_slack_message($c_id = 'hr', $token, $msg);
+                        send_slack_message($c_id, $token, $msg);
                         echo $msg;
                         echo "<br>";
                     }
