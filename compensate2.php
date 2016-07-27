@@ -284,8 +284,9 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                             }
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
-                        send_slack_message($c_id = 'hr', $token, $msg);
                         send_slack_message($c_id, $token, $msg);
+                        send_slack_message($c_id = 'hr', $token, $msg);
+                        
                         echo $msg;
                         echo "<br>";
                     }
