@@ -118,13 +118,19 @@
 	}else if( $action == 'get_all_leaves' ){
 		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
 		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		$res = HR::getAllLeaves( );
+	}else if( $action == 'change_leave_status' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 		//check for guest so that he can't update
-		// if( $loggedUserInfo['role'] == 'Guest' ){
-		// 	$res['error'] = 1;
-  //           $res['data']['message'] = "You don't have permission to update";
-		// }else{
-			$res = HR::getAllLeaves( );
-		//}
+		if( $loggedUserInfo['role'] == 'Guest' ){
+		 	$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission to update";
+		}else{
+			$leaveid = $PARAMS['leaveid'];
+			$newstatus = $PARAMS['newstatus'];
+			$res = HR::updateLeaveStatus( $leaveid, $newstatus );
+		}
 	}
 
 

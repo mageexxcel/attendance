@@ -1167,8 +1167,8 @@
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
             
-                //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
-                //$slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
+                $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+                $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
             }else{
 
             }
@@ -1183,7 +1183,7 @@
 
         }
 
-        public static function getAllLeaves(){     
+        public static function getAllLeaves(){      //api call
             //$q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
 
             $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where users.status = 'Enabled' order by leaves.id DESC ";
@@ -1203,6 +1203,66 @@
             $return['error'] = 0;
             $r_data['message'] = '';
             $r_data['leaves'] = $rows;
+            $return['data'] = $r_data;
+
+            return $return;
+            
+        }
+
+        public static function getLeaveDetails( $leaveid ){
+            $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where leaves.id = $leaveid ";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            return $row;
+        }
+
+        public static function changeLeaveStatus( $leaveid, $newstatus  ){
+            $q = "UPDATE leaves set status='$newstatus' WHERE id = $leaveid ";
+            self::DBrunQuery($q);
+            return true;
+        }
+
+
+        public static function updateLeaveStatus( $leaveid, $newstatus ){ //api call
+            $leaveDetails = self::getLeaveDetails( $leaveid );
+
+            $r_error = 0;
+            $r_message = "";
+
+            if( is_array($leaveDetails) ){
+                $old_status = $leaveDetails['status'];   
+
+                $from_date = $leaveDetails['from_date'];
+                $to_date = $leaveDetails['to_date'];
+                $no_of_days = $leaveDetails['no_of_days'];
+                $applied_on = $leaveDetails['applied_on'];
+                $reason = $leaveDetails['reason'];
+
+                self::changeLeaveStatus( $leaveid, $newstatus );
+
+                $userInfo = self::getUserInfo( $leaveDetails['user_Id'] );
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your leave has been $newstatus. \n \n Leave Details : \n";
+                $message_to_user .= " From : $from_date \n To : $to_date \n No. of days : $no_of_days \n Applied On : $applied_on \n Reason : $reason";
+
+                $message_to_hr = "Hi HR !!  \n  $userInfo_name leave has been $newstatus. \n \n Leave Details : \n";
+                $message_to_hr .= " From : $from_date \n To : $to_date \n No. of days : $no_of_days \n Applied On : $applied_on \n Reason : $reason";
+
+                $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+                $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
+
+                $r_message = "Leave status changes from $old_status to $newstatus";
+            }else{
+                $r_message = "No such leave found";
+                $r_error = 1;
+            }
+
+            $return = array();
+            $r_data = array();
+            $return['error'] = 0;
+            $r_data['message'] = $r_message;
             $return['data'] = $r_data;
 
             return $return;
