@@ -4,14 +4,14 @@ require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
 $de = date("m-d-Y");
-$userid = '370';
+$userid = '390';
 $year = "2016";
 $month = "07";
-$e = "hr@excellencetechnologies.in";
+$e = "sushama@excellencetechnologies.in";
 $list = array();
 $q = "SELECT * FROM attendance Where user_id = $userid";
 $runQuery = mysqli_query($link, $q) or die();
-//$rows = self::DBfetchRows($runQuery);
+$rows = array();
 while ($r = mysqli_fetch_assoc($runQuery)) {
     $rows[] = $r;
 }
