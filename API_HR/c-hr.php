@@ -1242,6 +1242,13 @@
                                     unset( $lastLeaves[$lk]);
                                 }
                             }
+                            if( sizeof( $lastLeaves) > 0 ){
+                                foreach( $lastLeaves as $kl => $ll ){
+                                    $lastLeaves[$kl]['from_date'] = date('d-F-Y', strtotime( $ll['from_date']) );
+                                    $lastLeaves[$kl]['to_date'] = date('d-F-Y', strtotime( $ll['to_date']) );
+                                    $lastLeaves[$kl]['applied_on'] = date('d-F-Y', strtotime( $ll['applied_on']) );
+                                }
+                            }
                             $lastLeaves = array_slice($lastLeaves, 0, 5 );
                             $p['last_applied_leaves'] = $lastLeaves;
                          }
