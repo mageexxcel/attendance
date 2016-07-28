@@ -1311,7 +1311,7 @@
         }
 
 
-        public static function updateLeaveStatus( $leaveid, $newstatus ){ //api call
+        public static function updateLeaveStatus( $leaveid, $newstatus, $messagetouser ){ //api call
             $leaveDetails = self::getLeaveDetails( $leaveid );
 
             $r_error = 0;
@@ -1337,6 +1337,11 @@
 
                 $message_to_hr = "Hi HR !!  \n  $userInfo_name leave has been $newstatus. \n \n Leave Details : \n";
                 $message_to_hr .= " From : $from_date \n To : $to_date \n No. of days : $no_of_days \n Applied On : $applied_on \n Reason : $reason";
+
+                if( $messagetouser != '' ){
+                    $message_to_user .= "\n Message from Admin : $messagetouser";
+                    $message_to_hr .= "\n Message from Admin : $messagetouser";
+                }
 
                 $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
                 $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );

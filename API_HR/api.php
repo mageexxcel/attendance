@@ -129,7 +129,8 @@
 		}else{
 			$leaveid = $PARAMS['leaveid'];
 			$newstatus = $PARAMS['newstatus'];
-			$res = HR::updateLeaveStatus( $leaveid, $newstatus );
+			$messagetouser = $PARAMS['messagetouser'];
+			$res = HR::updateLeaveStatus( $leaveid, $newstatus, $messagetouser );
 		}
 	}else if( $action == "get_my_leaves" ){
 		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
