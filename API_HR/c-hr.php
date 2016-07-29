@@ -1478,6 +1478,53 @@
             
 
         }
+        ////
+
+        public static function getUserMangedHours( $userid ){
+            $q = "SELECT * FROM user_working_hours WHERE user_Id = $userid order by id DESC";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            return $rows;
+        }
+
+        public static function geManagedUserWorkingHours( $userid ){ // api call
+            $allWorkingHours = self::getUserMangedHours( $userid );
+
+            $finalData = array();
+            if( is_array($allWorkingHours) && sizeof( $allWorkingHours) > 0 ){
+                $finalData = $allWorkingHours;
+            }
+            
+            $return = array();
+            $return['error'] = 0;
+            $r_data = array();
+            $r_data['message'] = '';
+            $r_data['list'] = $finalData;
+            $userInfo = self::getUserInfo( $userid );
+            unset( $userInfo['password']);
+            $r_data['userInfo'] = $userInfo; 
+            $return['data'] = $r_data;
+
+            return $return;
+
+        }
+
+        public static function insertUserWorkingHours( $userid, $date, $working_hours, $reason ){ //api call
+            $q = "INSERT INTO user_working_hours ( user_Id, `date`, working_hours, reason ) VALUES ( $userid, '$date', '$working_hours', '$reason') ";
+            self::DBrunQuery($q);
+            return true;
+        }
+ 
+        public static function addUserWorkingHours( $userid, $date, $working_hours, $reason ){ //api call
+            $insert = self::insertUserWorkingHours( $userid, $date, $working_hours, $reason ) ;
+
+            $return = array();
+            $return['error'] = 0;
+            $r_data['message'] = 'Success';
+            $return['data'] = array();
+
+            return $return;
+        }
 
 
     }
