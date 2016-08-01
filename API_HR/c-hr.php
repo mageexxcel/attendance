@@ -1518,6 +1518,21 @@
         public static function addUserWorkingHours( $userid, $date, $working_hours, $reason ){ //api call
             $insert = self::insertUserWorkingHours( $userid, $date, $working_hours, $reason ) ;
 
+            $userInfo = self::getUserInfo( $userid );
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            $beautyDate = date('d-M-Y', strtotime($date) );
+
+            $message_to_user = "Hi $userInfo_name !!  \n Your working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
+
+            echo $message_to_user.'<br>';
+            echo $message_to_hr.'<br>';
+
+            $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+            $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
+
             $r_data = array();
             $return = array();
             $return['error'] = 0;
