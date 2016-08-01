@@ -1543,6 +1543,90 @@
         }
 
 
+
+        public static function getAllUsersPendingLeavesSummary( $year, $month ){ // api call
+
+            $r_error = 1;
+            $r_message = "";
+            $r_data = array();
+
+            $usersAttendance = array();
+
+            $enabledUsersList = self::getEnabledUsersList();
+            foreach( $enabledUsersList as $u ){
+                $userid = $u['user_Id'];
+                $username = $u['username'];
+                if( $username == 'admin' || $userid == '' || $username == '' ){
+                    continue;
+                }
+
+                // if( $userid != 313 && $userid != 288 && $userid != 343 ){
+                //     continue;
+                // }
+                
+                $user_month_attendance = self::getUserMonthAttendaceComplete( $userid, $year, $month );
+
+                $user_month_attendance = $user_month_attendance['data'];
+
+                //---final leaves and missing punching days 
+                $raw = $user_month_attendance['attendance'];
+                $finalAttendance = array();
+                foreach( $raw as $pp ){
+                    $pp['display_date'] = date('d-M-Y', strtotime($pp['full_date']));
+                    if( $pp['day_type'] == 'WORKING_DAY' ){
+                        if( $pp['in_time'] == '' || $pp['out_time'] == '' ){
+                            $finalAttendance[] = $pp;    
+                        }
+                    }else if( $pp['day_type'] == 'LEAVE_DAY' || $pp['day_type'] == 'HALF_DAY' ){
+                        $finalAttendance[] = $pp;
+                    }
+                }
+
+                //---final leaves and missing punching days 
+
+                if( sizeof($finalAttendance) > 0 ){
+
+                    $u_data = array();
+                    $u_data['name'] = $u['name'];
+                    $u_data['profileImage'] = '';
+                    $u_data['jobtitle'] = $u['jobtitle'];
+                    $u_data['userid'] = $userid;
+                    $u_data['year'] = $user_month_attendance['year'];
+                    $u_data['month'] = $user_month_attendance['month'];
+                    $u_data['monthName'] = $user_month_attendance['monthName'];
+                    $u_data['monthSummary'] = $user_month_attendance['monthSummary'];
+                    $u_data['nextMonth'] = $user_month_attendance['nextMonth'];
+                    $u_data['previousMonth'] = $user_month_attendance['previousMonth'];
+                    $u_data['attendance'] = $finalAttendance;
+                    $usersAttendance[] = $u_data;
+                }
+
+
+            }
+            //----------
+            $nextMonth = self::_getNextMonth( $year, $month );
+            $previousMonth = self::_getPreviousMonth( $year, $month );
+            $currentMonth = self::_getCurrentMonth( $year, $month );
+            //----------
+
+            $r_data['year'] = $year;
+            $r_data['month'] = $month;
+            $r_data['monthName'] = $currentMonth['monthName'];
+            $r_data['nextMonth'] = $nextMonth;
+            $r_data['previousMonth'] = $previousMonth;
+            $r_data['leavesSummary'] = $usersAttendance;
+
+            $r_error = 0;
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
+
+        }
+
+
     }
 
     new HR();

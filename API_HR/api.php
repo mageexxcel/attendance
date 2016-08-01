@@ -1,6 +1,6 @@
 <?php
-	//error_reporting(0);
-	//ini_set('display_errors', 0);
+	error_reporting(0);
+	ini_set('display_errors', 0);
 
 	header("Access-Control-Allow-Origin: *");
 	if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -163,6 +163,10 @@
 			$reason = $PARAMS['reason'];
 			$res = HR::addUserWorkingHours( $userid, $date, $working_hours, $reason );
 		}
+	}else if( $action == "get_all_leaves_summary" ){
+		$year = $PARAMS['year'];
+		$month = $PARAMS['month'];
+		$res = HR::getAllUsersPendingLeavesSummary( $year, $month );
 	}
 
 
