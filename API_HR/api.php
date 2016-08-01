@@ -153,16 +153,16 @@
 		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
 		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 		//check for guest so that he can't update
-		// if( $loggedUserInfo['role'] == 'Guest' ){
-		// 	$res['error'] = 1;
-  //           $res['data']['message'] = "You don't have permission to update";
-		// }else{
+		if( $loggedUserInfo['role'] == 'Guest' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission to update";
+		}else{
 			$userid = $PARAMS['userid'];
 			$date = $PARAMS['date'];
 			$working_hours = $PARAMS['working_hours'];
 			$reason = $PARAMS['reason'];
 			$res = HR::addUserWorkingHours( $userid, $date, $working_hours, $reason );
-		//}
+		}
 	}
 
 

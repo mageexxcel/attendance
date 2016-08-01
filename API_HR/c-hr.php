@@ -1518,10 +1518,11 @@
         public static function addUserWorkingHours( $userid, $date, $working_hours, $reason ){ //api call
             $insert = self::insertUserWorkingHours( $userid, $date, $working_hours, $reason ) ;
 
+            $r_data = array();
             $return = array();
             $return['error'] = 0;
-            $r_data['message'] = 'Success';
-            $return['data'] = array();
+            $r_data['message'] = 'Successfully added';
+            $return['data'] = $r_data;
 
             return $return;
         }
