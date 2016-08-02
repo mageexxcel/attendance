@@ -56,7 +56,9 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         ksort($v);
         $arr[$k] = $v;
     }
-
+//echo "<pre>";
+//print_r($arr);
+//die;
 
 
     if (isset($_GET['dailynotify'])) {
@@ -171,12 +173,19 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
                     $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
                     $te = date("h:i", $ed);
+                    $user_id = $f['user_id'];
                     $cdate = date('Y-m-d', strtotime($f['date']));
                     $working_hour = getWorkingHours($cdate, $link);
                     $half_time = date("h:i", strtotime($working_hour) / 2 + 3600);
 
                     if ($working_hour != 0) {
-
+                        
+                    $user_working_hour = getUserWorkingHours($user_id, $cdate, $link);
+                          if($user_working_hour != 0){
+                            $working_hour = $user_working_hour;  
+                            echo $user_id."-".$cdate."-".$working_hour;
+                            }
+                          
                         if (strtotime($te) < strtotime($half_time)) {
                             $ed1 = strtotime($half_time) - strtotime($te);
                             $te1 = $ed1 / 60;
@@ -194,16 +203,17 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                             if($te1 >= 5 ){
                             $vv['ptime'][] = $te1;
                             $vv['ctime'][] = 0;
-                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'].",".$working_hour;
                             }
                         }
                         if (strtotime($te) > strtotime($working_hour)) {
+                           // echo $te."--".$working_hour."<br>";
                             $ed1 = strtotime($te) - strtotime($working_hour);
                             $te1 = $ed1 / 60;
                             if($te1 >= 5 ){
                               $vv['ctime'][] = $te1;
                             $vv['ptime'][] = 0;
-                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];  
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'].",".$working_hour;
                             }
                             
                         }
@@ -549,8 +559,7 @@ function getWorkingHours($data, $link) {
 }
 
 function getslacklist($array1, $array2) {
-    echo "<pre>";
-    // print_r($array1);
+   
     $result = array();
     if (sizeof($array1 > 0)) {
         foreach ($array1['members'] as $foo) {
@@ -567,3 +576,18 @@ function getslacklist($array1, $array2) {
     }
     return $result;
 }
+
+ function getUserWorkingHours($uid, $date, $link){
+    
+     $result = 0 ;
+    $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
+
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    if (mysqli_num_rows($resl) > 0) {
+        while ($row = mysqli_fetch_assoc($resl)) {
+            $result = $row['working_hours'];
+        }
+    }
+
+    return $result;
+ }
