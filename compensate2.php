@@ -33,7 +33,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
     $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
     $fresult = getCURL($url2);
 
-    $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
+    $query = "SELECT hr_testdata.*,users.status FROM hr_testdata LEFT JOIN users ON hr_testdata.user_id = users.id where users.status='Enabled' AND hr_testdata.date LIKE '%$de%'";
     $array = array();
     $w = mysqli_query($link, $query) or die(mysqli_error($link));
     while ($s = mysqli_fetch_assoc($w)) {
@@ -93,7 +93,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
                 echo $newmsg;
-                send_slack_message($c_id, $token, $newmsg);
+             //   send_slack_message($c_id, $token, $newmsg);
             }
         }
 
@@ -131,9 +131,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     }
                 }
             }
-
-            echo $newmes;
-            send_slack_message($c_id = 'hr', $token, $newmes);
+            if ($newmes != "") {
+                 echo $newmes;
+                //send_slack_message($c_id = 'hr', $token, $newmes);
+            }
+           
+            
         }
         //--end get one or two month employee completed slack message on hr channel-----
     }
@@ -175,7 +178,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $half_time = date("h:i", strtotime($working_hour) / 2 + 3600);
 
                     if ($working_hour != 0) {
-
+                          $user_working_hour = getUserWorkingHours($user_id, $cdate, $link);
+                          if($user_working_hour != 0){
+                            $working_hour = $user_working_hour;  
+//                            echo $user_id."-".$cdate."-".$working_hour;
+                            }
                         if (strtotime($te) < strtotime($half_time)) {
                             $ed1 = strtotime($half_time) - strtotime($te);
                             $te1 = $ed1 / 60;
@@ -570,3 +577,17 @@ function getslacklist($array1, $array2) {
     }
     return $result;
 }
+function getUserWorkingHours($uid, $date, $link){
+    
+     $result = 0 ;
+    $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
+
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    if (mysqli_num_rows($resl) > 0) {
+        while ($row = mysqli_fetch_assoc($resl)) {
+            $result = $row['working_hours'];
+        }
+    }
+
+    return $result;
+ }
