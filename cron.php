@@ -6,8 +6,8 @@ date_default_timezone_set('Asia/Kolkata');
 
 $query = "SELECT * FROM cron_table where status = 0 ";
 $run = mysqli_query($link, $query) or die(mysqli_error($link));
-//$time = date("H:i");
-$time = "23:10";
+$time = date("H:i");
+//$time = "23:10";
 
 
 //echo $time;
@@ -37,7 +37,7 @@ if (mysqli_num_rows($run) > 0) {
             }
         }
     }
-} elseif(mysqli_num_rows($run) <= 0 & strtotime($time) > strtotime("23:00")) {
+} elseif(mysqli_num_rows($run) <= 0 & strtotime($time) > strtotime("21:00")) {
     $q2 = "UPDATE cron_table set status = 0";
     $run2 = mysqli_query($link, $q2) or die(mysqli_error($link));
 }

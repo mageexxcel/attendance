@@ -3,13 +3,11 @@
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
-$de = date("07-2016");
-$current_date = date("2016-07-21");
-$current_month = date("2016-07");
-//$cmonth_name = date("F Y");
-//$current_day = date('l');
-$cmonth_name = "July";
-$current_day ="Thur";
+$de = date("m-Y");
+$current_date = date("Y-m-d");
+$current_month = date("Y-m");
+$cmonth_name = date("F Y");
+$current_day = date('l');
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
@@ -150,13 +148,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
         $list = array();
         for ($d = 1; $d <= 31; $d++) {
-            $time = mktime(12, 0, 0, date('07'), $d, date('2016'));
-            if (date('m', $time) == date('07'))
+            $time = mktime(12, 0, 0, date('m'), $d, date('Y'));
+            if (date('m', $time) == date('m'))
                 $list[] = date('m-d-Y', $time);
         }
-//echo "<pre>";
-//print_r($list);
-//die;
+
         foreach ($list as $getd) {
             $de = 0;
             $de = getData($getd, $link);
