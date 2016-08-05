@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Kolkata');
 $query = "SELECT * FROM cron_table where status = 0 ";
 $run = mysqli_query($link, $query) or die(mysqli_error($link));
 $time = date("H:i");
-//$time = "23:10";
+//$time = "15:10";
 
 
 //echo $time;
@@ -27,7 +27,7 @@ if (mysqli_num_rows($run) > 0) {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $result = curl_exec($ch);
-            // echo var_dump($result);
+             echo var_dump($result);
             if ($result === false) {
                 echo 'Curl error: ' . curl_error($ch);
             } else {
