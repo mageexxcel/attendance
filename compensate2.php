@@ -135,6 +135,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                  echo $newmes;
                 send_slack_message($c_id = 'hr', $token, $newmes);
             }
+            if ($newmes == "") {
+                $newmes = "No Message daily notify url run";
+                echo $newmes;
+                  send_slack_message($c_id = 'hr', $token, $newmes);
+            }
            
             
         }
@@ -236,12 +241,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if (array_key_exists('half', $value)) {
                 $half = $value['half'];
             }
-
-
-            echo "<pre>";
-//  print_r($pending);
-//  print_r($compensate);
-//  print_r($entry);
+ 
             $to_compensate = 0;
             $index = 0;
             $rep = array();
@@ -264,12 +264,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                      $rep = array();
                 }
             }
-            // print_r($rep);
-           // echo "<hr>";
+         
+         $msg = "";
             if ($to_compensate >= 10) {
-                // echo $to_compensate;
-                // echo "<br>";
-                $msg = "";
+
+                
                 foreach ($fresult['members'] as $foo) {
                     if ($key == $foo['profile']['email'] && $key != "") {
                         $f = $foo['id'];
@@ -298,7 +297,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         echo "<br>";
                     }
                 }
+                
+                
             }
+//            if($msg == ""){
+//                    echo "NO Result for pending";
+//                }
             $uid = $value['userid'];
 //echo "<pre>";
 //print_r($wdate);
@@ -350,6 +354,8 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
             }
         }
+         send_slack_message($c_id = 'hr', $token, $m = 'Pending time message send url run');
+        
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------
@@ -396,8 +402,14 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             $hr3 = "hrfile3";
             send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
         }
+        if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
+            $no_msg = "No Leave notification";
+            echo $no_msg;
+            send_slack_message($c_id = 'hr', $token, $msg3);
+        }
 
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
+        
         
                 //--end applied leave slack message to hr ------------------ 
 //----update profile pic mad phone no. slack message-----    
@@ -419,7 +431,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
                 $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
                 $c_id = get_channel_id($f, $cid_array);
-                //echo $c_id."--".$update_msg . "<hr>";
+                echo $c_id."--".$update_msg . "<hr>";
                 
                 send_slack_message($c_id, $token, $update_msg, $hr3);
             }
