@@ -209,12 +209,10 @@ if (isset($sendmessage)) {
     } else {
         $channelid_list = json_decode($result, true);
         $cid_array = $channelid_list['ims'];
-//       echo "<pre>";
-//        print_r($cid_array);
-//        echo "<hr>";
+
     }
     curl_close($ch);
-//die;
+
     $url = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -226,13 +224,9 @@ if (isset($sendmessage)) {
         echo 'Curl error: ' . curl_error($ch);
     } else {
         $fresult = json_decode($result, true);
-//        echo "<pre>";
-//        print_r($fresult);
-//        echo "<hr>";
+
     }
-    // echo "<pre>";  
-    //  print_r($ttable); 
-//die;
+
     curl_close($ch);
     $are = array();
     if (sizeof($time_table) > 0) {
@@ -245,7 +239,7 @@ if (isset($sendmessage)) {
                 if ($e == $foo['profile']['email'] && $e != "") {
                     $are[] = $e;
                     $f = $foo['id'];
-//                    echo $value['id'] . "--" . $f . "--" . $e . "<br>";
+
                     if (array_key_exists($id, $ttable)) {
                         $time_arr = $ttable[$id];
 
@@ -256,7 +250,7 @@ if (isset($sendmessage)) {
                         $bb = end($time_arr['timing']);
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
-                        //     echo $ada;
+                       
                         if (current($time_arr['timing']) == "") {
                             $aa = $bb = 0;
                         }
@@ -294,8 +288,6 @@ if (isset($sendmessage)) {
                     }
                     $c_id = get_channel_id($f, $cid_array);
                    // if ($e == "deepak@excellencetechnologies.in") {
-                        //  echo $f . "--" . $e . "--" .current($value['timing']) . "<br>";
-                        
                         $d = str_replace("PM", "", current($value['timing']));
                         $d = strtotime(str_replace("-", "/", $d));
                         $d1 = date("h:i A", $d);
@@ -314,7 +306,7 @@ if (isset($sendmessage)) {
                             }
                             $msg = $msg . "Today's Entry Time " . $d1;
                             $hr6 = "hrfile6";
-                            send_slack_message($c_id = 'D0KGJ5HPH', $token, $msg, $hr6);
+                            send_slack_message($c_id, $token, $msg, $hr6);
                         } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
 
                             $msg = $msg . "Today's Entry Time " . $d1;
@@ -371,11 +363,7 @@ function get_time_array($date, $link, $hr = false) {
         $dayz = date('l', strtotime($dat));
         $final = get_time_array($dat, $link, $hr);
     }
-//    if (sizeof($final) != 0 ) {
-//        echo sizeof($final);
-//        echo $dat;
-//        echo "<br>";
-//    }
+
     return $final;
 }
 
