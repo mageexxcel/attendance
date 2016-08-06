@@ -50,7 +50,7 @@ if (isset($_FILES['image'])) {
     }
 }
 $time_table2 = array();
-$de = "08-05-2016";
+//$de = "07-13-2016";
 if (isset($_POST['date'])) {
     $de = $_POST['date'];
     $de = str_replace("/", "-", $de);
@@ -72,7 +72,7 @@ while ($s = mysqli_fetch_assoc($w)) {
 //echo "<pre>";
 //print_r($time_table);
 //die;
-$sendmessage = "Hello";
+//$sendmessage = "Hello";
 if (isset($sendmessage)) {
     
     $qv = "SELECT * from admin";
@@ -84,8 +84,8 @@ while ($qs = mysqli_fetch_assoc($qw)) {
 }
     
     $time_table6 = array();
-    $date = "2016-08-05";
-    //$date = date("Y-m-d");
+    //$date = "2016-07-13";
+    $date = date("Y-m-d");
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
     $hr = "hrfile";
     $hr2 = "hrfile2";
@@ -115,7 +115,7 @@ while ($qs = mysqli_fetch_assoc($qw)) {
     $string2 = "";
     $string3 = "";
     $string4 = "";
-    echo "<pre>";
+   // echo "<pre>";
    // print_r($ttable);
     //die;
     foreach ($ttable as $valo) {
@@ -140,7 +140,7 @@ while ($qs = mysqli_fetch_assoc($qw)) {
             if (strtotime($a1) > strtotime('10:30') && $a1 != 0) {
                 $string4 = $string4 . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
             }
-            if ($a1 != 0 && strtotime($a1) <= strtotime('10:30')) {
+            if ($a1 != 0 && strtotime($a1) < strtotime('10:30')) {
                 $string = $string . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
             }
         }
@@ -156,7 +156,7 @@ while ($qs = mysqli_fetch_assoc($qw)) {
             if ($j1 == 0) {
                 $string5 = $string5 . $t['name'] . ": Did not Come Yet! \n";
             }
-            if ($j1!= 0 && strtotime($j1) <= strtotime('10:30')) {
+            if ($j1!= 0 && strtotime($j1) < strtotime('10:30')) {
                 $string2 = $string2 . $t['name'] . ":  Entry Time: " . $j1 . "\n";
             }
             if ( $j1!= 0 && strtotime($j1) > strtotime('10:30')) {
@@ -164,49 +164,45 @@ while ($qs = mysqli_fetch_assoc($qw)) {
             }
         }
     }
-echo "string1==".$string1;
-echo "<hr>";
-echo "string4==".$string4;
-echo "<hr>";
-echo "string==".$string;
-echo "<hr>";
-
-echo "string2==".$string2;
-echo "<hr>";
-echo "string3==".$string3;
-echo "<hr>";
-echo "string5==".$string5;
-echo "<hr>";
-echo "<br>";
-
+//echo $string1;
+//echo "<hr>";
+//echo $string4;
+//echo "<hr>";
+//echo $string;
+//echo "<hr>";
+//echo "<hr>";
+//echo $string2;
+//echo "<hr>";
+//echo $string3;
+//echo "<hr>";
+//echo $string5;
+//echo "<hr>";
+//echo "<br>";
 //D0KGJ5HPH
 //die;
-      send_slack_message($c_id = 'D0KGJ5HPH', $token, $string, $hr, $day);
-      sleep(5);
+      send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
     if ($string4 != "") {
         $hr4 = "hrfile4";
-          send_slack_message($c_id = 'D0KGJ5HPH', $token, $string4, $hr4, $day);
-          sleep(5);
+           send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
     }
     if ($string1 != "") {
        $hr1 = "hrfile1";
       
-         send_slack_message($c_id = 'D0KGJ5HPH', $token, $string1, $hr1, $day);
-         sleep(5);
+          send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
     }
-   $a1 = send_slack_message($c_id = 'D0KGJ5HPH', $token, $string2, $hr2);
-   sleep(5);
+    send_slack_message($c_id = 'hr', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-     $a2= send_slack_message($c_id = 'D0KGJ5HPH', $token, $string3, $hr3, $day);
-     sleep(5);
+          send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-          send_slack_message($c_id = 'D0KGJ5HPH', $token, $string5, $hr5, $day);
-          sleep(5);
+          send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
     }
-
+//    $token = "xoxp-15636967698-15636967730-56513350243-f70365b66f";
+//    $client_id = "15636967698.55360920161";
+//    $client_secret = "25d0606ecdce87d9a44b8c6c619c7d54";
+//die;
     $url = "https://slack.com/api/im.list?token=".$token;
     $cid_array = array();
     $ch = curl_init();
@@ -268,7 +264,6 @@ echo "<br>";
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
                    //     echo $ada;
-                        $msg = $msg.$foo['name'];
                         if(current($time_arr['timing']) == ""){
                           $aa = $bb = 0;
                          }
@@ -306,33 +301,31 @@ echo "<br>";
                         }
                        
                     }
-                    //$c_id = get_channel_id($f, $cid_array);
-                    $c_id = "D0KGJ5HPH";
+                    $c_id = get_channel_id($f, $cid_array);
                   //     if ($f == "U0FJZ0KDM" ) {
                   //  echo $f . "--" . $e . "--" .current($value['timing']) . "<br>";
                   //  echo "---".current($value['timing'])."---";
                     $d = str_replace("PM", "", current($value['timing']));
                     $d = strtotime(str_replace("-", "/", $d));
                     $d1 = date("h:i A", $d);
-                     
                     if (current($value['timing']) == ""){
                        $d1 = 0;
                      }
                     if ($d1 == 0 ) {
                         $msg = $msg . "You have not entered time Today ";
-                      // $a = send_slack_message($c_id, $token, $msg);
+                        send_slack_message($c_id, $token, $msg);
                     }
                     if ( $d1 != 0 && strtotime($d1) >= strtotime('10:30 AM')) {
                         
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                      //  $a = send_slack_message($c_id, $token, $msg, $hr6);
+                         send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) < strtotime('10:30')) {
                         
-                      //  $msg = $msg . "Today's Entry Time " . $d1;
-                   //   $a =   send_slack_message($c_id, $token, $msg);
+                        $msg = $msg . "Today's Entry Time " . $d1;
+                         send_slack_message($c_id, $token, $msg);
                     }
-                   // echo  $a;
+                 
                    // echo $msg;
                   // echo "<hr>";
                   //  }
@@ -341,9 +334,9 @@ echo "<br>";
                
             }
             
-//           if(!in_array($e,$are)){
-//               echo $value['username']."--".$e. "<br>";
-//           }
+           if(!in_array($e,$are)){
+               echo $value['username']."--".$e. "<br>";
+           }
             
         }
     }
@@ -428,31 +421,26 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     if (isset($s) && $s == "hrfile5") {
         $message = '[{"text": "' . $sir . '",  "author_name": "Today Attendance Tables (Did not Come Yet!)", "fallback": "Message Send to Hr Channel", "color": "#F2801D"}]';
     }
-   
     $room = $channelid;
-
-    try {
-   $url = "https://slack.com/api/chat.postMessage?token=".$token."&attachments=" . urlencode($message) . "&channel=" . $room;
+    $message = str_replace("", "%20", $message);
+    $icon = ":boom:";
+    $url = "https://slack.com/api/chat.postMessage?token=".$token."&attachments=" . urlencode($message) . "&channel=" . $room;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
-    //curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-   // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     $result = curl_exec($ch);
+    // echo var_dump($result);
     if ($result === false) {
         echo 'Curl error: ' . curl_error($ch);
-        $success =  curl_error($ch);
+        $success = "not send";
     } else {
         $success = "send";
     }
-} catch (Exception $e) {
-    $success =  $e->getMessage();
+    curl_close($ch);
 }
-    
-    return $success;
-  
-}
-die;
+//die;
 ?>
 <html>
     <head>
@@ -514,9 +502,9 @@ if (sizeof($time_table) > 0) {
     $time1 = "";
     $time2 = "";
     foreach ($time_table as $val) {
-        $time1 = current($val['timing']);
+        $time1 = str_replace("PM", "", current($val['timing']));
         $time1 = strtotime(str_replace("-", "/", $time1));
-        $time2 = end($val['timing']);
+        $time2 = str_replace("PM", "", end($val['timing']));
         $time2 = strtotime(str_replace("-", "/", $time2));
         $time3 = $time2 - $time1;
         $time3 = date("H:i:s", $time3);
