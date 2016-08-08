@@ -6,8 +6,8 @@ date_default_timezone_set('Asia/Kolkata');
 
 $query = "SELECT * FROM cron_table where status = 0 ";
 $run = mysqli_query($link, $query) or die(mysqli_error($link));
-//$time = date("H:i");
-$time = "15:10";
+$time = date("H:i");
+//$time = "15:10";
 
 
 //echo $time;
