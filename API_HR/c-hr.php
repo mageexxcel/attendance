@@ -541,7 +541,20 @@
             $genericMonthDays = self::getGenericMonthSummary( $year, $month );
             $userMonthPunching = self::getUserMonthPunching( $userid, $year, $month );
             $userMonthLeaves = self::getUserMonthLeaves( $userid, $year, $month );
-            
+
+            //start ---added on 8th august to ignore if leaves are not pending and approved
+            if( sizeof( $userMonthLeaves ) > 0 ){
+                $raw_userMonthLeaves = $userMonthLeaves;
+                $userMonthLeaves = array();
+                foreach( $raw_userMonthLeaves as $k => $v ){
+                    $v_status = $v['status'];
+                    if( strtolower($v_status) == 'pending' || strtolower($v_status) == 'approved' ){
+                        $userMonthLeaves[$k] = $v;
+                    }
+                }
+            }
+            //end ---added on 8th august to ignore if leaves are not pending and approved
+
             $return = array();
             foreach( $genericMonthDays as $k => $v ){
                 if( array_key_exists($k, $userMonthPunching )){
