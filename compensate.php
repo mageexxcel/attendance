@@ -33,7 +33,6 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
     $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
     $fresult = getCURL($url2);
 
-
     $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
     $array = array();
     $w = mysqli_query($link, $query) or die(mysqli_error($link));
@@ -56,9 +55,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         ksort($v);
         $arr[$k] = $v;
     }
-//echo "<pre>";
-//print_r($arr);
-//die;
+
 
 
     if (isset($_GET['dailynotify'])) {
@@ -93,15 +90,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     }
                 }
             }
-
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
-                echo $newmsg . "<br>";
-                //     send_slack_message($c_id, $token, $newmsg);
+                echo $newmsg;
+              //  send_slack_message($c_id, $token, $newmsg);
             }
         }
 
-        echo "<hr>";
         //-- get one or two month employee completed slack message on hr channel----- 
         $one_month = date('Y-m-d', strtotime($current_date . ' -1 month'));
         $two_month = date('Y-m-d', strtotime($current_date . ' -2 month'));
@@ -136,16 +131,17 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     }
                 }
             }
-
             if ($newmes != "") {
-                echo $newmes;
-                //  send_slack_message($c_id = 'hr', $token, $newmes);
+                 echo $newmes;
+             //   send_slack_message($c_id = 'hr', $token, $newmes);
             }
             if ($newmes == "") {
-                $newmes = "No Message";
+                $newmes = "No Message daily notify url run";
                 echo $newmes;
-                //  send_slack_message($c_id = 'hr', $token, $newmes);
+              //    send_slack_message($c_id = 'hr', $token, $newmes);
             }
+           
+            
         }
         //--end get one or two month employee completed slack message on hr channel-----
     }
@@ -174,6 +170,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
 //---- end-----------
 
+
         foreach ($arr as $kk => $vv) {
             // print_r($value);
             foreach ($vv as $f) {
@@ -181,19 +178,16 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
                     $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
                     $te = date("h:i", $ed);
-                    $user_id = $f['user_id'];
                     $cdate = date('Y-m-d', strtotime($f['date']));
                     $working_hour = getWorkingHours($cdate, $link);
                     $half_time = date("h:i", strtotime($working_hour) / 2 + 3600);
 
                     if ($working_hour != 0) {
-
-                        $user_working_hour = getUserWorkingHours($user_id, $cdate, $link);
-                        if ($user_working_hour != 0) {
-                            $working_hour = $user_working_hour;
-                            echo $user_id . "-" . $cdate . "-" . $working_hour;
-                        }
-
+                          $user_working_hour = getUserWorkingHours($user_id, $cdate, $link);
+                          if($user_working_hour != 0){
+                            $working_hour = $user_working_hour;  
+//                            echo $user_id."-".$cdate."-".$working_hour;
+                            }
                         if (strtotime($te) < strtotime($half_time)) {
                             $ed1 = strtotime($half_time) - strtotime($te);
                             $te1 = $ed1 / 60;
@@ -208,20 +202,19 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
                             $ed1 = strtotime($working_hour) - strtotime($te);
                             $te1 = $ed1 / 60;
-                            if ($te1 >= 5) {
-                                $vv['ptime'][] = $te1;
-                                $vv['ctime'][] = 0;
-                                $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'] . "," . $working_hour;
+                            if($te1 >= 5 ){
+                            $vv['ptime'][] = $te1;
+                            $vv['ctime'][] = 0;
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
                             }
                         }
                         if (strtotime($te) > strtotime($working_hour)) {
-                            // echo $te."--".$working_hour."<br>";
                             $ed1 = strtotime($te) - strtotime($working_hour);
                             $te1 = $ed1 / 60;
-                            if ($te1 >= 5) {
-                                $vv['ctime'][] = $te1;
-                                $vv['ptime'][] = 0;
-                                $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'] . "," . $working_hour;
+                            if($te1 >= 5 ){
+                            $vv['ctime'][] = $te1;
+                            $vv['ptime'][] = 0;
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];  
                             }
                         }
                     }
@@ -240,7 +233,6 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 //    die;
 
         foreach ($arr2 as $key => $value) {
-
             $pending = $value['ptime'];
             $compensate = $value['ctime'];
             $entry = $value['entry_exit'];
@@ -249,11 +241,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if (array_key_exists('half', $value)) {
                 $half = $value['half'];
             }
-
-            echo "<pre>";
-//  print_r($pending);
-//  print_r($compensate);
-//  print_r($entry);
+ 
             $to_compensate = 0;
             $index = 0;
             $rep = array();
@@ -273,22 +261,20 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
                 if ($to_compensate <= 0) {
                     $to_compensate = 0;
-                    $rep = array();
+                     $rep = array();
                 }
             }
-//             print_r($rep);
-//            echo "<hr>";
-            // die;
+         
+         $msg = "";
             if ($to_compensate >= 10) {
-                // echo $to_compensate;
-                // echo "<br>";
-                $msg = "";
+
+                
                 foreach ($fresult['members'] as $foo) {
                     if ($key == $foo['profile']['email'] && $key != "") {
-                        //$f = $foo['id'];
-                        $f = "U0FJZ0KDM";
+                        $f = $foo['id'];
+                        //$f = "U0FJZ0KDM";
                         //  $rname = $foo['real_name'];
-                        // $c_id = get_channel_id($f, $cid_array);
+                         $c_id = get_channel_id($f, $cid_array);
 
                         $r = date('H:i', mktime(0, $to_compensate));
                         //  echo $key."----".$f."-----".$c_id;
@@ -300,24 +286,34 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
                                 $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Compensated: " . $r['cc'] . " minutes \n";
                             } else {
-                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Extra: " . $r['pp'] . " minutes \n";
+                                $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Less: " . $r['pp'] . " minutes \n";
                             }
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
-
-                        // send_slack_message($c_id = 'hr', $token, $msg);
+                     //   send_slack_message($c_id, $token, $msg);
+                     //   send_slack_message($c_id = 'hr', $token, $msg);
+                        
                         echo $msg;
                         echo "<br>";
                     }
                 }
+                
+                
             }
+//            if($msg == ""){
+//                    echo "NO Result for pending";
+//                }
             $uid = $value['userid'];
-
+//echo "<pre>";
+//print_r($wdate);
+//die;
             if (sizeof($wdate) > 0) {
                 $diff = array_diff($set, $wdate);
-            
+
                 $arr = getLeaveNotification($uid, $link);
+
                 $diff2 = array_diff($diff, $arr);
+
                 $mm = "";
                 if (sizeof($diff2) > 0) {
 
@@ -329,6 +325,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
             if (sizeof($half) > 0) {
                 $arr = getLeaveNotification($uid, $link);
+
                 foreach ($half as $h) {
                     if (!in_array($h, $arr)) {
                         $mm = $mm . "You have not applied for halfday on " . date("d-m-Y", strtotime(str_replace("-", "/", $h))) . "\n";
@@ -350,13 +347,15 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         $msg2 = $msg2 . $mm . "Please apply asap on HR System";
 
 
-                        //   send_slack_message($c_id, $token, $msg2);
+                       // send_slack_message($c_id, $token, $msg2);
                         echo $msg2;
                         echo "<br>";
                     }
                 }
             }
         }
+       //  send_slack_message($c_id = 'hr', $token, $m = 'Pending time message send url run');
+        
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------
@@ -392,28 +391,34 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 
         if ($msg1 != "") {
             $hr1 = "hrfile1";
-            // send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
+          // send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
         }
         if ($msg2 != "") {
             $hr2 = "hrfile2";
-            // send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+          //  send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
         }
 
         if ($msg3 != "") {
             $hr3 = "hrfile3";
-            // send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+          //  send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+        }
+        if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
+            $no_msg = "No Leave notification";
+            echo $no_msg;
+          //  send_slack_message($c_id = 'hr', $token, $no_msg);
         }
 
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
-     
-
-        //--end applied leave slack message to hr ------------------ 
+        
+        
+                //--end applied leave slack message to hr ------------------ 
 //----update profile pic mad phone no. slack message-----    
 
         foreach ($fresult['members'] as $vol) {
             $update_msg = "";
             if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
 //          $fr[] = $vol; 
+                $f = $vol['id'];
                 $update_msg = "Hi " . $vol['name'] . "\n You have not added your";
                 if ($vol['profile']['phone'] == "") {
                     $update_msg = $update_msg . " phone number ";
@@ -425,13 +430,17 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $update_msg = $update_msg . " profile picture ";
                 }
                 $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
-                echo $update_msg . "<hr>";
-                // send_slack_message($c_id, $token, $update_msg, $hr3);
+                $c_id = get_channel_id($f, $cid_array);
+                echo $c_id."--".$update_msg . "<hr>";
+                
+              //  send_slack_message($c_id, $token, $update_msg, $hr3);
             }
         }
 
 //---end update profile pic and phone no. slack message--- 
+        
     }
+
 }
 
 //---get channel id of a user---------
@@ -562,7 +571,8 @@ function getWorkingHours($data, $link) {
 }
 
 function getslacklist($array1, $array2) {
-
+    echo "<pre>";
+    // print_r($array1);
     $result = array();
     if (sizeof($array1 > 0)) {
         foreach ($array1['members'] as $foo) {
@@ -579,10 +589,9 @@ function getslacklist($array1, $array2) {
     }
     return $result;
 }
-
-function getUserWorkingHours($uid, $date, $link) {
-
-    $result = 0;
+function getUserWorkingHours($uid, $date, $link){
+    
+     $result = 0 ;
     $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
 
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
@@ -593,4 +602,4 @@ function getUserWorkingHours($uid, $date, $link) {
     }
 
     return $result;
-}
+ }

@@ -405,7 +405,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
             $no_msg = "No Leave notification";
             echo $no_msg;
-            send_slack_message($c_id = 'hr', $token, $msg3);
+            send_slack_message($c_id = 'hr', $token, $no_msg);
         }
 
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
