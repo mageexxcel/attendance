@@ -29,10 +29,10 @@ if (isset($_FILES['image'])) {
         if ($i == 0) {
             //first row ignore
         } else {
-            
+
             $line = trim($line);
             $line = trim(preg_replace('/\s+/', ' ', $line));
-          
+
             if (!empty($line)) {
                 $data = explode(" ", $line);
             }
@@ -102,7 +102,7 @@ if (isset($sendmessage)) {
     $string2 = "";
     $string3 = "";
     $string4 = "";
-   // echo "<pre>";
+    // echo "<pre>";
     // print_r($ttable);
     //die;
     foreach ($ttable as $valo) {
@@ -172,16 +172,16 @@ if (isset($sendmessage)) {
     }
     if ($string1 != "") {
         $hr1 = "hrfile1";
-           send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
+          send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
     }
       send_slack_message($c_id = 'hr', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-          send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
+           send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-         send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
+           send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
     }
     $url = "https://slack.com/api/im.list?token=" . $token;
     $cid_array = array();
@@ -229,7 +229,7 @@ if (isset($sendmessage)) {
                         $bb = end($time_arr['timing']);
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
-                       
+
                         if (current($time_arr['timing']) == "") {
                             $aa = $bb = 0;
                         }
@@ -258,34 +258,35 @@ if (isset($sendmessage)) {
                             }
                         }
                     }
+                    $ff = saveUserMonthPunching($id, $e, $link);
                     $c_id = get_channel_id($f, $cid_array);
-                   // if ($e == "deepak@excellencetechnologies.in") {
-                        $d = str_replace("PM", "", current($value['timing']));
-                        $d = strtotime(str_replace("-", "/", $d));
-                        $d1 = date("h:i A", $d);
-                        if (current($value['timing']) == "") {
-                            $d1 = 0;
-                        }
-                        if ($d1 == 0) {
-                            $msg = $msg . "You have not entered time Today ";
-                             send_slack_message($c_id, $token, $msg);
-                        }
-                        if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
-                            $s = getLateComingInfo($e, $link);
+                    // if ($e == "deepak@excellencetechnologies.in") {
+                    $d = str_replace("PM", "", current($value['timing']));
+                    $d = strtotime(str_replace("-", "/", $d));
+                    $d1 = date("h:i A", $d);
+                    if (current($value['timing']) == "") {
+                        $d1 = 0;
+                    }
+                    if ($d1 == 0) {
+                        $msg = $msg . "You have not entered time Today ";
+                          send_slack_message($c_id, $token, $msg);
+                    }
+                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
+                        $s = getLateComingInfo($e, $link);
                         if ($s != "") {
-                                $msg = $msg . $s;
-                            }
-                            $msg = $msg . "Today's Entry Time " . $d1;
-                            $hr6 = "hrfile6";
-                            send_slack_message($c_id, $token, $msg, $hr6);
-                        } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
-                            $msg = $msg . "Today's Entry Time " . $d1;
-                               send_slack_message($c_id, $token, $msg);
+                            $msg = $msg . $s;
                         }
-                        echo $msg;
-                        echo "<hr>";
-                         $ff = getUserMonthPunching($id, $e, $link);
-                   // }
+                        $msg = $msg . "Today's Entry Time " . $d1;
+                        $hr6 = "hrfile6";
+                          send_slack_message($c_id, $token, $msg, $hr6);
+                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
+                        $msg = $msg . "Today's Entry Time " . $d1;
+                           send_slack_message($c_id, $token, $msg);
+                    }
+                    echo $msg;
+                    echo "<hr>";
+
+                    // }
                 }
             }
             if (!in_array($e, $are)) {
@@ -294,6 +295,7 @@ if (isset($sendmessage)) {
         }
     }
 }
+
 function get_time_array($date, $link, $hr = false) {
     $final = array();
     $query3 = "SELECT * FROM attendance Where timing like '%$date%' ";
@@ -330,6 +332,7 @@ function get_time_array($date, $link, $hr = false) {
     }
     return $final;
 }
+
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
         if ($data == $val['user']) {
@@ -338,6 +341,7 @@ function get_channel_id($data, $array) {
         }
     }
 }
+
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if ($sir == "You have not Entered your time Today") {
@@ -383,6 +387,7 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
     curl_close($ch);
 }
+
 function getLateComingInfo($data, $link) {
     $date = date("m-Y");
     $string = "";
@@ -404,7 +409,7 @@ function getLateComingInfo($data, $link) {
     return $string;
 }
 
-function getUserMonthPunching($userid, $email, $link) {
+function saveUserMonthPunching($userid, $email, $link) {
     $year = date("Y");
     $month = date("m");
     $c_day = date("d");
@@ -453,7 +458,7 @@ function getUserMonthPunching($userid, $email, $link) {
                 $a = 0;
             }
         }
-         $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$email' AND `date` = '$pdate'");
+        $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$email' AND `date` = '$pdate'");
         if (mysqli_num_rows($q1) <= 0) {
             $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$userid', '$email', '$a', '$b','$pdate')";
 
