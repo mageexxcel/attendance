@@ -8,6 +8,7 @@ $current_date = date("Y-m-d");
 $current_month = date("Y-m");
 $cmonth_name = date("F Y");
 $current_day = date('l');
+
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
@@ -291,7 +292,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
                         send_slack_message($c_id, $token, $msg);
-                        send_slack_message($c_id = 'hr', $token, $msg);
+                        send_slack_message($c_id='hr', $token, $msg);
                         
                         echo $msg;
                         echo "<br>";
@@ -300,9 +301,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 
                 
             }
-//            if($msg == ""){
-//                    echo "NO Result for pending";
-//                }
+
             $uid = $value['userid'];
 //echo "<pre>";
 //print_r($wdate);
