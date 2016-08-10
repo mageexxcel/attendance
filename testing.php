@@ -4,10 +4,10 @@ require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
 $de = date("m-d-Y");
-$userid = '390';
+$userid = '383';
 $year = "2016";
-$month = "07";
-$e = "sushama@excellencetechnologies.in";
+$month = "08";
+$e = "amit@excellencetechnologies.in";
 $list = array();
 $q = "SELECT * FROM attendance Where user_id = $userid";
 $runQuery = mysqli_query($link, $q) or die();
@@ -43,7 +43,7 @@ foreach ($allMonthAttendance as $pp_key => $pp) {
 echo "<pre>";
 array_pop($list);
 print_r($list);
-//die;
+die;
 foreach ($list as $value) {
     $pdate = $value['date'];
     $a = $value['in_time'];

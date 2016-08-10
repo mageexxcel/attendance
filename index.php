@@ -8,48 +8,53 @@ if (isset($_FILES['image'])) {
     $file_size = $_FILES['image']['size'];
     $file_tmp = $_FILES['image']['tmp_name'];
     $file_type = $_FILES['image']['type'];
-    // $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
-    if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
-        echo "File Not uploaded";
-        die;
-    }
-    $sendmessage = true;
-    $attendance = array();
-    $query = "SELECT * FROM attendance";
-    $row = mysqli_query($link, $query) or die();
-    while ($r = mysqli_fetch_assoc($row)) {
-        $attendance[] = $r['timing'];
-    }
-    $PF_file_name = "upload/AGL_001.TXT";
-    $file = fopen($PF_file_name, "r");
-    $i = 0;
-    $data = array();
-    while (!feof($file)) {
-        $line = fgets($file);
-        if ($i == 0) {
-            //first row ignore
-        } else {
+    if ($file_name != "AGL_001.TXT") {
+        echo "Wrong file inserted";
+    } else {
 
-            $line = trim($line);
-            $line = trim(preg_replace('/\s+/', ' ', $line));
-
-            if (!empty($line)) {
-                $data = explode(" ", $line);
-            }
-            $user_id = $data['2'];
-            $datetime = $data['6'] . " " . $data['7'];
-            if (in_array($datetime, $attendance)) {
-                
-            } else {
-                $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
-                mysqli_query($link, $q2) or die(mysqli_error($link));
-            }
+        // $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
+        if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
+            echo "File Not uploaded";
+            die;
         }
-        $i++;
+        $sendmessage = true;
+        $attendance = array();
+        $query = "SELECT * FROM attendance";
+        $row = mysqli_query($link, $query) or die();
+        while ($r = mysqli_fetch_assoc($row)) {
+            $attendance[] = $r['timing'];
+        }
+        $PF_file_name = "upload/AGL_001.TXT";
+        $file = fopen($PF_file_name, "r");
+        $i = 0;
+        $data = array();
+        while (!feof($file)) {
+            $line = fgets($file);
+            if ($i == 0) {
+                //first row ignore
+            } else {
+
+                $line = trim($line);
+                $line = trim(preg_replace('/\s+/', ' ', $line));
+
+                if (!empty($line)) {
+                    $data = explode(" ", $line);
+                }
+                $user_id = $data['2'];
+                $datetime = $data['6'] . " " . $data['7'];
+                if (in_array($datetime, $attendance)) {
+                    
+                } else {
+                    $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
+                    mysqli_query($link, $q2) or die(mysqli_error($link));
+                }
+            }
+            $i++;
+        }
     }
 }
 $time_table2 = array();
-//$de = "08-05-2016";
+//$de = "08-09-2016";
 $time_table2 = get_time_array($de, $link);
 $time_table = array();
 $query2 = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' ";
@@ -75,8 +80,8 @@ if (isset($sendmessage)) {
         $token = $qs['token'];
     }
     $time_table6 = array();
-    //$date = "2016-08-05";
-    $date = date("Y-m-d");
+    //$date = "2016-08-09";
+     $date = date("Y-m-d");
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
     $hr = "hrfile";
     $hr2 = "hrfile2";
@@ -172,16 +177,16 @@ if (isset($sendmessage)) {
     }
     if ($string1 != "") {
         $hr1 = "hrfile1";
-          send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
+           send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
     }
-      send_slack_message($c_id = 'hr', $token, $string2, $hr2);
+     send_slack_message($c_id = 'hr', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-           send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
+            send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-           send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
+          send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
     }
     $url = "https://slack.com/api/im.list?token=" . $token;
     $cid_array = array();
@@ -269,7 +274,7 @@ if (isset($sendmessage)) {
                     }
                     if ($d1 == 0) {
                         $msg = $msg . "You have not entered time Today ";
-                          send_slack_message($c_id, $token, $msg);
+                           send_slack_message($c_id, $token, $msg);
                     }
                     if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
                         $s = getLateComingInfo($e, $link);
@@ -278,13 +283,13 @@ if (isset($sendmessage)) {
                         }
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                          send_slack_message($c_id, $token, $msg, $hr6);
+                             send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
                         $msg = $msg . "Today's Entry Time " . $d1;
-                           send_slack_message($c_id, $token, $msg);
+                             send_slack_message($c_id, $token, $msg);
                     }
-                    echo $msg;
-                    echo "<hr>";
+                   // echo $msg;
+                   // echo "<hr>";
 
                     // }
                 }
