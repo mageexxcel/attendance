@@ -11,7 +11,6 @@ if (isset($_FILES['image'])) {
     if ($file_name != "AGL_001.TXT") {
         echo "Wrong file inserted";
     } else {
-
         // $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
         if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
             echo "File Not uploaded";
@@ -33,10 +32,8 @@ if (isset($_FILES['image'])) {
             if ($i == 0) {
                 //first row ignore
             } else {
-
                 $line = trim($line);
                 $line = trim(preg_replace('/\s+/', ' ', $line));
-
                 if (!empty($line)) {
                     $data = explode(" ", $line);
                 }
@@ -69,7 +66,6 @@ while ($s = mysqli_fetch_assoc($w)) {
         $time_table[$sid]['timing'][] = "";
     }
 }
-
 //$sendmessage = "Hello";
 if (isset($sendmessage)) {
     $qv = "SELECT * from admin";
@@ -86,7 +82,6 @@ if (isset($sendmessage)) {
     $hr = "hrfile";
     $hr2 = "hrfile2";
     $time_table6 = get_time_array($prev_date, $link, $hr);
-
     $ada = $time_table6['date'];
     $pdate = date("d-m-Y", strtotime(str_replace("-", "/", $ada)));
     $day = date('l', strtotime($pdate));
@@ -170,23 +165,23 @@ if (isset($sendmessage)) {
 //echo "<br>";
 //D0KGJ5HPH
 //die;
-      send_slack_message($c_id = 'hr', $token, $string, $hr, $day);
+      send_slack_message($c_id = 'hr_system', $token, $string, $hr, $day);
     if ($string4 != "") {
         $hr4 = "hrfile4";
-            send_slack_message($c_id = 'hr', $token, $string4, $hr4, $day);
+            send_slack_message($c_id = 'hr_system', $token, $string4, $hr4, $day);
     }
     if ($string1 != "") {
         $hr1 = "hrfile1";
-           send_slack_message($c_id = 'hr', $token, $string1, $hr1, $day);
+           send_slack_message($c_id = 'hr_system', $token, $string1, $hr1, $day);
     }
-     send_slack_message($c_id = 'hr', $token, $string2, $hr2);
+     send_slack_message($c_id = 'hr_system', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
-            send_slack_message($c_id = 'hr', $token, $string3, $hr3, $day);
+            send_slack_message($c_id = 'hr_system', $token, $string3, $hr3, $day);
     }
     if ($string5 != "") {
         $hr5 = "hrfile5";
-          send_slack_message($c_id = 'hr', $token, $string5, $hr5, $day);
+          send_slack_message($c_id = 'hr_system', $token, $string5, $hr5, $day);
     }
     $url = "https://slack.com/api/im.list?token=" . $token;
     $cid_array = array();
@@ -234,7 +229,6 @@ if (isset($sendmessage)) {
                         $bb = end($time_arr['timing']);
                         $bb = strtotime(str_replace("-", "/", $bb));
                         $bb = date("h:i A", $bb);
-
                         if (current($time_arr['timing']) == "") {
                             $aa = $bb = 0;
                         }
@@ -290,7 +284,6 @@ if (isset($sendmessage)) {
                     }
                    // echo $msg;
                    // echo "<hr>";
-
                     // }
                 }
             }
@@ -300,7 +293,6 @@ if (isset($sendmessage)) {
         }
     }
 }
-
 function get_time_array($date, $link, $hr = false) {
     $final = array();
     $query3 = "SELECT * FROM attendance Where timing like '%$date%' ";
@@ -337,7 +329,6 @@ function get_time_array($date, $link, $hr = false) {
     }
     return $final;
 }
-
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
         if ($data == $val['user']) {
@@ -346,7 +337,6 @@ function get_channel_id($data, $array) {
         }
     }
 }
-
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if ($sir == "You have not Entered your time Today") {
@@ -392,7 +382,6 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
     curl_close($ch);
 }
-
 function getLateComingInfo($data, $link) {
     $date = date("m-Y");
     $string = "";
@@ -413,13 +402,11 @@ function getLateComingInfo($data, $link) {
     }
     return $string;
 }
-
 function saveUserMonthPunching($userid, $email, $link) {
     $year = date("Y");
     $month = date("m");
     $c_day = date("d");
     //$c_day = date("05");
-
     $list = array();
     $q = "SELECT * FROM attendance Where user_id = $userid";
     $runQuery = mysqli_query($link, $q) or die();
@@ -427,7 +414,6 @@ function saveUserMonthPunching($userid, $email, $link) {
     while ($r = mysqli_fetch_assoc($runQuery)) {
         $rows[] = $r;
     }
-
     $allMonthAttendance = array();
     foreach ($rows as $key => $d) {
         $d_timing = $d['timing'];
@@ -443,7 +429,6 @@ function saveUserMonthPunching($userid, $email, $link) {
             $allMonthAttendance[$d_date][] = $d;
         }
     }
-
     foreach ($allMonthAttendance as $pp_key => $pp) {
         $daySummary = _beautyDaySummary($pp);
         $list[$pp_key] = $daySummary;
@@ -456,7 +441,6 @@ function saveUserMonthPunching($userid, $email, $link) {
         $a = $value['in_time'];
         $b = $value['out_time'];
         if ($a == $b) {
-
             if (strtotime($b) <= strtotime("04:30 PM")) {
                 $b = 0;
             } else {
@@ -466,41 +450,33 @@ function saveUserMonthPunching($userid, $email, $link) {
         $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$email' AND `date` = '$pdate'");
         if (mysqli_num_rows($q1) <= 0) {
             $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$userid', '$email', '$a', '$b','$pdate')";
-
             mysqli_query($link, $ins3) or die(mysqli_error($link));
         }
     }
     return $list;
 }
-
 function _beautyDaySummary($dayRaw) {
     $TIMESTAMP = '';
     $numberOfPunch = sizeof($dayRaw);
-
     $timeStampWise = array();
     foreach ($dayRaw as $pp) {
         $TIMESTAMP = $pp['timestamp'];
         $timeStampWise[$pp['timestamp']] = $pp;
     }
     ksort($timeStampWise);
-
     $inTimeKey = key($timeStampWise);
     end($timeStampWise);
     $outTimeKey = key($timeStampWise);
-
     $inTime = date('h:i A', $inTimeKey);
     $outTime = date('h:i A', $outTimeKey);
-
     $r_date = (int) date('d', $TIMESTAMP);
     $rf_date = date('d-m-Y', $TIMESTAMP);
-
     $return = array();
     $return['in_time'] = $inTime;
     $return['out_time'] = $outTime;
     $return['date'] = $rf_date;
     return $return;
 }
-
 //die;
 ?>
 <html>

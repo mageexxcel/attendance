@@ -1,5 +1,4 @@
 <?php
-
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
@@ -107,12 +106,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             if ($newmes != "") {
                 echo $newmes;
-                send_slack_message($c_id = 'hr', $token, $newmes);
+                send_slack_message($c_id = 'hr_system', $token, $newmes);
             }
             if ($newmes == "") {
                 $newmes = "No Message daily notify url run";
                 echo $newmes;
-                send_slack_message($c_id = 'hr', $token, $newmes);
+                send_slack_message($c_id = 'hr_system', $token, $newmes);
             }
         }
         //--end get one or two month employee completed slack message on hr channel-----
@@ -200,7 +199,6 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if (array_key_exists('half', $value)) {
                 $half = $value['half'];
             }
-
             $to_compensate = 0;
             $index = 0;
             $rep = array();
@@ -221,10 +219,8 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $rep = array();
                 }
             }
-
             $msg = "";
             if ($to_compensate >= 10) {
-
                 foreach ($fresult['members'] as $foo) {
                     if ($key == $foo['profile']['email'] && $key != "") {
                         $f = $foo['id'];
@@ -245,8 +241,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
                         send_slack_message($c_id, $token, $msg);
-                        send_slack_message($c_id = 'hr', $token, $msg);
-
+                        send_slack_message($c_id = 'hr_system', $token, $msg);
                         echo $msg;
                         echo "<br>";
                     }
@@ -293,7 +288,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
             }
         }
-        send_slack_message($c_id = 'hr', $token, $m = 'Pending time message send url run');
+        send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------
@@ -325,24 +320,22 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         }
         if ($msg1 != "") {
             $hr1 = "hrfile1";
-            send_slack_message($c_id = 'hr', $token, $msg1, $hr1);
+            send_slack_message($c_id = 'hr_system', $token, $msg1, $hr1);
         }
         if ($msg2 != "") {
             $hr2 = "hrfile2";
-            send_slack_message($c_id = 'hr', $token, $msg2, $hr2);
+            send_slack_message($c_id = 'hr_system', $token, $msg2, $hr2);
         }
         if ($msg3 != "") {
             $hr3 = "hrfile3";
-            send_slack_message($c_id = 'hr', $token, $msg3, $hr3);
+            send_slack_message($c_id = 'hr_system', $token, $msg3, $hr3);
         }
         if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
             $no_msg = "No Leave notification";
             echo $no_msg;
-            send_slack_message($c_id = 'hr', $token, $no_msg);
+            send_slack_message($c_id = 'hr_system', $token, $no_msg);
         }
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
-
-
         //--end applied leave slack message to hr ------------------ 
 //----update profile pic mad phone no. slack message-----    
         foreach ($fresult['members'] as $vol) {
@@ -363,14 +356,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
                 $c_id = get_channel_id($f, $cid_array);
                 echo $c_id . "--" . $update_msg . "<hr>";
-
                 send_slack_message($c_id, $token, $update_msg, $hr3);
             }
         }
 //---end update profile pic and phone no. slack message--- 
     }
 }
-
 //---get channel id of a user---------
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
@@ -380,7 +371,6 @@ function get_channel_id($data, $array) {
         }
     }
 }
-
 //--------Send slack message------------
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
@@ -412,7 +402,6 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
     curl_close($ch);
 }
-
 //----Get dates of working days in curerent month------------
 function getData($data, $link) {
     $result = 0;
@@ -425,7 +414,6 @@ function getData($data, $link) {
         return $result;
     }
 }
-
 //------Get leave detail of employee of current month.
 function getLeaveNotification($data, $link) {
     $date = date("Y-m");
@@ -446,7 +434,6 @@ function getLeaveNotification($data, $link) {
     }
     return $result;
 }
-
 // ----------Run curl url------
 function getCURL($url, $data = false) {
     $ch = curl_init();
@@ -466,7 +453,6 @@ function getCURL($url, $data = false) {
     return $rest;
     curl_close($ch);
 }
-
 function getWorkingHours($data, $link) {
     $result = "09:00";
     $qry = "select * from working_hours where date='$data'";
@@ -478,7 +464,6 @@ function getWorkingHours($data, $link) {
     }
     return $result;
 }
-
 function getslacklist($array1, $array2) {
     echo "<pre>";
     // print_r($array1);
@@ -498,9 +483,7 @@ function getslacklist($array1, $array2) {
     }
     return $result;
 }
-
 function getUserWorkingHours($uid, $date, $link) {
-
     $result = 0;
     $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
