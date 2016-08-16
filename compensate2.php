@@ -144,7 +144,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $user_id = $f['user_id']; 
                     $cdate = date('Y-m-d', strtotime($f['date']));
                     $working_hour = getWorkingHours($cdate, $link);
-                    $half_time = date("h:i", strtotime($working_hour) / 2 + 3600);
+                    $half_time = date("h:i", strtotime($working_hour) / 2);
                     if ($working_hour != 0) {
                         $user_working_hour = getUserWorkingHours($user_id, $cdate, $link);
                         if ($user_working_hour != 0) {
