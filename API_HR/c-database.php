@@ -21,6 +21,9 @@
                 mysql_close($this->dbh);
             }
         }
+        public static function DBescapeString( $string ){
+            return mysql_real_escape_string( $string );
+        }
         public static function DBrunQuery($query){
             return mysql_query($query); 
         }

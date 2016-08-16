@@ -1029,8 +1029,11 @@
             $return = false;
             $message = '[{"text": "'. $message.'", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
             $message = str_replace("", "%20", $message);
+
+            $message =   stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
+
             $url = "https://slack.com/api/chat.postMessage?token=".self::$SLACK_token."&attachments=" . urlencode($message) . "&channel=" . $channelid;
-            
+
             $html = self::getHtml( $url );
             if ($html === false) {
 
@@ -1158,6 +1161,7 @@
         public static function applyLeave( $userid, $from_date, $to_date, $no_of_days, $reason ){
             //date format = Y-m-d
             $applied_date = date('Y-m-d');
+            $reason =  self::DBescapeString( $reason );
             $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on  ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date' )";
             
             $r_error = 0;
@@ -1180,7 +1184,7 @@
 
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-            
+
                 $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
                 $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
             }else{
@@ -1539,9 +1543,6 @@
 
             $message_to_user = "Hi $userInfo_name !!  \n Your working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
             $message_to_hr = "Hi HR !!  \n $userInfo_name working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
-
-            echo $message_to_user.'<br>';
-            echo $message_to_hr.'<br>';
 
             $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
             $slackMessageStatus = self::sendSlackMessageToUser( "hr", $message_to_hr );
