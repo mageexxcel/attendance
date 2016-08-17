@@ -8,6 +8,7 @@ $current_month = date("Y-m");
 $cmonth_name = date("F Y");
 $current_day = date('l');
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
+$prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 if ($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat) {
@@ -294,7 +295,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
 //---------Applied leave messages to Hr channel-------------
     if (isset($_GET['leave'])) {
         $raw = array();
-        $ss = "SELECT leaves.*,user_profile.name FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%'";
+        $ss = "SELECT leaves.*,user_profile.name FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%' OR applied_on LIKE '%$prev_month%'";
         $sw = mysqli_query($link, $ss) or die(mysqli_error($link));
         while ($row = mysqli_fetch_assoc($sw)) {
             $raw[] = $row;
