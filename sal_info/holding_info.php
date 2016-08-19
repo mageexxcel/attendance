@@ -13,40 +13,32 @@ if (isset($_POST['token']) && $_POST['token'] == "") {
     $result['error'][] = "Please insert a valid token ";
 }
 if (!isset($_POST['user_id'])) {
-    $result['error'][] = "Please add user id ";
+    $result['error'][] = "Please add user_id ";
 }
 if (isset($_POST['user_id']) && $_POST['user_id'] == "") {
     $result['error'][] = "Please insert a valid user id ";
 }
-if (!isset($_POST['increment_start_date'])) {
-    $result['error'][] = "Please add Increment start date ";
+
+if (!isset($_POST['holding_start_date'])) {
+    $result['error'][] = "Please add holding_start_date ";
 }
-if (isset($_POST['increment_start_date']) && $_POST['increment_start_date'] == "") {
-    $result['error'][] = "Please insert a valid Increment start date ";
-}
-if (!isset($_POST['increment_end_date'])) {
-    $result['error'][] = "Please add Increment end date ";
-}
-if (isset($_POST['increment_end_date']) && $_POST['increment_end_date'] == "") {
-    $result['error'][] = "Please insert a Increment end date";
-}
-if (!isset($_POST['holding_amt_start'])) {
-    $result['error'][] = "Please add holding_amt_start ";
-}
-if (isset($_POST['holding_amt_start']) && $_POST['holding_amt_start'] == "") {
+if (isset($_POST['holding_start_date']) && $_POST['holding_start_date'] == "") {
     $result['error'][] = "Please insert a Holding amount start date";
 }
-if (!isset($_POST['holding_amt_stop'])) {
-    $result['error'][] = "Please add total_salary ";
+if (!isset($_POST['holding_end_date'])) {
+    $result['error'][] = "Please add holding_end_date ";
 }
-if (isset($_POST['holding_amt_stop']) && $_POST['holding_amt_stop'] == "") {
-    $result['error'][] = "Please insert a Holding amount stop date";
+if (isset($_POST['holding_end_date']) && $_POST['holding_end_date'] == "") {
+    $result['error'][] = "Please insert a Holding amount end date";
 }
 if (!isset($_POST['holding_amt'])) {
     $result['error'][] = "Please add Holding amount ";
 }
 if (isset($_POST['holding_amt']) && $_POST['holding_amt'] == "") {
     $result['error'][] = "Please insert a Holding amount";
+}
+if (isset($_POST['reason']) && $_POST['reason'] == "") {
+    $result['error'][] = "Please insert a valid reason";
 }
 
 if (sizeof($result['error']) <= 0) {

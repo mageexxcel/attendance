@@ -6,107 +6,116 @@ $result = array(
     'data' => array(),
     'error' => array()
 );
+$request_body = file_get_contents('php://input');
+$PARAMS = json_decode($request_body, true );
 
-if (!isset($_POST['token'])) {
+
+if (!isset($PARAMS['token'])) {
     $result['error'][] = "Please add token ";
 }
-if (isset($_POST['token']) && $_POST['token'] == "") {
+if (isset($PARAMS['token']) && $PARAMS['token'] == "") {
     $result['error'][] = "Please insert a valid token ";
 }
-if (!isset($_POST['user_id'])) {
+if (!isset($PARAMS['user_id'])) {
     $result['error'][] = "Please add user id ";
 }
-if (isset($_POST['user_id']) && $_POST['user_id'] == "") {
+if (isset($PARAMS['user_id']) && $PARAMS['user_id'] === "") {
     $result['error'][] = "Please insert a valid user id ";
 }
-if (!isset($_POST['total_salary'])) {
+if (!isset($PARAMS['total_salary'])) {
     $result['error'][] = "Please add total_salary ";
 }
-if (isset($_POST['total_salary']) && $_POST['total_salary'] == "") {
+if (isset($PARAMS['total_salary']) && $PARAMS['total_salary'] === "") {
     $result['error'][] = "Please insert a valid total salary amount ";
 }
-if (!isset($_POST['applicable_from'])) {
+if (!isset($PARAMS['applicable_from'])) {
     $result['error'][] = "Please add applicable_from ";
 }
-if (isset($_POST['applicable_from']) && $_POST['applicable_from'] == "") {
-    $result['error'][] = "Please insert a valid Applicable amount ";
+if (isset($PARAMS['applicable_from']) && $PARAMS['applicable_from'] == "") {
+    $result['error'][] = "Please insert a valid applicable_from date";
 }
-if (!isset($_POST['leave'])) {
+if (!isset($PARAMS['applicable_till'])) {
+    $result['error'][] = "Please add applicable_till ";
+}
+if (isset($PARAMS['applicable_till']) && $PARAMS['applicable_till'] == "") {
+    $result['error'][] = "Please insert a valid Applicable till date ";
+}
+if (!isset($PARAMS['leave'])) {
     $result['error'][] = "Please add leave ";
 }
-if (isset($_POST['leave']) && $_POST['leave'] == "") {
+if (isset($PARAMS['leave']) && $PARAMS['leave'] == "") {
     $result['error'][] = "Please insert a valid leave ";
 }
-if (!isset($_POST['special_allowance'])) {
+if (!isset($PARAMS['special_allowance'])) {
     $result['error'][] = "Please add special_allowance ";
 }
-if (isset($_POST['special_allowance']) && $_POST['special_allowance'] == "") {
+if (isset($PARAMS['special_allowance']) && $PARAMS['special_allowance'] === "") {
     $result['error'][] = "Please insert a valid special_allowance ";
 }
-if (!isset($_POST['medical_allowance'])) {
+if (!isset($PARAMS['medical_allowance'])) {
     $result['error'][] = "Please add medical_allowance ";
 }
-if (isset($_POST['medical_allowance']) && $_POST['medical_allowance'] == "") {
+if (isset($PARAMS['medical_allowance']) && $PARAMS['medical_allowance'] === "") {
     $result['error'][] = "Please insert a valid medical_allowance ";
 }
-if (!isset($_POST['conveyance'])) {
+if (!isset($PARAMS['conveyance'])) {
     $result['error'][] = "Please add conveyance ";
 }
-if (isset($_POST['conveyance']) && $_POST['conveyance'] == "") {
+if (isset($PARAMS['conveyance']) && $PARAMS['conveyance'] === "") {
     $result['error'][] = "Please insert a valid conveyance ";
 }
-if (!isset($_POST['hra'])) {
+if (!isset($PARAMS['hra'])) {
     $result['error'][] = "Please add hra ";
 }
-if (isset($_POST['hra']) && $_POST['hra'] == "") {
+if (isset($PARAMS['hra']) && $PARAMS['hra'] === "") {
     $result['error'][] = "Please insert a valid hra ";
 }
-if (!isset($_POST['basic'])) {
+if (!isset($PARAMS['basic'])) {
     $result['error'][] = "Please add basic ";
 }
-if (isset($_POST['basic']) && $_POST['basic'] == "") {
+if (isset($PARAMS['basic']) && $PARAMS['basic'] === "") {
     $result['error'][] = "Please insert a valid basic ";
 }
-if (!isset($_POST['tds'])) {
+if (!isset($PARAMS['tds'])) {
     $result['error'][] = "Please add tds ";
 }
-if (isset($_POST['tds']) && $_POST['tds'] == "") {
+if (isset($PARAMS['tds']) && $PARAMS['tds'] === "") {
     $result['error'][] = "Please insert a valid tds ";
 }
-if (!isset($_POST['Misc_deduction'])) {
+if (!isset($PARAMS['misc_deduction'])) {
     $result['error'][] = "Please add Misc_deduction ";
 }
-if (isset($_POST['Misc_deduction']) && $_POST['Misc_deduction'] == "") {
+if (isset($PARAMS['misc_deduction']) && $PARAMS['misc_deduction'] === "") {
     $result['error'][] = "Please insert a valid Misc_deduction ";
 }
-if (!isset($_POST['advance'])) {
+if (!isset($PARAMS['advance'])) {
     $result['error'][] = "Please add advance ";
 }
-if (isset($_POST['advance']) && $_POST['advance'] == "") {
+if (isset($PARAMS['advance']) && $PARAMS['advance'] === "") {
     $result['error'][] = "Please insert a valid advance ";
 }
-if (!isset($_POST['loan'])) {
+if (!isset($PARAMS['loan'])) {
     $result['error'][] = "Please add loan ";
 }
-if (isset($_POST['loan']) && $_POST['loan'] == "") {
+if (isset($PARAMS['loan']) && $PARAMS['loan'] === "") {
     $result['error'][] = "Please insert a valid loan ";
 }
-if (!isset($_POST['epf'])) {
+if (!isset($PARAMS['epf'])) {
     $result['error'][] = "Please add epf ";
 }
-if (isset($_POST['epf']) && $_POST['epf'] == "") {
+if (isset($PARAMS['epf']) && $PARAMS['epf'] === "") {
     $result['error'][] = "Please insert a valid epf ";
 }
-if (!isset($_POST['arrear'])) {
+if (!isset($PARAMS['arrear'])) {
     $result['error'][] = "Please add arrear ";
 }
-if (isset($_POST['arrear']) && $_POST['arrear'] == "") {
+if (isset($PARAMS['arrear']) && $PARAMS['arrear'] === "") {
     $result['error'][] = "Please insert a valid arrear ";
 }
 
 if (sizeof($result['error']) <= 0) {
-    foreach ($_POST as $key => $val) {
-        if ($key != 'token' && $key != 'applicable_from' && $key != 'submit') {
+    foreach ($PARAMS as $key => $val) {
+        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_till' && $key != 'submit') {
             if (!is_numeric($val)) {
                 $result['error'][] = "Please insert a valid $key number";
             }
@@ -118,10 +127,14 @@ if (sizeof($result['error']) <= 0) {
     }
 }
 
-if (isset($_POST['token']) && $_POST['token'] != "") {
-
+if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
+       $tuserid = Salary::getIdUsingToken($PARAMS['token']);
+      $userinfo = Salary::getUserDetail($tuserid);
+      if ($userinfo['type'] != "admin") {
+          $result['error'][] = "You are not authorise to update salary information";
+      }
     if (sizeof($result['error']) <= 0) {
-        $re = Salary::updateSalary($_POST);
+        $re = Salary::updateSalary($PARAMS);
         if ($re == "Successfully Salary Updated") {
             $result['data'] = $re;
         } else {
