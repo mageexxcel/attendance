@@ -69,7 +69,7 @@
                 
                 $updateFieldString = '';
                 foreach( $updateData as $field => $fieldVal ){
-                    $fieldVal = strtolower( mysql_real_escape_string($fieldVal) );
+                    $fieldVal = mysql_real_escape_string($fieldVal);
                     if( $updateFieldString == '' ){
                         $updateFieldString = $field."='$fieldVal'";
                     }else{
