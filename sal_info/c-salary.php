@@ -25,8 +25,8 @@ class Salary extends DATABASE {
         $q = "SELECT * from admin";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-        
-        
+
+
         foreach ($rows as $p) {
             self::$SLACK_client_id = $p['client_id'];
             self::$SLACK_client_secret = $p['client_secret'];
@@ -60,6 +60,7 @@ class Salary extends DATABASE {
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
             $arr['type'] = strtolower($val['type']);
+           // $arr['type'] = "admin";
         }
         return $arr;
     }
@@ -72,12 +73,23 @@ class Salary extends DATABASE {
     }
 
     public function getSalaryDetail($salary_id) {
+        $ret = array();
         $q = "select * from salary_details where salary_id = $salary_id";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         foreach ($row as $val) {
             $ret[$val['key']] = $val['value'];
         }
+        return $ret;
+    }
+
+    public function getHoldingDetail($user_id) {
+        $ret = array();
+        $q = "select * from user_holding_info where user_Id = $user_id";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        $ret = $row;
         return $ret;
     }
 
@@ -116,7 +128,7 @@ class Salary extends DATABASE {
             'applicable_till' => date("Y-m-d", strtotime($data['applicable_till']))
         );
 
-          self::DBinsertQuery('salary', $ins);
+        self::DBinsertQuery('salary', $ins);
         $salary_id = mysql_insert_id();
         $ins2 = array(
             'Special_Allowance' => $data['special_allowance'],
@@ -139,28 +151,28 @@ class Salary extends DATABASE {
             }
             $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
 
-             $runQuery = self::DBrunQuery($query);
+            $runQuery = self::DBrunQuery($query);
         }
         $userid = $data['user_id'];
         $userInfo = self::getUserInfo($userid);
         $userInfo_name = $userInfo['name'];
         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
         $message = "Hey $userInfo_name !!  \n Your Salary details are updated \n Details: \n ";
-        
-        $message = $message."Total Salary = ".$data['total_salary']." Rs \n";
-        $message = $message."Basic = ".$data['basic']." Rs \n";
-        $message = $message."HRA = ".$data['total_salary']." Rs \n";
-        $message = $message."Medical Allowance = ".$data['medical_allowance']." Rs \n";
-        $message = $message."Special Allowance = ".$data['special_allowance']." Rs \n";
-        $message = $message."Arrears = ".$data['arrear']." Rs \n";
-        $message = $message."EPF = ".$data['epf']." Rs \n";
-        $message = $message."Loan = ".$data['loan']." Rs \n";
-        $message = $message."Advance = ".$data['advance']." Rs \n";
-        $message = $message."Misc Deductions = ".$data['Misc_deduction']." Rs \n";
-        $message = $message."TDS = ".$data['tds']." Rs \n";
-        
-      //  $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
-       
+
+        $message = $message . "Total Salary = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Basic = " . $data['basic'] . " Rs \n";
+        $message = $message . "HRA = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Medical Allowance = " . $data['medical_allowance'] . " Rs \n";
+        $message = $message . "Special Allowance = " . $data['special_allowance'] . " Rs \n";
+        $message = $message . "Arrears = " . $data['arrear'] . " Rs \n";
+        $message = $message . "EPF = " . $data['epf'] . " Rs \n";
+        $message = $message . "Loan = " . $data['loan'] . " Rs \n";
+        $message = $message . "Advance = " . $data['advance'] . " Rs \n";
+        $message = $message . "Misc Deductions = " . $data['Misc_deduction'] . " Rs \n";
+        $message = $message . "TDS = " . $data['tds'] . " Rs \n";
+
+        //  $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+
         return "Successfully Salary Updated";
     }
 
@@ -175,13 +187,14 @@ class Salary extends DATABASE {
         }
     }
 
-    public function insertIncrementInfo($data) {
+    public function insertHoldingInfo($data) {
         $ins = array(
             'user_Id' => $data['user_id'],
             'holding_amt' => $data['holding_amt'],
             'holding_start_date' => $data['holding_start_date'],
             'holding_end_date' => $data['holding_end_date'],
-            'reason' => $data['reason']
+            'reason' => $data['reason'],
+            'last_updated_on' => date("Y-m-d")
         );
 
         $res = self::DBinsertQuery('user_holding_info', $ins);
@@ -200,8 +213,18 @@ class Salary extends DATABASE {
             'bank_account_no' => $data['account_no'],
             'ifsc' => $data['ifsc']
         );
+        $whereField = 'user_Id';
+        $whereFieldVal = $data['user_id'];
+        $q = 'select * from user_bank_details where user_Id=' . $whereFieldVal;
+        $run = mysql_query($q);
+        $num_rows = mysql_num_rows($run);
+        if ($num_rows > 0) {
+            $res = self::DBupdateBySingleWhere('user_bank_details', $whereField, $whereFieldVal, $ins);
+        }
+        if ($num_rows <= 0) {
+            $res = self::DBinsertQuery('user_bank_details', $ins);
+        }
 
-        $res = self::DBinsertQuery('user_bank_details', $ins);
         if ($res == false) {
             return false;
         } else {
@@ -220,54 +243,51 @@ class Salary extends DATABASE {
     }
 
     public function UpdateUserInfo($data) {
-        $ins = array(
-            'name' => $data['name'],
-            'jobtitle' => $data['jobtitle'],
-            'dateofjoining' => $data['dateofjoin'],
-            'dob' => $data['dob'],
-            'gender' => $data['gender'],
-            'marital_status' => $data['marital_status'],
-            'address1' => $data['address1'],
-            'address2' => $data['address2'],
-            'city' => $data['city'],
-            'state' => $data['state'],
-            'zip_postal' => $data['zipcode'],
-            'country' => $data['country'],
-            'home_ph' => $data['home_phone'],
-            'mobile_ph' => $data['mobile_phone'],
-            'work_email' => $data['work_email'],
-            'other_email' => $data['other_email'],
-            'image' => $data['image'],
-        );
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $userid = $data['user_id'];
+        $user_profile_detail = self::getUserprofileDetail($userid);
         $whereField = 'user_Id';
-        $whereFieldVal = $data['user_id'];
-        $res = self::DBupdateBySingleWhere('user_profile', $whereField, $whereFieldVal, $ins);
-        if ($res == false) {
-            return false;
-        } else {
-            $userid = $data['user_id'];
-        $userInfo = self::getUserInfo($userid);
-        $userInfo_name = $userInfo['name'];
-        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-        $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
-        
-        $message = $message."Name = ".$data['name']."\n";
-        $message = $message."Job Title = ".$data['jobtitle']."\n";
-        $message = $message."Date of Joining = ".$data['total_salary']."\n";
-        $message = $message."Date of Birth = ".$data['medical_allowance']."\n";
-        $message = $message."Gender = ".$data['special_allowance']."\n";
-        $message = $message."Marital Status = ".$data['arrear']."\n";
-        $message = $message."Address = ".$data['address1']." ".$data['address2']." ".$data['city']." ".$data['state']." ".$data['country']." ".$data['zipcode']."\n";
-        $message = $message."Home Phone no. = ".$data['home_phone']."\n";
-        $message = $message."Mobile No. = ".$data['mobile_phone']."\n";
-        $message = $message."Work Email = ".$data['work_email']."\n";
-        $message = $message."Other Email = ".$data['other_email']."\n";
-        
-        $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
-            
-            
-            return "Successfully Updated into table";
+        $whereFieldVal = $userid;
+        $msg=array();
+        $res = false;
+        foreach ($user_profile_detail as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $user_profile_detail[$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('user_profile', $whereField, $whereFieldVal, $arr);
+                    $msg[$key] = $data[$key];
+                }
+            }
         }
+
+        if ($res == false) {
+            $r_error = 0;
+            $r_message = "No fields updated into table";
+            $r_data['message'] = $r_message;
+        } else {
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            if (sizeof($msg > 0)) {
+                $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
+                foreach ($msg as $key => $valu) {
+                    $message = $message . "$key = " . $valu . "\n";
+                }
+                //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            }
+            
+            $r_error = 0;
+            $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
     }
 
     public function UserDocumentInfo($data) {
@@ -297,22 +317,22 @@ class Salary extends DATABASE {
             return false;
         } else {
             $userid = $data['user_id'];
-        $userInfo = self::getUserInfo($userid);
-        $userInfo_name = $userInfo['name'];
-        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-        $message = "Hey $userInfo_name !!  \n Your document details are updated \n Details: \n ";
-        
-        $message = $message."Id Proof = ".$data['id_proof']."\n";
-        $message = $message."Address Proof = ".$data['address_proof']."\n";
-        $message = $message."Passport Photo = ".$data['passport_photo']."\n";
-        $message = $message."Ceritficate = ".$data['certificate']."\n";
-        $message = $message."Pancard = ".$data['pancard']."\n";
-        $message = $message."User Id for Bank = ".$data['uid_for_bank']."\n";
-        $message = $message."Previous Company Document = ".$data['previous_comp_doc']."\n";
-     
-        echo $message;
-        //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
-            
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $message = "Hey $userInfo_name !!  \n Your document details are updated \n Details: \n ";
+
+            $message = $message . "Id Proof = " . $data['id_proof'] . "\n";
+            $message = $message . "Address Proof = " . $data['address_proof'] . "\n";
+            $message = $message . "Passport Photo = " . $data['passport_photo'] . "\n";
+            $message = $message . "Ceritficate = " . $data['certificate'] . "\n";
+            $message = $message . "Pancard = " . $data['pancard'] . "\n";
+            $message = $message . "User Id for Bank = " . $data['uid_for_bank'] . "\n";
+            $message = $message . "Previous Company Document = " . $data['previous_comp_doc'] . "\n";
+
+            echo $message;
+            //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+
             return "Successfully Inserted into table";
         }
     }
@@ -409,11 +429,118 @@ class Salary extends DATABASE {
                 }
             }
         }
-        
+
         return $return;
     }
-   
+
+    public function getUserprofileDetail($userid) {
+        $q = "SELECT users.status,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        $arr = "";
+        $arr = $row;
+        return $arr;
+    }
+
+    public function getUserBankDetail($userid) {
+        $q = "SELECT * FROM user_bank_details WHERE user_Id = $userid";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        $arr = "";
+        $arr = $row;
+        return $arr;
+    }
+
+    public static function getUserDetailInfo($userid) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $user_bank_detail = self::getUserBankDetail($userid);
+        $user_profile_detail = self::getUserprofileDetail($userid);
+        $return = array();
+        $r_error = 0;
+        $return['error'] = $r_error;
+        $return['data']['user_profile_detail'] = $user_profile_detail;
+        $return['data']['user_bank_detail'] = $user_bank_detail;
+        return $return;
+    }
+
+    public static function UpdateUserBankInfo($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $userid = $data['user_id'];
+        $user_bank_detail = self::getUserBankDetail($userid);
+        $ins = array(
+            'bank_name' => $data['bank_name'],
+            'bank_address' => $data['bank_address'],
+            'bank_account_no' => $data['account_no'],
+            'ifsc' => $data['ifsc']
+        );
+
+        $whereField = 'user_Id';
+        $whereFieldVal = $userid;
+        $msg = array();
+        $res = false;
+        foreach ($user_bank_detail as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $user_bank_detail[$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('user_bank_details', $whereField, $whereFieldVal, $arr);
+                    $msg[$key] = $data[$key];
+                }
+            }
+        }
+
+        if ($res == false) {
+            $r_error = 0;
+            $r_message = "No fields updated into table";
+            $r_data['message'] = $r_message;
+        } else {
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            if (sizeof($msg > 0)) {
+                $message = "Hey $userInfo_name !!  \n Your bank details are updated \n Details: \n ";
+                foreach ($msg as $key => $valu) {
+                    $message = $message . "$key = " . $valu . "\n";
+                }
+                //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            }
+            $r_error = 0;
+            $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+    public static function generateUserSalary($userid){
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $salary_info = self::getSalaryInfo($userid);
+        echo "<pre>";
+        $num = sizeof($salary_info);
+        echo $num;
+        if($num > 0){
+            $res2 = Salary::getSalaryDetail($salary_info[$num-1]);
+             print_r($res2);
+        }
+        else {
+          $r_message = "No salary detail for this user";
+            $r_data['message'] = $r_message;  
+        }
+       
+        
+    }
 
 }
- new Salary();
+
+new Salary();
 ?>

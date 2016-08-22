@@ -11,13 +11,10 @@ $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
 $prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
-
 //get holiday date list
 $h = "SELECT * FROM holidays WHERE  date like '%$current_date%'";
 $qr = mysqli_query($link, $h) or die(mysqli_error($link));
 $holiday = mysqli_num_rows($qr);
-
-
 if ($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat && $holiday == 0) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
@@ -79,7 +76,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
                 echo $newmsg;
-               send_slack_message($c_id, $token, $newmsg);
+                send_slack_message($c_id, $token, $newmsg);
             }
         }
         //-- get one or two month employee completed slack message on hr channel----- 
@@ -141,7 +138,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
         }
         array_pop($set);
-        array_pop($set);
+        //array_pop($set);
 //---- end-----------
         foreach ($arr as $kk => $vv) {
             // print_r($value);
@@ -258,12 +255,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             $uid = $value['userid'];
 //echo "<pre>";
 //print_r($wdate);
-//die;
+//die; 
+             $mm = "";
             if (sizeof($wdate) > 0) {
                 $diff = array_diff($set, $wdate);
                 $arr = getLeaveNotification($uid, $link);
                 $diff2 = array_diff($diff, $arr);
-                $mm = "";
+                
                 if (sizeof($diff2) > 0) {
                     foreach ($diff2 as $v) {
                         $mm = $mm . "You have not applied your leave on " . date("d-m-Y", strtotime(str_replace("-", "/", $v))) . "\n";
@@ -290,13 +288,15 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         $msg2 = $msg2 . "Hi " . $rname . "\n";
                         $msg2 = $msg2 . $mm . "Please apply asap on HR System";
                         send_slack_message($c_id, $token, $msg2);
+                        send_slack_message($c_id='hr_system', $token, $msg2);
+                       
                         echo $msg2;
                         echo "<br>";
                     }
                 }
             }
         }
-        send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
+      // send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------

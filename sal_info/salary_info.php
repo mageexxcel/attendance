@@ -23,6 +23,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                     $result['error'][] = 'The given user id member not found';
                 } else {
                     $result['data'] = $userinfo;
+                    $res3 = Salary::getHoldingDetail($userid);
                     $res = Salary::getSalaryInfo($userid);
                     $i = 0;
                     foreach ($res as $val) {
@@ -32,22 +33,28 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                         $result['data']['salary_details'][] = $res2;
                         $i++;
                     }
+                     $result['data']['holding_details'] = $res3;
                 }
             } else {
                 $result['error'][] = 'The given user id number';
             }
         } else {
+            
             $result['data'] = $userinfo;
             $res = Salary::getSalaryInfo($tuserid);
+            $res3 = Salary::getHoldingDetail($tuserid);
             $i = 0;
             foreach ($res as $val) {
 
                 $res2 = Salary::getSalaryDetail($val['id']);
+                
                 $res2['test'] = $val;
                 $res2['date'] = $val['applicable_from'];
                 $result['data']['salary_details'][] = $res2;
+                
                 $i++;
             }
+            $result['data']['holding_details'] = $res3;
         }
     }
 }
