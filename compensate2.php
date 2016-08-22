@@ -296,7 +296,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
             }
         }
-      // send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
+       send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------
