@@ -12,6 +12,7 @@ $prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 //get holiday date list
+echo "<pre>";
 $h = "SELECT * FROM holidays WHERE  date like '%$current_date%'";
 $qr = mysqli_query($link, $h) or die(mysqli_error($link));
 $holiday = mysqli_num_rows($qr);
