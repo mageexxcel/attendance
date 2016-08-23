@@ -427,7 +427,7 @@ function getData($data, $link) {
 function getLeaveNotification($data, $link) {
     $date = date("Y-m");
     $result = array();
-    $qry = "select * from leaves where user_Id=" . $data . " AND from_date like '%$date%'";
+    $qry = "select * from leaves where user_Id=" . $data . " AND from_date like '%$date%' AND status != 'Rejected'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     while ($row = mysqli_fetch_assoc($resl)) {
         if (sizeof($row) > 0) {
