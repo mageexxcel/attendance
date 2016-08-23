@@ -2,29 +2,19 @@
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
-//$de = date("m-Y");
-//$current_date = date("Y-m-d");
-//$current_month = date("Y-m");
-//$cmonth_name = date("F Y");
-//$current_day = date('l');
-
-$de = "08-2016";
-$current_date = "2016-08-19";
-$current_month = "2016-08";
-$cmonth_name = "August 2016";
-$current_day = "Monday";
-
+$de = date("m-Y");
+$current_date = date("Y-m-d");
+$current_month = date("Y-m");
+$cmonth_name = date("F Y");
+$current_day = date('l');
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
 $prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
-
-//get no. of holiday date 
+//get holiday date list
 $h = "SELECT * FROM holidays WHERE  date like '%$current_date%'";
 $qr = mysqli_query($link, $h) or die(mysqli_error($link));
 $holiday = mysqli_num_rows($qr);
-
-
 if ($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat && $holiday == 0) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
@@ -86,7 +76,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
                 echo $newmsg;
-             //  send_slack_message($c_id, $token, $newmsg);
+             //   send_slack_message($c_id, $token, $newmsg);
             }
         }
         //-- get one or two month employee completed slack message on hr channel----- 
@@ -121,12 +111,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             if ($newmes != "") {
                 echo $newmes;
-               // send_slack_message($c_id = 'hr_system', $token, $newmes);
+              //  send_slack_message($c_id = 'hr_system', $token, $newmes);
             }
             if ($newmes == "") {
                 $newmes = "No Message daily notify url run";
                 echo $newmes;
-              //  send_slack_message($c_id = 'hr_system', $token, $newmes);
+             //   send_slack_message($c_id = 'hr_system', $token, $newmes);
             }
         }
         //--end get one or two month employee completed slack message on hr channel-----
@@ -148,7 +138,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
         }
         array_pop($set);
-        array_pop($set);
+        //array_pop($set);
 //---- end-----------
         foreach ($arr as $kk => $vv) {
             // print_r($value);
@@ -255,7 +245,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                             }
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
-                      //  send_slack_message($c_id, $token, $msg);
+                       // send_slack_message($c_id, $token, $msg);
                       //  send_slack_message($c_id = 'hr_system', $token, $msg);
                         echo $msg;
                         echo "<br>";
@@ -265,12 +255,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             $uid = $value['userid'];
 //echo "<pre>";
 //print_r($wdate);
-//die;
+//die; 
+             $mm = "";
             if (sizeof($wdate) > 0) {
                 $diff = array_diff($set, $wdate);
                 $arr = getLeaveNotification($uid, $link);
                 $diff2 = array_diff($diff, $arr);
-                $mm = "";
+                
                 if (sizeof($diff2) > 0) {
                     foreach ($diff2 as $v) {
                         $mm = $mm . "You have not applied your leave on " . date("d-m-Y", strtotime(str_replace("-", "/", $v))) . "\n";
@@ -296,14 +287,16 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         //  echo $key."----".$f."-----".$c_id;
                         $msg2 = $msg2 . "Hi " . $rname . "\n";
                         $msg2 = $msg2 . $mm . "Please apply asap on HR System";
-                      //  send_slack_message($c_id, $token, $msg2);
+                       // send_slack_message($c_id, $token, $msg2);
+                      //  send_slack_message($c_id='hr_system', $token, $msg2);
+                       
                         echo $msg2;
                         echo "<br>";
                     }
                 }
             }
         }
-      // send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
+     //  send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
     }
 //--end compensate slack notification----------
 //---------Applied leave messages to Hr channel-------------
@@ -343,12 +336,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         }
         if ($msg3 != "") {
             $hr3 = "hrfile3";
-          //  send_slack_message($c_id = 'hr_system', $token, $msg3, $hr3);
+           // send_slack_message($c_id = 'hr_system', $token, $msg3, $hr3);
         }
         if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
             $no_msg = "No Leave notification";
             echo $no_msg;
-          //  send_slack_message($c_id = 'hr_system', $token, $no_msg);
+           // send_slack_message($c_id = 'hr_system', $token, $no_msg);
         }
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
         //--end applied leave slack message to hr ------------------ 
@@ -371,7 +364,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 $update_msg = $update_msg . " in your slack profile. Please do that asap. ";
                 $c_id = get_channel_id($f, $cid_array);
                 echo $c_id . "--" . $update_msg . "<hr>";
-              //  send_slack_message($c_id, $token, $update_msg, $hr3);
+               // send_slack_message($c_id, $token, $update_msg, $hr3);
             }
         }
 //---end update profile pic and phone no. slack message--- 

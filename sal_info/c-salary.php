@@ -60,7 +60,7 @@ class Salary extends DATABASE {
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
             $arr['type'] = strtolower($val['type']);
-           // $arr['type'] = "admin";
+            //$arr['type'] = "admin";
         }
         return $arr;
     }
@@ -250,7 +250,7 @@ class Salary extends DATABASE {
         $user_profile_detail = self::getUserprofileDetail($userid);
         $whereField = 'user_Id';
         $whereFieldVal = $userid;
-        $msg=array();
+        $msg = array();
         $res = false;
         foreach ($user_profile_detail as $key => $val) {
             if (array_key_exists($key, $data)) {
@@ -278,7 +278,7 @@ class Salary extends DATABASE {
                 }
                 //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             }
-            
+
             $r_error = 0;
             $r_message = "Successfully Updated into table";
             $r_data['message'] = $r_message;
@@ -519,8 +519,8 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-    
-    public static function generateUserSalary($userid){
+
+    public static function generateUserSalary($userid) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -528,15 +528,161 @@ class Salary extends DATABASE {
         echo "<pre>";
         $num = sizeof($salary_info);
         echo $num;
-        if($num > 0){
-            $res2 = Salary::getSalaryDetail($salary_info[$num-1]);
-             print_r($res2);
+        if ($num > 0) {
+            $res2 = Salary::getSalaryDetail($salary_info[$num - 1]);
+            print_r($res2);
+        } else {
+            $r_message = "No salary detail for this user";
+            $r_data['message'] = $r_message;
         }
-        else {
-          $r_message = "No salary detail for this user";
-            $r_data['message'] = $r_message;  
+    }
+
+    public static function createNewClient($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'name' => $data['name'],
+            'address' => $data['address'],
+            'created_on' => date("Y-m-d"),
+            'status' => 1
+        );
+
+        $res = self::DBinsertQuery('clients', $ins);
+        if ($res == false) {
+            $r_error = 1;
+            $r_message = "Error occured while inserting data";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_message = "Data Successfully Inserted";
+            $r_data['message'] = $r_message;
         }
-       
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getAllClient() {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $query = "SELECT * FROM clients";
+
+        $runQuery = self::DBrunQuery($query);
+        $res = self::DBfetchRows($runQuery);
+        if ($res == false) {
+            $r_error = 1;
+            $r_message = "Error occured while fetching data";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_data = $res;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function createClientInvoice($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'client_id' => $data['client_id'],
+            'client_name' => $data['client_name'],
+            'client_address' => $data['client_address'],
+            'currency' => $data['currency'],
+            'items' => mysql_real_escape_string($data['items']),
+            'sub_total' => $data['sub_total'],
+            'service_tax' => $data['service_tax'],
+            'total_amount' => $data['total_amount'],
+            'due_date' => $data['due_date'],
+            'created_on' => date("Y-m-d"),
+            'status' => 1
+        );
+
+        $res = self::DBinsertQuery('clients_invoices', $ins);
+        if ($res == false) {
+            $r_error = 1;
+            $r_message = "Error occured while inserting data";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_message = "Successfully Created";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getClientDetails($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $client_id = $data['client_id'];
+        $query = "SELECT * FROM clients WHERE id=$client_id";
+        $runQuery = self::DBrunQuery($query);
+        $res = self::DBfetchRow($runQuery);
+        $query2 = "SELECT * FROM clients_invoices WHERE client_id=$client_id";
+        $runQuery2 = self::DBrunQuery($query2);
+        $res2 = self::DBfetchRows($runQuery2);
+
+        if ($res == false || sizeof($res2) < 0) {
+            $r_error = 1;
+            $r_message = "Client and invoice not found";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_data['client_info'] = $res;
+            $r_data['invoices'] = $res2;
+        }
+
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function createPDf($html) {
+        require_once "dompdf-master/dompdf_config.inc.php";
+
+        $pname = rand(1, 100) . ".pdf";
+        $theme_root = "a_pdfs/" . $pname;
+
+        if (get_magic_quotes_gpc())
+            $html = stripslashes($html);
+        
+        $dompdf = new DOMPDF();
+        $dompdf->load_html($html);
+        $dompdf->render();
+       //$dompdf->stream("test.pdf");
+        $output = $dompdf->output();
+        try {
+            file_put_contents($theme_root, $output);
+            return $theme_root;
+        } catch (Exception $e) {
+            return $e;
+        }
+    }
+    
+    public static function createUserPayslip($user_id){
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        
+        
+        
         
     }
 

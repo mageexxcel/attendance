@@ -1,12 +1,11 @@
 <?php
-
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-$PARAMS = json_decode($request_body, true);
-//$PARAMS = $_GET;
+//$PARAMS = json_decode($request_body, true);
+$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -42,11 +41,11 @@ if ($action == 'get_user_profile_detail') {
 }
 
 if ($action == 'update_user_profile_detail') {
-    
-     if ($userinfo['type'] == "admin") {
+
+    if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
-           $res = Salary::UpdateUserInfo($PARAMS);
+            $res = Salary::UpdateUserInfo($PARAMS);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
@@ -54,13 +53,10 @@ if ($action == 'update_user_profile_detail') {
         $PARAMS['user_id'] = $user_id;
         $res = Salary::UpdateUserInfo($PARAMS);
     }
-    
-
-    
 }
 
 if ($action == 'update_user_bank_detail') {
-       if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::UpdateUserBankInfo($PARAMS);
@@ -69,13 +65,11 @@ if ($action == 'update_user_bank_detail') {
         }
     } else {
         $PARAMS['user_id'] = $user_id;
-         $res = Salary::UpdateUserBankInfo($PARAMS);
+        $res = Salary::UpdateUserBankInfo($PARAMS);
     }
-
-   
 }
 if ($action == 'create_user_salary') {
-   if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::generateUserSalary($user_id);
@@ -86,5 +80,59 @@ if ($action == 'create_user_salary') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+if ($action == 'create_new_client') {
+   if ($userinfo['type'] == "admin") {
+
+        $res = Salary::createNewClient($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_all_clients') {
+   
+   if ($userinfo['type'] == "admin") {
+       $res = Salary::getAllClient();
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'create_client_invoice') {
+    if ($userinfo['type'] == "admin") {
+   
+        $res = Salary::createClientInvoice($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_client_detail') {
+    if ($userinfo['type'] == "admin") {
+      if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
+            $client_id = $PARAMS['client_id'];
+            $res = Salary::getClientDetails($client_id);
+        } else {
+            $res['data']['message'] = 'Please give client_id ';
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'create_user_payslip') {
+ 
+    if ($userinfo['type'] == "admin") {
+      if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $user_id = $PARAMS['user_id'];
+            $res = Salary::createUserPayslip($user_id);
+        } else {
+            $res['data']['message'] = 'Please give user_id ';
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
 echo json_encode($res);
 ?>
