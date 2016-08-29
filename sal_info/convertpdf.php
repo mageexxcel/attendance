@@ -1,7 +1,9 @@
 <?php
+
 require_once "dompdf-master/dompdf_config.inc.php";
 $html = '';
-require_once 'template_l.php';
+$html=ob_start();
+require_once 'template_payslip.php';
 
 $html = ob_get_clean();
 $pname = "test.pdf";

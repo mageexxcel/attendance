@@ -60,13 +60,20 @@ class Salary extends DATABASE {
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
             $arr['type'] = strtolower($val['type']);
-            //$arr['type'] = "admin";
+            // $arr['type'] = "admin";
         }
         return $arr;
     }
 
     public function getSalaryInfo($userid) {
         $q = "select * from salary where user_Id = $userid";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    public function getUserPayslipInfo($userid) {
+        $q = "select * from payslips where user_Id = $userid";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         return $row;
@@ -88,7 +95,6 @@ class Salary extends DATABASE {
         $q = "select * from user_holding_info where user_Id = $user_id";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
-
         $ret = $row;
         return $ret;
     }
@@ -525,9 +531,8 @@ class Salary extends DATABASE {
         $r_message = "";
         $r_data = array();
         $salary_info = self::getSalaryInfo($userid);
-        echo "<pre>";
         $num = sizeof($salary_info);
-        echo $num;
+
         if ($num > 0) {
             $res2 = Salary::getSalaryDetail($salary_info[$num - 1]);
             print_r($res2);
@@ -541,6 +546,7 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+
         $ins = array(
             'name' => $data['name'],
             'address' => $data['address'],
@@ -565,14 +571,55 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    public static function UpdateClientDetails($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $clientid = $data['client_id'];
+        $q = "SELECT * FROM clients WHERE id=$clientid";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+
+        $whereField = 'id';
+        $whereFieldVal = $clientid;
+        $msg = array();
+        $res = false;
+        foreach ($row as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $row[$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('clients', $whereField, $whereFieldVal, $arr);
+                }
+            }
+        }
+
+        if ($res == false) {
+            $r_error = 0;
+            $r_message = "No fields updated into table";
+            $r_data['message'] = $r_message;
+        } else {
+
+            $r_error = 0;
+            $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
     public static function getAllClient() {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $query = "SELECT * FROM clients";
+        $query = "SELECT * FROM clients ORDER BY id DESC";
 
         $runQuery = self::DBrunQuery($query);
         $res = self::DBfetchRows($runQuery);
+
         if ($res == false) {
             $r_error = 1;
             $r_message = "Error occured while fetching data";
@@ -592,12 +639,15 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+        $arr_item = $data['items'];
+        $items = json_encode($data['items']);
+
         $ins = array(
             'client_id' => $data['client_id'],
             'client_name' => $data['client_name'],
             'client_address' => $data['client_address'],
             'currency' => $data['currency'],
-            'items' => mysql_real_escape_string($data['items']),
+            'items' => $items,
             'sub_total' => $data['sub_total'],
             'service_tax' => $data['service_tax'],
             'total_amount' => $data['total_amount'],
@@ -606,12 +656,50 @@ class Salary extends DATABASE {
             'status' => 1
         );
 
+//        $url = "http://excellencetechnologies.co.in/imap/upload_invoice.php?file=".  urlencode($file_path);
+//        echo $url;
+//        
+//        $ch = curl_init();
+//            curl_setopt($ch, CURLOPT_URL, $url);
+//            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+//            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+//            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+//            $result = curl_exec($ch);
+//    if ($result === false) {
+//        echo 'Curl error: ' . curl_error($ch);
+//    } else {
+//        $fresult = json_decode($result, true);
+//    }
+//    curl_close($ch);
+//            echo $result;
+
         $res = self::DBinsertQuery('clients_invoices', $ins);
         if ($res == false) {
             $r_error = 1;
             $r_message = "Error occured while inserting data";
             $r_data['message'] = $r_message;
         } else {
+            $invoice_no = mysql_insert_id();
+
+            $html = '';
+            $html = ob_start();
+            require_once 'template_invoice.php';
+            $html = ob_get_clean();
+
+            $html = str_replace("##client_name##", $data['client_name'], $html);
+            $html = str_replace("##client_address##", $data['client_address'], $html);
+            $html = str_replace("##due_date##", $data['due_date'], $html);
+            $html = str_replace("##invoice_no##", $invoice_no, $html);
+            $html = str_replace("##sub_total##", $data['sub_total'], $html);
+            $html = str_replace("##service_tax##", $data['service_tax'], $html);
+            $html = str_replace("##total_amount##", $data['total_amount'], $html);
+            $html = str_replace("##currency##", $data['currency'], $html);
+
+            $suc = self::createPDf($html, $invoice_no);
+            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+            $query = "UPDATE clients_invoices SET file_address= '" . mysql_real_escape_string($file_path) . "' WHERE id = $invoice_no";
+            mysql_query($query);
+
             $r_error = 0;
             $r_message = "Successfully Created";
             $r_data['message'] = $r_message;
@@ -623,26 +711,55 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function getClientDetails($data) {
+    public static function DeleteInvoice($data) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $client_id = $data['client_id'];
+
+        $q = "DELETE FROM clients_invoices WHERE id =" . $data['invoice_id'];
+        $res = self::DBrunQuery($q);
+        if ($res == false) {
+            $r_error = 1;
+            $r_message = "Error occured while deleting invoice";
+            $r_data['message'] = $r_message;
+        } else {
+
+            $r_error = 0;
+            $r_message = "Invoice Deleted";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getClientDetails($client_id) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
         $query = "SELECT * FROM clients WHERE id=$client_id";
         $runQuery = self::DBrunQuery($query);
         $res = self::DBfetchRow($runQuery);
-        $query2 = "SELECT * FROM clients_invoices WHERE client_id=$client_id";
+        $query2 = "SELECT * FROM clients_invoices WHERE client_id=$client_id ORDER BY id DESC";
         $runQuery2 = self::DBrunQuery($query2);
         $res2 = self::DBfetchRows($runQuery2);
+        $res4 = array();
+        foreach ($res2 as $val) {
+            $res3 = $val;
+            $res3['items'] = json_decode($val['items']);
+            $res4[] = $res3;
+        }
 
-        if ($res == false || sizeof($res2) < 0) {
+        if ($res == false || sizeof($res4) < 0) {
             $r_error = 1;
             $r_message = "Client and invoice not found";
             $r_data['message'] = $r_message;
         } else {
             $r_error = 0;
             $r_data['client_info'] = $res;
-            $r_data['invoices'] = $res2;
+            $r_data['invoices'] = $res4;
         }
 
 
@@ -654,19 +771,22 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function createPDf($html) {
+    public static function createPDf($html, $invoice_no, $path = false) {
         require_once "dompdf-master/dompdf_config.inc.php";
 
-        $pname = rand(1, 100) . ".pdf";
+        $pname = $invoice_no . ".pdf";
         $theme_root = "a_pdfs/" . $pname;
+        if ($path != false) {
+            $theme_root = $path . "/" . $pname;
+        }
 
         if (get_magic_quotes_gpc())
             $html = stripslashes($html);
-        
+
         $dompdf = new DOMPDF();
         $dompdf->load_html($html);
         $dompdf->render();
-       //$dompdf->stream("test.pdf");
+        //$dompdf->stream("test.pdf");
         $output = $dompdf->output();
         try {
             file_put_contents($theme_root, $output);
@@ -675,15 +795,76 @@ class Salary extends DATABASE {
             return $e;
         }
     }
-    
-    public static function createUserPayslip($user_id){
+
+    public static function createUserPayslip($data) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
-        
-        
-        
+
+        $ins = array(
+            'user_Id' => $data['user_id'],
+            'month' => $data['month'] . " " . $data['year'],
+            'total_leave_taken' => $data['total_leave_taken'],
+            'leave_balance' => $data['leave_balance'],
+            'allocated_leaves' => $data['allocated_leaves'],
+            'paid_leaves' => $data['paid_leaves'],
+            'unpaid_leaves' => $data['unpaid_leaves'],
+            'final_leave_balance' => $data['final_leave_balance'],
+            'payslip_url' => ""
+        );
+        $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . " " . $data['year'] . "'";
+        $row = mysql_query($q);
+        if (mysql_num_rows($row) > 0) {
+            $r_error = 1;
+            $r_message = "Payslip already present in database";
+            $r_data['message'] = $r_message;
+        } else {
+            $res = self::DBinsertQuery('payslips', $ins);
+            if ($res == false) {
+                $r_error = 1;
+                $r_message = "Error occured while inserting data";
+                $r_data['message'] = $r_message;
+            } else {
+                $payslip_no = mysql_insert_id();
+
+                $html = '';
+                $html = ob_start();
+                require_once 'template_payslip.php';
+                $html = ob_get_clean();
+
+                $suc = self::createPDf($html, $payslip_no, $path = "payslip");
+                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/atten/attendance/sal_info/" . $suc;
+                $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($file_path) . "' WHERE id = $payslip_no";
+                mysql_query($query);
+
+                $r_error = 0;
+                $r_message = "Salary slip generated successfully";
+                $r_data['message'] = $r_message;
+            }
+        }
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function getUserManagePayslip($userid) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $res = self::getUserPayslipInfo($userid);
+
+        $r_error = 0;
+        $r_data['user_data_for_payslip'] = array();
+        $r_data['user_payslip_history'] = $res;
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
     }
 
 }
