@@ -1,11 +1,12 @@
 <?php
+
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-//$PARAMS = json_decode($request_body, true);
-$PARAMS = $_GET;
+$PARAMS = json_decode($request_body, true);
+//$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -82,27 +83,90 @@ if ($action == 'create_user_salary') {
 }
 
 if ($action == 'create_new_client') {
-   if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin") {
+        if (!isset($PARAMS['name']) || $PARAMS['name'] == "") {
+            $res['data']['message'][] = 'Please Insert name';
+        }
+        if (!isset($PARAMS['address']) || $PARAMS['address'] == "") {
+            $res['data']['message'][] = 'Please Insert address';
+        } else {
+            $res = Salary::createNewClient($PARAMS);
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
 
-        $res = Salary::createNewClient($PARAMS);
+if ($action == 'update_client_details') {
+
+    if ($userinfo['type'] == "admin") {
+        if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
+            $clientid = $PARAMS['client_id'];
+            $res = Salary::UpdateClientDetails($PARAMS);
+        } else {
+            $res['data']['message'] = 'Please give client_id ';
+        }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
 
 if ($action == 'get_all_clients') {
-   
-   if ($userinfo['type'] == "admin") {
-       $res = Salary::getAllClient();
+
+    if ($userinfo['type'] == "admin") {
+        $res = Salary::getAllClient();
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
 
 if ($action == 'create_client_invoice') {
+
     if ($userinfo['type'] == "admin") {
-   
-        $res = Salary::createClientInvoice($PARAMS);
+        if (!isset($PARAMS['client_id']) || $PARAMS['client_id'] == "") {
+            $res['data']['message'][] = 'Please Insert client_id';
+        }
+        if (!isset($PARAMS['client_name']) || $PARAMS['client_name'] == "") {
+            $res['data']['message'][] = 'Please Insert client_name';
+        }
+        if (!isset($PARAMS['client_address']) || $PARAMS['client_address'] == "") {
+            $res['data']['message'][] = 'Please Insert client_address';
+        }
+        if (!isset($PARAMS['currency']) || $PARAMS['currency'] == "") {
+            $res['data']['message'][] = 'Please Insert currency';
+        }
+        if (!isset($PARAMS['items']) || $PARAMS['items'] == "") {
+            $res['data']['message'][] = 'Please Insert items';
+        }
+        if (!isset($PARAMS['sub_total']) || $PARAMS['sub_total'] == "") {
+            $res['data']['message'][] = 'Please Insert sub_total';
+        }
+        if (!isset($PARAMS['service_tax']) || $PARAMS['service_tax'] == "") {
+            $res['data']['message'][] = 'Please Insert service_tax';
+        }
+        if (!isset($PARAMS['total_amount']) || $PARAMS['total_amount'] == "") {
+            $res['data']['message'][] = 'Please Insert total_amount';
+        }
+        if (!isset($PARAMS['due_date']) || $PARAMS['due_date'] == "") {
+            $res['data']['message'][] = 'Please Insert due_date';
+        } else {
+
+            $res = Salary::createClientInvoice($PARAMS);
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'delete_invoice') {
+
+    if ($userinfo['type'] == "admin") {
+        if (isset($PARAMS['invoice_id']) && $PARAMS['invoice_id'] != "") {
+            $invoiceid = $PARAMS['invoice_id'];
+            $res = Salary::DeleteInvoice($PARAMS);
+        } else {
+            $res['data']['message'] = 'Please give invoice_id ';
+        }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
@@ -110,7 +174,7 @@ if ($action == 'create_client_invoice') {
 
 if ($action == 'get_client_detail') {
     if ($userinfo['type'] == "admin") {
-      if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
+        if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
             $client_id = $PARAMS['client_id'];
             $res = Salary::getClientDetails($client_id);
         } else {
@@ -120,12 +184,11 @@ if ($action == 'get_client_detail') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
-if ($action == 'create_user_payslip') {
- 
+
+if ($action == 'create_employee_salary_slip') {
     if ($userinfo['type'] == "admin") {
-      if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::createUserPayslip($user_id);
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $res = Salary::createUserPayslip($PARAMS);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
@@ -133,6 +196,21 @@ if ($action == 'create_user_payslip') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+if ($action == 'get_user_manage_payslips_data') {
+    if ($userinfo['type'] == "admin") {
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $userid = $PARAMS['user_id']; 
+            $res = Salary::getUserManagePayslip($userid);
+        } else {
+            $res['data']['message'] = 'Please give user_id ';
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+
 
 echo json_encode($res);
 ?>
