@@ -59,7 +59,7 @@ class Salary extends DATABASE {
             $arr['id'] = $val['user_Id'];
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
-             $arr['type'] = strtolower($val['type']);
+            $arr['type'] = strtolower($val['type']);
             //$arr['type'] = "admin";
         }
         return $arr;
@@ -201,6 +201,8 @@ class Salary extends DATABASE {
     }
 
     public function insertHoldingInfo($data) {
+
+
         $ins = array(
             'user_Id' => $data['user_id'],
             'holding_amt' => $data['holding_amt'],
@@ -209,11 +211,22 @@ class Salary extends DATABASE {
             'reason' => $data['reason'],
             'last_updated_on' => date("Y-m-d")
         );
+        $userid = $data['user_id'];
+        $username = self::getUserDetail($userid);
 
         $res = self::DBinsertQuery('user_holding_info', $ins);
         if ($res == false) {
             return false;
         } else {
+            $message = "Holding amount info of an Employee " . $username['name'] . " is added in database \n Details: \n ";
+            $message = $message . "Holding Amount = " . $data['holding_amt'] . "\n";
+            $message = $message . "Holding start date= " . $data['holding_start_date'] . "\n";
+            $message = $message . "Holding end date = " . $data['holding_end_date'] . "\n";
+            $message = $message . "Reason = " . $data['reason'] . "\n";
+            
+            $slack_userChannelid="hr_system";
+            $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+
             return "Successfully Inserted into table";
         }
     }
@@ -852,7 +865,10 @@ class Salary extends DATABASE {
             'final_leave_balance' => $data['final_leave_balance'],
             'payslip_url' => ""
         );
-
+       $userid = $data['user_id'];
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        
         $html = '';
         $html = ob_start();
         require_once 'template_payslip.php';
@@ -884,6 +900,12 @@ class Salary extends DATABASE {
             $r_error = 0;
             $r_message = "Salary slip updated successfully";
             $r_data['message'] = $r_message;
+            
+           //$message = "Salaryslip info of an Employee " . $userInfo_name . " is updated in database \n ";
+
+            //   $slack_userChannelid="hr_system";
+            // $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+            
         } else {
             $res = self::DBinsertQuery('payslips', $ins);
 
@@ -904,6 +926,12 @@ class Salary extends DATABASE {
                 $r_error = 0;
                 $r_message = "Salary slip generated successfully";
                 $r_data['message'] = $r_message;
+                
+                 //$message = "Salaryslip  of an Employee " . $userInfo_name . " is generated in database \n ";
+
+            //   $slack_userChannelid="hr_system";
+            // $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+                
             }
         }
 
@@ -1152,10 +1180,10 @@ class Salary extends DATABASE {
         $r_message = "";
         $r_data = array();
         $q = "SELECT * FROM user_document_detail where user_Id = $userid";
-       
+
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-        
+
         if ($row == false) {
             $r_error = 1;
             $r_message = "Error occured while fetching data";
@@ -1164,6 +1192,26 @@ class Salary extends DATABASE {
             $r_error = 0;
             $r_data['user_document_info'] = $row;
         }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function deleteUserSalary($userid, $salaryid) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q = "DELETE FROM salary WHERE id = $salaryid";
+
+        $runQuery = self::DBrunQuery($q);
+        $q2 = "DELETE FROM salary_details WHERE salary_id = $salaryid";
+        $runQuery2 = self::DBrunQuery($q2);
+        $r_error = 0;
+        $r_message = "Salary slip deleted successfully";
+        $r_data['message'] = $r_message;
+
         $return = array();
 
         $return['error'] = $r_error;
