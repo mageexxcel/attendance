@@ -6,7 +6,7 @@ require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
-//  $PARAMS = $_GET;
+//$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -187,7 +187,7 @@ if ($action == 'get_client_detail') {
 
 if ($action == 'create_employee_salary_slip') {
 
- if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::createUserPayslip($PARAMS);
         } else {
@@ -251,6 +251,24 @@ if ($action == 'get_document') {
         }
     } else {
         $res = Salary::getUserDocumentDetail($user_id);
+    }
+}
+
+if ($action == 'delete_salary') {
+    if ($userinfo['type'] == "admin") {
+        $res['data']['message']="";
+        if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
+            $res['data']['message'] .= 'Please give user_id ';
+        }
+        if (!isset($PARAMS['salary_id']) || (isset($PARAMS['salary_id']) && $PARAMS['salary_id'] == "")) {
+            $res['data']['message'] .= 'Please give salary_id ';
+        } else {
+            $userid = $PARAMS['user_id'];
+            $salaryid = $PARAMS['salary_id'];
+            $res = Salary::deleteUserSalary($userid, $salaryid);
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
 

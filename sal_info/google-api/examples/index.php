@@ -33,7 +33,7 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
  * http://localhost:8080/simple-file-upload.php
  ************************************************/
 $redirect_uri = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
-echo $redirect_uri;
+
 
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
