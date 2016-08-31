@@ -6,7 +6,7 @@ require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
-//$PARAMS = $_GET;
+//  $PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -186,7 +186,8 @@ if ($action == 'get_client_detail') {
 }
 
 if ($action == 'create_employee_salary_slip') {
-    if ($userinfo['type'] == "admin") {
+
+ if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::createUserPayslip($PARAMS);
         } else {
@@ -200,13 +201,56 @@ if ($action == 'create_employee_salary_slip') {
 if ($action == 'get_user_manage_payslips_data') {
     if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $userid = $PARAMS['user_id']; 
-            $res = Salary::getUserManagePayslip($userid);
+            $userid = $PARAMS['user_id'];
+            if (isset($PARAMS['year'])) {
+                $year = $PARAMS['year'];
+            }
+            if (isset($PARAMS['month'])) {
+                $month = $PARAMS['month'];
+            } else {
+                $currentYear = date("Y");
+                $currentMonth = date("F");
+
+                if ($currentMonth == "January") {
+                    $year = date('Y', strtotime($currentYear . ' -1 year'));
+                    $month = date('m', strtotime($currentMonth . 'last month'));
+                } else {
+                    $year = $currentYear;
+                    $month = date('m', strtotime($currentMonth . 'last month'));
+                }
+            }
+
+            $res = Salary::getUserManagePayslip($userid, $year, $month);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'insert_user_document') {
+    if ($userinfo['type'] == "admin") {
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $res = Salary::insertUserDocumentInfo($PARAMS);
+        } else {
+            $res['data']['message'] = 'Please give user_id ';
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_document') {
+    if ($userinfo['type'] == "admin") {
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $user_id = $PARAMS['user_id'];
+            $res = Salary::getUserDocumentDetail($user_id);
+        } else {
+            $res['data']['message'] = 'Please give user_id ';
+        }
+    } else {
+        $res = Salary::getUserDocumentDetail($user_id);
     }
 }
 

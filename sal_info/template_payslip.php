@@ -68,7 +68,7 @@
                     Joining Date
                 </td>
                 <td>
-                    <?php echo $data['joininig_date'] ?>
+                    <?php echo date("F d, Y",strtotime($data['joining_date'])) ?>
                 </td>
             </tr>
             <tr>
@@ -231,6 +231,20 @@
                 </td>
                 <td>
                    <?php echo $data['arrear'] ?>
+                </td>
+                <td>
+
+                </td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Bonus
+                </td>
+                <td>
+                   <?php echo $data['bonus'] ?>
                 </td>
                 <td>
 

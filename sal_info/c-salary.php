@@ -59,8 +59,8 @@ class Salary extends DATABASE {
             $arr['id'] = $val['user_Id'];
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
-            $arr['type'] = strtolower($val['type']);
-            // $arr['type'] = "admin";
+             $arr['type'] = strtolower($val['type']);
+            //$arr['type'] = "admin";
         }
         return $arr;
     }
@@ -73,7 +73,14 @@ class Salary extends DATABASE {
     }
 
     public function getUserPayslipInfo($userid) {
-        $q = "select * from payslips where user_Id = $userid";
+        $q = "select * from payslips where user_Id = $userid ORDER by id DESC";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    public function getAllUserPayslip($userid, $year, $month) {
+        $q = "select * from payslips where month='$month' AND year = '$year'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         return $row;
@@ -296,10 +303,14 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public function UserDocumentInfo($data) {
+    public function insertUserDocumentInfo($data) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
         $ins = array(
             'user_Id' => $data['user_id'],
-            'Id_proof' => $data['id_proof'],
+            'id_proof' => $data['id_proof'],
             'address_proof' => $data['address_proof'],
             'passport_photo' => $data['passport_photo'],
             'certificate' => $data['certificate'],
@@ -309,18 +320,30 @@ class Salary extends DATABASE {
         );
         $whereField = 'user_Id';
         $whereFieldVal = $data['user_id'];
-        $q = 'select * from user_document_detail where user_id=' . $whereFieldVal;
-        $run = mysql_query($q);
-        $num_rows = mysql_num_rows($run);
+        $q = 'select * from user_document_detail where user_Id=' . $whereFieldVal;
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        $num_rows = mysql_num_rows($runQuery);
+
         if ($num_rows > 0) {
-            $res = self::DBupdateBySingleWhere('user_document_detail', $whereField, $whereFieldVal, $ins);
+            foreach ($row as $key => $val) {
+                if (array_key_exists($key, $ins)) {
+                    if ($ins[$key] != $row[$key]) {
+                        $arr = array();
+                        $arr[$key] = $ins[$key];
+                        $res = self::DBupdateBySingleWhere('user_document_detail', $whereField, $whereFieldVal, $ins);
+                    }
+                }
+            }
         }
         if ($num_rows <= 0) {
             $res = self::DBinsertQuery('user_document_detail', $ins);
         }
 
         if ($res == false) {
-            return false;
+            $r_error = 1;
+            $r_message = "No fields updated into table";
+            $r_data['message'] = $r_message;
         } else {
             $userid = $data['user_id'];
             $userInfo = self::getUserInfo($userid);
@@ -336,11 +359,18 @@ class Salary extends DATABASE {
             $message = $message . "User Id for Bank = " . $data['uid_for_bank'] . "\n";
             $message = $message . "Previous Company Document = " . $data['previous_comp_doc'] . "\n";
 
-            echo $message;
+            //  echo $message;
             //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
 
-            return "Successfully Inserted into table";
+            $r_error = 0;
+            $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
         }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
     }
 
     public static function getHtml($url) {
@@ -443,6 +473,15 @@ class Salary extends DATABASE {
         $q = "SELECT users.status,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
+        $arr = "";
+        $arr = $row;
+        return $arr;
+    }
+
+    public function getCurrentMonthHoliday($year, $month) {
+        $q = "SELECT * from holidays where date like '%" . $year . "-" . $month . "%'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
         $arr = "";
         $arr = $row;
         return $arr;
@@ -803,23 +842,51 @@ class Salary extends DATABASE {
 
         $ins = array(
             'user_Id' => $data['user_id'],
-            'month' => $data['month'] . " " . $data['year'],
+            'month' => $data['month'],
+            'year' => $data['year'],
             'total_leave_taken' => $data['total_leave_taken'],
-            'leave_balance' => $data['leave_balance'],
+            'leave_balance' => $data['final_leave_balance'],
             'allocated_leaves' => $data['allocated_leaves'],
             'paid_leaves' => $data['paid_leaves'],
             'unpaid_leaves' => $data['unpaid_leaves'],
             'final_leave_balance' => $data['final_leave_balance'],
             'payslip_url' => ""
         );
-        $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . " " . $data['year'] . "'";
-        $row = mysql_query($q);
-        if (mysql_num_rows($row) > 0) {
-            $r_error = 1;
-            $r_message = "Payslip already present in database";
+
+        $html = '';
+        $html = ob_start();
+        require_once 'template_payslip.php';
+        $html = ob_get_clean();
+
+        $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+
+        if (mysql_num_rows($runQuery) > 0) {
+            $payslip_no = $row['id'];
+            $suc = self::createPDf($html, $payslip_no, $path = "payslip");
+            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+
+            $data['payslip_url'] = $file_path;
+            $whereFieldVal = $row['id'];
+
+            $whereField = 'id';
+            foreach ($row as $key => $val) {
+                if (array_key_exists($key, $data)) {
+                    if ($data[$key] != $row[$key]) {
+                        $arr = array();
+                        $arr[$key] = $data[$key];
+                        $res = self::DBupdateBySingleWhere('payslips', $whereField, $whereFieldVal, $arr);
+                    }
+                }
+            }
+
+            $r_error = 0;
+            $r_message = "Salary slip updated successfully";
             $r_data['message'] = $r_message;
         } else {
             $res = self::DBinsertQuery('payslips', $ins);
+
             if ($res == false) {
                 $r_error = 1;
                 $r_message = "Error occured while inserting data";
@@ -827,14 +894,11 @@ class Salary extends DATABASE {
             } else {
                 $payslip_no = mysql_insert_id();
 
-                $html = '';
-                $html = ob_start();
-                require_once 'template_payslip.php';
-                $html = ob_get_clean();
-
                 $suc = self::createPDf($html, $payslip_no, $path = "payslip");
-                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/atten/attendance/sal_info/" . $suc;
+                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+                //$file_path = "http://" . $_SERVER['SERVER_NAME'] . "/atten/attendance/sal_info/" . $suc;
                 $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($file_path) . "' WHERE id = $payslip_no";
+
                 mysql_query($query);
 
                 $r_error = 0;
@@ -850,16 +914,256 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public function getUserManagePayslip($userid) {
+    public function getUserManagePayslip($userid, $year, $month) {
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+        $user_salaryinfo = array();
+        $res1 = self::getSalaryInfo($userid);
+        $res0 = self::getUserprofileDetail($userid);
+        $latest_sal_id = sizeof($res1) - 1;
+
+        $user_salaryinfo = $res1[$latest_sal_id];
+        $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
+        $user_salaryinfo['year'] = $year;
+        $user_salaryinfo['month'] = $month;
+        $user_salaryinfo['name'] = $res0['name'];
+        $user_salaryinfo['dateofjoining'] = $res0['dateofjoining'];
+        $user_salaryinfo['jobtitle'] = $res0['jobtitle'];
+        $user_salaryinfo['salary_detail'] = $salary_detail;
+        $total_earning = $salary_detail['Basic'] + $salary_detail['HRA'] + $salary_detail['Conveyance'] + $salary_detail['Medical_Allowance'] + $salary_detail['Special_Allowance'] + $salary_detail['Arrears'];
+
+        $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS'];
+        $net_salary = $total_earning - $total_deduction;
+        $user_salaryinfo['total_earning'] = $total_earning;
+        $user_salaryinfo['total_deduction'] = $total_deduction;
+        $user_salaryinfo['net_salary'] = abs($net_salary);
+
+
         $res = self::getUserPayslipInfo($userid);
+        $current_month_leave = self::getUserLeaveInfo($userid, $year, $month);
+        $leaves = $res[0]['leave_balance'] - $current_month_leave;
+        if ($leaves > 0) {
+            $paid_leave = $current_month_leave;
+            $unpaid_leave = 0;
+        }
+        if ($leaves < 0) {
+            $paid_leave = $current_month_leave - abs($leaves);
+            $unpaid_leave = abs($leaves);
+        }
+
+        $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
+        $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
+        $user_salaryinfo['paid_leaves'] = $paid_leave;
+        $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
+        $user_salaryinfo['total_leave_taken'] = $current_month_leave;
+        $user_salaryinfo['leave_balance'] = $res[0]['leave_balance'];
+        $final_leave_balance = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
+        if ($final_leave_balance < 0) {
+            $user_salaryinfo['final_leave_balance'] = 0;
+        }
+        if ($final_leave_balance > 0) {
+            $user_salaryinfo['final_leave_balance'] = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
+        }
+
+
 
         $r_error = 0;
-        $r_data['user_data_for_payslip'] = array();
+        $r_data['user_data_for_payslip'] = $user_salaryinfo;
         $r_data['user_payslip_history'] = $res;
+        $r_data['all_users_latest_payslip'] = self::getAllUserPayslip($userid, $year, $month);
 
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getTotalWorkingDays($year, $month) {
+        $list = array();
+        for ($d = 1; $d <= 31; $d++) {
+            $time = mktime(12, 0, 0, date('m'), $d, date('Y'));
+            if (date('m', $time) == date('m'))
+                $list[] = date('m-d-Y', $time);
+        }
+        $no_of_holidays = self::getHolidaysOfMonth($year, $month);
+        $weekends_of_month = self::getWeekendsOfMonth($year, $month);
+
+        if (sizeof($weekends_of_month) > 0) {
+            $arru = $weekends_of_month;
+        }
+        if (sizeof($no_of_holidays) > 0) {
+            foreach ($no_of_holidays as $k => $p) {
+                if (!array_key_exists($k, $arru)) {
+                    $arru[$k] = $p;
+                }
+            }
+        }
+
+        $total_no_of_workdays = sizeof($list) - sizeof($arru);
+        return $total_no_of_workdays;
+    }
+
+    public static function getHolidaysOfMonth($year, $month) {
+        $q = "SELECT * FROM holidays";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $list = array();
+        foreach ($rows as $pp) {
+            $h_date = $pp['date'];
+            $h_month = date('m', strtotime($h_date));
+            $h_year = date('Y', strtotime($h_date));
+            if ($h_year == $year && $h_month == $month) {
+                $h_full_date = date("Y-m-d", strtotime($h_date));
+                $h_date = date("d", strtotime($h_date));
+                $pp['date'] = $h_date;
+                $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                $list[$h_date] = $pp;
+            }
+        }
+        return $list;
+    }
+
+    // get weekends off list
+    public static function getWeekendsOfMonth($year, $month) {
+        $list = array();
+        $monthDays = self::getDaysOfMonth($year, $month);
+        $alternateSaturdayCheck = false;
+        foreach ($monthDays as $k => $v) {
+            if ($v['day'] == 'Sunday') {
+                $list[$k] = $v;
+            }
+            if ($v['day'] == 'Saturday') {
+                if ($alternateSaturdayCheck == true) {
+                    $list[$k] = $v;
+                    $alternateSaturdayCheck = false;
+                } else {
+                    $alternateSaturdayCheck = true;
+                }
+            }
+        }
+        return $list;
+    }
+
+    public static function getDaysOfMonth($year, $month) {
+        $list = array();
+        for ($d = 1; $d <= 31; $d++) {
+            $time = mktime(12, 0, 0, $month, $d, $year);
+            if (date('m', $time) == $month) {
+                $c_full_date = date('Y-m-d', $time);
+                $c_date = date('d', $time);
+                $c_day = date('l', $time);
+                $row = array(
+                    'full_date' => $c_full_date,
+                    'date' => $c_date,
+                    'day' => $c_day
+                );
+                $list[$c_date] = $row;
+            }
+        }
+        return $list;
+    }
+
+    public static function getUserMonthPunching($userid, $year, $month) {
+        //$userid = '313';
+        $list = array();
+        $q = "SELECT * FROM attendance Where user_id = $userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $allMonthAttendance = array();
+        foreach ($rows as $key => $d) {
+            $d_timing = $d['timing'];
+            $d_timing = str_replace("-", "/", $d_timing);
+            $d_full_date = date("Y-m-d", strtotime($d_timing));
+            $d_timestamp = strtotime($d_timing);
+            $d_month = date("m", $d_timestamp);
+            $d_year = date("Y", $d_timestamp);
+            $d_date = date("d", $d_timestamp);
+            //$d_date = (int)$d_date;
+            if ($d_year == $year && $d_month == $month) {
+                $d['timestamp'] = $d_timestamp;
+                $allMonthAttendance[$d_date][] = $d;
+            }
+        }
+        foreach ($allMonthAttendance as $pp_key => $pp) {
+            $daySummary = self::_beautyDaySummary($pp);
+            $list[$pp_key] = $daySummary;
+        }
+
+        return sizeof($list);
+    }
+
+    public static function _beautyDaySummary($dayRaw) {
+        $TIMESTAMP = '';
+        $numberOfPunch = sizeof($dayRaw);
+
+        $timeStampWise = array();
+        foreach ($dayRaw as $pp) {
+            $TIMESTAMP = $pp['timestamp'];
+            $timeStampWise[$pp['timestamp']] = $pp;
+        }
+        ksort($timeStampWise);
+        $inTimeKey = key($timeStampWise);
+        end($timeStampWise);
+        $outTimeKey = key($timeStampWise);
+        $inTime = date('h:i A', $inTimeKey);
+        $outTime = date('h:i A', $outTimeKey);
+        $r_date = (int) date('d', $TIMESTAMP);
+        $r_day = date('l', $TIMESTAMP);
+
+        $r_total_time = $r_extra_time_status = $r_extra_time = '';
+        $r_total_time = (int) $outTimeKey - (int) $inTimeKey;
+        $r_extra_time = (int) $r_total_time - (int) ( 9 * 60 * 60 );
+        if ($r_extra_time < 0) { // not completed minimum hours
+            $r_extra_time_status = "-";
+            $r_extra_time = $r_extra_time * -1;
+        } else if ($r_extra_time > 0) {
+            $r_extra_time_status = "+";
+        }
+        $return = array();
+        $return['in_time'] = $inTime;
+        $return['out_time'] = $outTime;
+        $return['total_time'] = $r_total_time;
+        $return['extra_time_status'] = $r_extra_time_status;
+        $return['extra_time'] = $r_extra_time;
+
+        return $return;
+    }
+
+    public static function getUserLeaveInfo($userid, $year, $month) {
+        $list = array();
+        $q = "SELECT * FROM leaves Where user_id = $userid AND from_date like '%" . $year . "-" . $month . "%'";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+
+        $total_no_of_leaves = 0;
+        if (sizeof($rows) > 0) {
+            foreach ($rows as $val) {
+                $total_no_of_leaves = $total_no_of_leaves + $val['no_of_days'];
+            }
+        }
+        return $total_no_of_leaves;
+    }
+
+    public static function getUserDocumentDetail($userid) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q = "SELECT * FROM user_document_detail where user_Id = $userid";
+       
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        
+        if ($row == false) {
+            $r_error = 1;
+            $r_message = "Error occured while fetching data";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_data['user_document_info'] = $row;
+        }
         $return = array();
 
         $return['error'] = $r_error;

@@ -25,6 +25,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                     $result['data'] = $userinfo;
                     $res3 = Salary::getHoldingDetail($userid);
                     $res = Salary::getSalaryInfo($userid);
+                    $res4 = Salary::getUserPayslipInfo($userid);
                     $i = 0;
                     foreach ($res as $val) {
                         $res2 = Salary::getSalaryDetail($val['id']);
@@ -34,6 +35,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                         $i++;
                     }
                      $result['data']['holding_details'] = $res3;
+                     $result['data']['payslip_history'] = $res4;
                 }
             } else {
                 $result['error'][] = 'The given user id number';
@@ -43,6 +45,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
             $result['data'] = $userinfo;
             $res = Salary::getSalaryInfo($tuserid);
             $res3 = Salary::getHoldingDetail($tuserid);
+            $res4 = Salary::getUserPayslipInfo($tuserid);
             $i = 0;
             foreach ($res as $val) {
 
@@ -55,6 +58,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                 $i++;
             }
             $result['data']['holding_details'] = $res3;
+            $result['data']['payslip_history'] = $res4;
         }
     }
 }
