@@ -865,7 +865,7 @@ class Salary extends DATABASE {
         if (mysql_num_rows($runQuery) > 0) {
             $payslip_no = $row['id'];
             $suc = self::createPDf($html, $payslip_no, $path = "payslip");
-            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack/attendance/sal_info/" . $suc;
 
             $data['payslip_url'] = $file_path;
             $whereFieldVal = $row['id'];
@@ -895,7 +895,7 @@ class Salary extends DATABASE {
                 $payslip_no = mysql_insert_id();
 
                 $suc = self::createPDf($html, $payslip_no, $path = "payslip");
-                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack/attendance/sal_info/" . $suc;
                 //$file_path = "http://" . $_SERVER['SERVER_NAME'] . "/atten/attendance/sal_info/" . $suc;
                 $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($file_path) . "' WHERE id = $payslip_no";
 
