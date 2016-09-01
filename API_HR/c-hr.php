@@ -1641,6 +1641,36 @@
         }
 
 
+        public static function updateGooglepaySlipDriveAccessToken( $google_access_token ){ //api call
+            $r_error = 1;
+            $r_message = "";
+            $r_data = array();
+
+            $q = "select * from config where type='google_payslip_drive_token' ";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+
+            if( $row == false  ){
+                $q = "INSERT INTO config ( type, value ) VALUES ( 'google_payslip_drive_token', '$google_access_token' ) ";
+                self::DBrunQuery($q);
+                $r_error = 0;
+                $r_message = "Insert Successfully!!";
+            }else{
+                $q = "UPDATE config set value='$google_access_token' WHERE type = 'google_payslip_drive_token' ";
+                self::DBrunQuery($q);
+                $r_error = 0;
+                $r_message = "Update Successfully!!";
+            }
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
+            
+        }
+
+
     }
 
     new HR();

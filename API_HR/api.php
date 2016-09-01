@@ -167,6 +167,17 @@
 		$year = $PARAMS['year'];
 		$month = $PARAMS['month'];
 		$res = HR::getAllUsersPendingLeavesSummary( $year, $month );
+	}else if( $action == 'save_google_payslip_drive_access_token' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		if( strtolower($loggedUserInfo['role']) != 'admin' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission";
+		}else{
+			$google_access_token = $PARAMS['google_access_token'];
+			$res = HR::updateGooglepaySlipDriveAccessToken( $google_access_token );
+		}
 	}
 
 
