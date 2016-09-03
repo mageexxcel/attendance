@@ -26,6 +26,10 @@
         font-weight: 600;
         font-size: 16px;
     }
+    .tab3 td{
+        font-size:12px;
+         font-family: "sans-serif";
+    }
 
 </style>
 <body>
@@ -33,7 +37,7 @@
         <tbody>
             <tr>
                 <td width="370px;"><p>Excellence Technologies</p>
-                    <span class="span_bold">Salary Statement For the Month of <?php echo $data['month'].",&nbsp;".$data['year']; ?></span></td>
+                    <span class="span_bold">Salary Statement For the Month of <?php echo $month_name . ",&nbsp;" . $data['year']; ?></span></td>
                 <td align="right"><img src="logo.png"></td>
             </tr>
             <tr>
@@ -50,7 +54,7 @@
                     Employee Name
                 </td>
                 <td>
-                    <?php echo $data['name'] ?>
+<?php echo $data['name'] ?>
                 </td>
                 <td>
                 </td>
@@ -62,13 +66,13 @@
                     Designation
                 </td>
                 <td>
-                    <?php echo $data['designation'] ?>
+<?php echo $data['designation'] ?>
                 </td>
                 <td>
                     Joining Date
                 </td>
                 <td>
-                    <?php echo date("F d, Y",strtotime($data['joining_date'])) ?>
+<?php echo date("F d, Y", strtotime($data['joining_date'])) ?>
                 </td>
             </tr>
             <tr>
@@ -76,13 +80,13 @@
                     Total Working Days
                 </td>
                 <td>
-                   <?php echo $data['total_working_days'] ?>
+<?php echo $data['total_working_days'] ?>
                 </td>
                 <td>
                     Days Present
                 </td>
                 <td>
-                   <?php echo $data['days_present'] ?>
+<?php echo $data['days_present'] ?>
                 </td>
             </tr>
             <tr>
@@ -90,13 +94,13 @@
                     Paid Leave Taken
                 </td>
                 <td>
-                   <?php echo $data['paid_leaves'] ?>
+<?php echo $data['paid_leaves'] ?>
                 </td>
                 <td>
                     Leave Without Pay
                 </td>
                 <td>
-                    <?php echo $data['unpaid_leaves'] ?>
+<?php echo $data['unpaid_leaves'] ?>
                 </td>
             </tr>
             <tr>
@@ -104,13 +108,13 @@
                     Total Leave Taken
                 </td>
                 <td>
-                    <?php echo $data['total_leave_taken'] ?>
+<?php echo $data['total_leave_taken'] ?>
                 </td>
                 <td>
                     Leave Accumulated
                 </td>
                 <td>
-                    <?php echo $data['allocated_leaves'] ?>
+<?php echo $data['allocated_leaves'] ?>
                 </td>
             </tr>
             <tr>
@@ -118,13 +122,13 @@
                     Previous Leave Balance
                 </td>
                 <td>
-                    <?php echo $data['leave_balance'] ?>
+<?php echo $data['leave_balance'] ?>
                 </td>
                 <td>
                     Final Leave Balance
                 </td>
                 <td>
-                    <?php echo $data['final_leave_balance'] ?>
+<?php echo $data['final_leave_balance'] ?>
                 </td>
             </tr>
             <tr>
@@ -160,13 +164,13 @@
                     Basic
                 </td>
                 <td>
-                   <?php echo $data['basic'] ?>
+<?php echo $data['basic'] ?>
                 </td>
                 <td>
                     EPF
                 </td>
                 <td>
-                    <?php echo $data['epf'] ?>
+<?php echo $data['epf'] ?>
                 </td>
             </tr>
             <tr>
@@ -174,13 +178,13 @@
                     HRA
                 </td>
                 <td>
-                    <?php echo $data['hra'] ?>
+<?php echo $data['hra'] ?>
                 </td>
                 <td>
                     Loan
                 </td>
                 <td>
-                    <?php echo $data['loan'] ?>
+<?php echo $data['loan'] ?>
                 </td>
             </tr>
             <tr>
@@ -188,13 +192,13 @@
                     Conveyance
                 </td>
                 <td>
-                   <?php echo $data['conveyance'] ?>
+<?php echo $data['conveyance'] ?>
                 </td>
                 <td>
                     Advance
                 </td>
                 <td>
-                    <?php echo $data['advance'] ?>
+<?php echo $data['advance'] ?>
                 </td>
             </tr>
             <tr>
@@ -202,13 +206,13 @@
                     Medical Allowance
                 </td>
                 <td>
-                    <?php echo $data['medical_allowance'] ?>
+<?php echo $data['medical_allowance'] ?>
                 </td>
                 <td>
                     Misc Deductions
                 </td>
                 <td>
-                   <?php echo $data['misc_deduction'] ?>
+<?php echo $data['misc_deduction'] ?>
                 </td>
             </tr>
             <tr>
@@ -216,13 +220,13 @@
                     Special Allowance
                 </td>
                 <td>
-                    <?php echo $data['special_allowance'] ?>
+<?php echo $data['special_allowance'] ?>
                 </td>
                 <td>
                     TDS
                 </td>
                 <td>
-                    <?php echo $data['tds'] ?>
+<?php echo $data['tds'] ?>
                 </td>
             </tr>
             <tr>
@@ -230,7 +234,7 @@
                     Arrears
                 </td>
                 <td>
-                   <?php echo $data['arrear'] ?>
+<?php echo $data['arrear'] ?>
                 </td>
                 <td>
 
@@ -244,7 +248,7 @@
                     Bonus
                 </td>
                 <td>
-                   <?php echo $data['bonus'] ?>
+<?php echo $data['bonus'] ?>
                 </td>
                 <td>
 
@@ -258,18 +262,18 @@
                     Total Earnings
                 </td>
                 <td>
-                    <?php echo $data['total_earning'] ?>
+<?php echo $data['total_earning'] ?>
                 </td>
                 <td>
                     Total Deductions
                 </td>
                 <td>
-                    <?php echo $data['total_deduction'] ?>
+<?php echo $data['total_deduction'] ?>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <br>
+                    
                     <span class="span_bold">Net Salary(Rs)</span>
                 </td>
                 <td>
@@ -291,13 +295,46 @@
             <tr>
                 <td colspan="2">
                     <span class="span_bold">For Excellence Technosoft Pvt Ltd</span><br>
-                    <span class="span_bold">Manish Prakash/Kumar Mukul <br>(Co-Founders)</span>
+                    <span class="span_bold">Manish Prakash <br>(Director)</span>
                 </td>
                 <td colspan="2" align="right">
                     <span class="span_bold" >PAN No: AACCE4460B</span><br>
                     <span class="span_bold" >TAN No: DELE05598F</span>
                 </td>
             </tr>
+        </tbody>
+    </table>
+    <table class = "tab3" style=" width:750px;position:absolute;bottom:50px;border-top:3px sold">
+        <tbody>
+            <tr>
+                <td colspan="2">
+                    <div  style="background-color: #622423;height:5px;"></div>
+                    <div  style="background-color: #622423;height:1px;margin-top:2px;"></div>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Excellence Technosoft Pvt Ltd</b>
+                </td>
+                <td style="text-align: right">
+                    <a href="http://www.excellencetechnologies.in">http://www.excellencetechnologies.in</a> 
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Corp Office:</b> C84-A, Sector 8, Noida, U.P. - 201301
+                </td>
+                <td style="text-align: right">
+                    <b>CIN:</b> U72200DL2010PTC205087
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <b>Regd Office:</b> 328 GAGAN VIHAR IST MEZZAZINE,NEW DELHI-110051
+                </td>
+            </tr>
+
         </tbody>
     </table>
 

@@ -59,7 +59,7 @@ class Salary extends DATABASE {
             $arr['id'] = $val['user_Id'];
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
-            $arr['type'] = strtolower($val['type']);
+             $arr['type'] = strtolower($val['type']);
             //$arr['type'] = "admin";
         }
         return $arr;
@@ -120,6 +120,15 @@ class Salary extends DATABASE {
             }
         }
         return $newRows;
+    }
+
+    public function getrefreshToken() {
+        $ret = array();
+        $q = "select * from config where type = 'google_payslip_drive_token'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+
+        return $row;
     }
 
     public static function updateSalary($data) {
@@ -223,9 +232,9 @@ class Salary extends DATABASE {
             $message = $message . "Holding start date= " . $data['holding_start_date'] . "\n";
             $message = $message . "Holding end date = " . $data['holding_end_date'] . "\n";
             $message = $message . "Reason = " . $data['reason'] . "\n";
-            
-            $slack_userChannelid="hr_system";
-            $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+
+            $slack_userChannelid = "hr_system";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
 
             return "Successfully Inserted into table";
         }
@@ -852,7 +861,8 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-
+        $date = $data['year'] . "-" . $data['month'] . "-01";
+        $month_name = date('F', strtotime($date));
         $ins = array(
             'user_Id' => $data['user_id'],
             'month' => $data['month'],
@@ -865,73 +875,77 @@ class Salary extends DATABASE {
             'final_leave_balance' => $data['final_leave_balance'],
             'payslip_url' => ""
         );
-       $userid = $data['user_id'];
-        $userInfo = self::getUserInfo($userid);
-        $userInfo_name = $userInfo['name'];
-        
-        $html = '';
-        $html = ob_start();
-        require_once 'template_payslip.php';
-        $html = ob_get_clean();
+        $check_google_drive_connection = self::getrefreshToken();
+        if (sizeof($check_google_drive_connection) <= 0) {
+            $r_error = 1;
+            $r_message = "Refresh token not found. Connect do google login first";
+            $r_data['message'] = $r_message;
+        } else {
+            $userid = $data['user_id'];
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
 
-        $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
+            $html = '';
+            $html = ob_start();
+            require_once 'template_payslip.php';
+            $html = ob_get_clean();
 
-        if (mysql_num_rows($runQuery) > 0) {
-            $payslip_no = $row['id'];
-            $suc = self::createPDf($html, $payslip_no, $path = "payslip");
-            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack/attendance/sal_info/" . $suc;
+            $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
 
-            $data['payslip_url'] = $file_path;
-            $whereFieldVal = $row['id'];
+            if (mysql_num_rows($runQuery) > 0) {
+                $payslip_no = $row['id'];
+                $file_id = $row['payslip_file_id'];
+                $payslip_name = $month_name;
+                $suc = self::createPDf($html, $payslip_name, $path = "payslip");
 
-            $whereField = 'id';
-            foreach ($row as $key => $val) {
-                if (array_key_exists($key, $data)) {
-                    if ($data[$key] != $row[$key]) {
-                        $arr = array();
-                        $arr[$key] = $data[$key];
-                        $res = self::DBupdateBySingleWhere('payslips', $whereField, $whereFieldVal, $arr);
+                $whereFieldVal = $row['id'];
+
+                $whereField = 'id';
+                foreach ($row as $key => $val) {
+                    if (array_key_exists($key, $data)) {
+                        if ($data[$key] != $row[$key]) {
+                            $arr = array();
+                            $arr[$key] = $data[$key];
+                            $res = self::DBupdateBySingleWhere('payslips', $whereField, $whereFieldVal, $arr);
+                        }
                     }
                 }
-            }
 
-            $r_error = 0;
-            $r_message = "Salary slip updated successfully";
-            $r_data['message'] = $r_message;
-            
-           //$message = "Salaryslip info of an Employee " . $userInfo_name . " is updated in database \n ";
+                $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $file_id);
 
-            //   $slack_userChannelid="hr_system";
-            // $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
-            
-        } else {
-            $res = self::DBinsertQuery('payslips', $ins);
-
-            if ($res == false) {
-                $r_error = 1;
-                $r_message = "Error occured while inserting data";
-                $r_data['message'] = $r_message;
-            } else {
-                $payslip_no = mysql_insert_id();
-
-                $suc = self::createPDf($html, $payslip_no, $path = "payslip");
-                $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack/attendance/sal_info/" . $suc;
-                //$file_path = "http://" . $_SERVER['SERVER_NAME'] . "/atten/attendance/sal_info/" . $suc;
-                $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($file_path) . "' WHERE id = $payslip_no";
-
+                $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
                 mysql_query($query);
 
-                $r_error = 0;
-                $r_message = "Salary slip generated successfully";
-                $r_data['message'] = $r_message;
-                
-                 //$message = "Salaryslip  of an Employee " . $userInfo_name . " is generated in database \n ";
 
-            //   $slack_userChannelid="hr_system";
-            // $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
-                
+
+                $r_error = 0;
+                $r_message = "Salary slip updated successfully";
+                $r_data['message'] = $r_message;
+            } else {
+                $res = self::DBinsertQuery('payslips', $ins);
+
+                if ($res == false) {
+                    $r_error = 1;
+                    $r_message = "Error occured while inserting data";
+                    $r_data['message'] = $r_message;
+                } else {
+                    $payslip_no = mysql_insert_id();
+                    $payslip_name = $month_name;
+
+                    $suc = self::createPDf($html, $payslip_name, $path = "payslip");
+
+                    $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name);
+
+                    $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
+                    mysql_query($query);
+
+
+                    $r_error = 0;
+                    $r_message = "Salary slip generated successfully";
+                    $r_data['message'] = $r_message;
+                }
             }
         }
 
@@ -947,6 +961,10 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+
+        $date = $year . "-" . $month . "-01";
+        $month_name = date('F', strtotime($date));
+
         $user_salaryinfo = array();
         $res1 = self::getSalaryInfo($userid);
         $res0 = self::getUserprofileDetail($userid);
@@ -956,6 +974,7 @@ class Salary extends DATABASE {
         $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
         $user_salaryinfo['year'] = $year;
         $user_salaryinfo['month'] = $month;
+        $user_salaryinfo['month_name'] = $month_name;
         $user_salaryinfo['name'] = $res0['name'];
         $user_salaryinfo['dateofjoining'] = $res0['dateofjoining'];
         $user_salaryinfo['jobtitle'] = $res0['jobtitle'];
@@ -968,11 +987,19 @@ class Salary extends DATABASE {
         $user_salaryinfo['total_deduction'] = $total_deduction;
         $user_salaryinfo['net_salary'] = abs($net_salary);
 
-
         $res = self::getUserPayslipInfo($userid);
+        if (sizeof($res) > 0) {
+
+            if ($res[0]['leave_balance'] == "") {
+                $res[0]['leave_balance'] = 0;
+            }
+        }
+
+
+
         $current_month_leave = self::getUserLeaveInfo($userid, $year, $month);
         $leaves = $res[0]['leave_balance'] - $current_month_leave;
-        if ($leaves > 0) {
+        if ($leaves >= 0) {
             $paid_leave = $current_month_leave;
             $unpaid_leave = 0;
         }
@@ -987,19 +1014,25 @@ class Salary extends DATABASE {
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;
         $user_salaryinfo['leave_balance'] = $res[0]['leave_balance'];
+
         $final_leave_balance = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
-        if ($final_leave_balance < 0) {
+        if ($final_leave_balance <= 0) {
             $user_salaryinfo['final_leave_balance'] = 0;
         }
         if ($final_leave_balance > 0) {
             $user_salaryinfo['final_leave_balance'] = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
         }
 
-
+        $check_google_drive_connection = self::getrefreshToken();
 
         $r_error = 0;
         $r_data['user_data_for_payslip'] = $user_salaryinfo;
         $r_data['user_payslip_history'] = $res;
+        $r_data['google_drive_emailid'] = "";
+        if (sizeof($check_google_drive_connection) > 0) {
+            //$r_data['google_drive_emailid'] = $check_google_drive_connection['email_id'];
+            $r_data['google_drive_emailid'] = "Yes email id exist";
+        }
         $r_data['all_users_latest_payslip'] = self::getAllUserPayslip($userid, $year, $month);
 
         $return = array();
@@ -1211,6 +1244,168 @@ class Salary extends DATABASE {
         $r_error = 0;
         $r_message = "Salary slip deleted successfully";
         $r_data['message'] = $r_message;
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function sendEmail($userinfo) {
+        include "phpmailer/examples/gmail.php";
+    }
+
+    public static function saveFileToGoogleDrive($payslip_no, $userInfo_name, $file_id = false) {
+        $filename = $payslip_no . ".pdf";
+        //upload file in google drive;
+        $parent_folder = "Employees Salary Payslips";
+        $subfolder_empname = $userInfo_name;
+        $subfolder_year = date("Y");
+        $r_token = self::getrefreshToken();
+        $refresh_token = $r_token['value'];
+
+        include "google-api/examples/indextest.php";
+
+        if ($file_id != false ) {
+
+            try {
+                $service->files->delete($file_id);
+            } catch (Exception $e) {
+                print "An error occurred: " . $e->getMessage();
+            }
+        }
+
+        $testfile = 'payslip/' . $filename;
+
+        if (!file_exists($testfile)) {
+            $fh = fopen($testfile, 'w');
+
+            fseek($fh, 1024 * 1024);
+            fwrite($fh, "!", 1);
+            fclose($fh);
+        }
+
+        if (array_key_exists($parent_folder, $arr)) {
+            $pfolder = $arr[$parent_folder];
+        }
+        if (array_key_exists($subfolder_empname, $arr)) {
+            $sfolder = $arr[$subfolder_empname];
+        }
+        if (array_key_exists($subfolder_year, $arr)) {
+            $syearfolder = $arr[$subfolder_year];
+        }
+        if (!array_key_exists($parent_folder, $arr)) {
+
+            $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                'name' => $parent_folder,
+                'mimeType' => 'application/vnd.google-apps.folder'));
+            $filez = $service->files->create($fileMetadata, array(
+                'fields' => 'id'));
+
+
+            $pfolder = $filez->id;
+        }
+        if (!array_key_exists($subfolder_empname, $arr)) {
+
+            $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                'name' => $subfolder_empname,
+                'parents' => array($pfolder),
+                'mimeType' => 'application/vnd.google-apps.folder'));
+            $filez = $service->files->create($fileMetadata, array(
+                'fields' => 'id'));
+
+
+            $sfolder = $filez->id;
+        }
+        if (!array_key_exists($subfolder_year, $arr)) {
+
+            $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                'name' => $subfolder_year,
+                'parents' => array($sfolder),
+                'mimeType' => 'application/vnd.google-apps.folder'));
+            $filez = $service->files->create($fileMetadata, array(
+                'fields' => 'id'));
+            //printf("Folder ID: %s\n", $filez->title);
+
+            $syearfolder = $filez->id;
+        }
+
+        $file = new Google_Service_Drive_DriveFile(
+                array(
+            'name' => $filename,
+            'parents' => array($syearfolder)
+        ));
+
+        $result2 = $service->files->create(
+                $file, array(
+            'data' => file_get_contents($testfile),
+            'mimeType' => 'application/octet-stream',
+            'uploadType' => 'multipart'
+                )
+        );
+
+        $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
+        $url['file_id'] = $result2->id;
+////                    //  echo $url;
+        $permission = new Google_Service_Drive_Permission();
+        $permission->setRole('writer');
+        $permission->setType('anyone');
+////$permission->setValue( 'me' );
+        try {
+            $service->permissions->create($result2->id, $permission);
+        } catch (Exception $e) {
+            print "An error occurred: " . $e->getMessage();
+        }
+        unlink($testfile);
+
+        return $url;
+    }
+
+    public static function sendPayslipMsgEmployee($payslip_id) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $q = "SELECT * FROM payslips where id =" . $payslip_id;
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if (mysql_num_rows($runQuery) > 0) {
+
+            $google_drive_file_url = $row['payslip_url'];
+
+            $date = $row['year'] . "-" . $row['month'] . "-01";
+            $month_name = date('F', strtotime($date));
+
+            $userid = $row['user_Id'];
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
+            $user_slack_id = $userInfo['slack_profile']['id'];
+            $channel_id = self::getSlackChannelIds();
+
+            $slack_userChannelid = "";
+            foreach ($channel_id as $v) {
+                if ($v['user'] == "$user_slack_id") {
+                    $slack_userChannelid = $v['id'];
+                }
+            }
+
+            $message = "Hi " . $userInfo_name . ". \n Your salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
+            // echo  $message;
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+
+            $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
+            mysql_query($query);
+
+            $r_error = 0;
+            $r_message = "Slack Message send to employee";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 1;
+            $r_message = "Pdf file link not found of particular payslip_id";
+            $r_data['message'] = $r_message;
+        }
 
         $return = array();
 

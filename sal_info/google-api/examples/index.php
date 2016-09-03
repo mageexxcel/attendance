@@ -17,123 +17,95 @@
 
 include_once __DIR__ . '/../vendor/autoload.php';
 include_once "templates/base.php";
+include_once __DIR__ . '/../../../../connection.php';
 
-echo pageHeader("File Upload - Uploading a simple file");
-
-/*************************************************
+/* * ***********************************************
  * Ensure you've downloaded your oauth credentials
- ************************************************/
+ * ********************************************** */
 if (!$oauth_credentials = getOAuthCredentialsFile()) {
-  echo missingOAuth2CredentialsWarning();
-  return;
+    echo missingOAuth2CredentialsWarning();
+    return;
 }
 
-/************************************************
+/* * **********************************************
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
- ************************************************/
-$redirect_uri = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
+ * ********************************************** */
+$redirect_uri = 'http://excellencemagentoblog.com/slack/attendance/sal_info/google-api/examples/';
 
+//$redirect_uri = 'http://localhost/atten/attendance/sal_info/google-api/examples/';
 
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
 $client->setRedirectUri($redirect_uri);
 $client->addScope("https://www.googleapis.com/auth/drive");
-$client->revokeToken();
 $service = new Google_Service_Drive($client);
 
-// add "?logout" to the URL to remove a token from the session
 if (isset($_REQUEST['logout'])) {
-  unset($_SESSION['upload_token']);
+    unset($_SESSION['upload_token']);
 }
 
-/************************************************
+/* * **********************************************
  * If we have a code back from the OAuth 2.0 flow,
  * we need to exchange that with the
  * Google_Client::fetchAccessTokenWithAuthCode()
  * function. We store the resultant access token
  * bundle in the session, and redirect to ourself.
- ************************************************/
+ * ********************************************** */
 if (isset($_GET['code'])) {
-  $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-  $client->setAccessToken($token);
+    $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
+    $client->setAccessToken($token);
+   $email = "";
+//    if ($client->getAccessToken()) {
+//        $token_data = $client->verifyIdToken();
+//        $email = $token_data['email'];
+//    }
+//    echo "<pre>";
+//    print_r($token);
+    // store in the session also
+    $_SESSION['upload_token'] = $token;
+    $refresh_token = $token['refresh_token'];
+    $q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
 
-  // store in the session also
-  $_SESSION['upload_token'] = $token;
+    $runquery = mysqli_query($link, $q) or die(mysqli_error($link));
 
-  // redirect back to the example
-  header('Location: ' . filter_var($redirect_uri, FILTER_SANITIZE_URL));
+    $row = array();
+    while ($r = mysqli_fetch_assoc($runquery)) {
+        $row = $r;
+    }
+
+    if (sizeof($row) > 0) {
+        $id = $row['id'];
+        $query = "UPDATE config SET value = '$refresh_token', email_id = '$email'  WHERE type = 'google_payslip_drive_token'";
+    } else {
+        $query = "INSERT INTO config (type, value, email_id) VALUES ('google_payslip_drive_token', '$refresh_token', '$email' )";
+    }
+   mysqli_query($link, $query) or die (mysqli_error($link));
+
+   echo "Refresh token of $email saved to database. Please redirect to homepage" ;
 }
 
 // set the access token as part of the client
 if (!empty($_SESSION['upload_token'])) {
-  $client->setAccessToken($_SESSION['upload_token']);
-  
-  if ($client->isAccessTokenExpired()) {
-    unset($_SESSION['upload_token']);
-  }
+    $client->setAccessToken($_SESSION['upload_token']);
+    if ($client->isAccessTokenExpired()) {
+        unset($_SESSION['upload_token']);
+    }
 } else {
-  $authUrl = $client->createAuthUrl();
+    $authUrl = $client->createAuthUrl();
 }
 
-/************************************************
- * If we're signed in then lets try to upload our
- * file. For larger files, see fileupload.php.
- ************************************************/
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $client->getAccessToken()) {
-  // We'll setup an empty 1MB file to upload.
-  DEFINE("TESTFILE", 'testfile-small.txt');
-  if (!file_exists(TESTFILE)) {
-    $fh = fopen(TESTFILE, 'w');
-    fseek($fh, 1024 * 1024);
-    fwrite($fh, "!", 1);
-    fclose($fh);
-  }
-echo "<pre>";
-print_r($client);
-  // This is uploading a file directly, with no metadata associated.
-  $file = new Google_Service_Drive_DriveFile();
-  $result = $service->files->create(
-      $file,
-      array(
-        'data' => file_get_contents(TESTFILE),
-        'mimeType' => 'application/octet-stream',
-        'uploadType' => 'media'
-      )
-  );
 
-  // Now lets try and send the metadata as well using multipart!
-  $file = new Google_Service_Drive_DriveFile();
-  $file->setName("Hello World!");
-  $result2 = $service->files->create(
-      $file,
-      array(
-        'data' => file_get_contents(TESTFILE),
-        'mimeType' => 'application/octet-stream',
-        'uploadType' => 'multipart'
-      )
-  );
-}
+
+
+//print_r($_SESSION);
+//print_r($userProfile);
 ?>
 
 <div class="box">
-<?php if (isset($authUrl)): ?>
-  <div class="request">
-    <a class='login' href='<?= $authUrl ?>'>Connect Me!</a>
-  </div>
-<?php elseif($_SERVER['REQUEST_METHOD'] == 'POST'): ?>
-  <div class="shortened">
-    <p>Your call was successful! Check your drive for the following files:</p>
-    <ul>
-      <li><a href="https://drive.google.com/open?id=<?= $result->id ?>" target="_blank"><?= $result->name ?></a></li>
-      <li><a href="https://drive.google.com/open?id=<?= $result2->id ?>" target="_blank"><?= $result2->name ?></a></li>
-    </ul>
-  </div>
-<?php else: ?>
-  <form method="POST">
-    <input type="submit" value="Click here to upload two small (1MB) test files" />
-  </form>
-<?php endif ?>
+    <?php if (isset($authUrl)): ?>
+        <div class="request">
+            <a class='login' href='<?= $authUrl ?>' target="_blank">Connect Me!</a>
+        </div>
+    <?php endif ?>
 </div>
-
-<?= pageFooter(__FILE__) ?>

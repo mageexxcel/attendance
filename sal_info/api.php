@@ -256,7 +256,7 @@ if ($action == 'get_document') {
 
 if ($action == 'delete_salary') {
     if ($userinfo['type'] == "admin") {
-        $res['data']['message']="";
+        $res['data']['message'] = "";
         if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
             $res['data']['message'] .= 'Please give user_id ';
         }
@@ -266,6 +266,29 @@ if ($action == 'delete_salary') {
             $userid = $PARAMS['user_id'];
             $salaryid = $PARAMS['salary_id'];
             $res = Salary::deleteUserSalary($userid, $salaryid);
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'send_payslips_to_employees') {
+
+    if ($userinfo['type'] == "admin") {
+        $res['data']['message'] = "";
+        if (!isset($PARAMS['payslip_ids']) || (isset($PARAMS['payslip_ids']) && $PARAMS['payslip_ids'] == "")) {
+            $res['data']['message'] .= 'Please give payslip_ids ';
+        } else {
+            $payslip_id = array();
+            $payslip_id = $PARAMS['payslip_ids'];
+            if (sizeof($payslip_id) > 0) {
+                foreach ($payslip_id as $val) {
+                    $res = Salary::sendPayslipMsgEmployee($val);
+                }
+            }
+            else{
+                $res['data']['message'] .= 'Please give payslip_ids '; 
+            }
         }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
