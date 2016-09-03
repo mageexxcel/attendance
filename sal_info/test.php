@@ -1,3 +1,3 @@
 <?php
-$currentMonth = date('F');
-echo Date('m', strtotime($currentMonth . " last month"));
+$currentMonth = "2016-08-01";
+echo Date('F', strtotime($currentMonth));

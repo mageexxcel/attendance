@@ -1,43 +1,107 @@
-<?php include_once "templates/base.php" ?>
+<?php
 
-<?php if (!isWebRequest()): ?>
-  To view this example, run the following command from the root directory of this repository:
+/*
+ * Copyright 2011 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-    php -S localhost:8080 -t examples/
+include_once __DIR__ . '/../vendor/autoload.php';
 
-  And then browse to "localhost:8080" in your web browser
-<?php return ?>
-<?php endif ?>
+include_once "templates/base.php";
 
-<?= pageHeader("PHP Library Examples"); ?>
+include_once __DIR__ . '/../../../../connection.php';
 
-<?php if (isset($_POST['api_key'])): ?>
-<?php setApiKey($_POST['api_key']) ?>
-<span class="warn">
-  API Key set!
-</span>
-<?php endif ?>
+//echo pageHeader("File Upload - Uploading a simple file");
 
-<?php if (!getApiKey()): ?>
-<div class="api-key">
-  <strong>You have not entered your API key</strong>
-  <form method="post">
-    API Key:<input type="text" name="api_key" />
-    <input type="submit" />
-  </form>
-  <em>This can be found in the <a href="http://developers.google.com/console" target="_blank">Google API Console</em>
-</div>
-<?php endif ?>
+/* * ***********************************************
+ * Ensure you've downloaded your oauth credentials
+ * ********************************************** */
+if (!$oauth_credentials = getOAuthCredentialsFile()) {
+    echo missingOAuth2CredentialsWarning();
+    return;
+}
 
-<ul>
-  <li><a href="simple-query.php">A query using simple API access</a></li>
-  <li><a href="url-shortener.php">Authorize a url shortener, using OAuth 2.0 authentication.</a></li>
-  <li><a href="batch.php">An example of combining multiple calls into a batch request</a></li>
-  <li><a href="service-account.php">A query using the service account functionality.</a></li>
-  <li><a href="simple-file-upload.php">An example of a small file upload.</a></li>
-  <li><a href="large-file-upload.php">An example of a large file upload.</a></li>
-  <li><a href="idtoken.php">An example of verifying and retrieving the id token.</a></li>
-  <li><a href="multi-api.php">An example of using multiple APIs.</a></li>
-</ul>
+/* * **********************************************
+ * The redirect URI is to the current page, e.g:
+ * http://localhost:8080/simple-file-upload.php
+ * ********************************************** */
+$redirect_uri = 'http://excellencemagentoblog.com/slack/attendance/sal_info/google-api/examples/';
 
-<?= pageFooter(); ?>
+//$redirect_uri = 'http://localhost/atten/attendance/sal_info/google-api/examples/';
+
+
+$client = new Google_Client();
+$client->setAuthConfig($oauth_credentials);
+$client->setRedirectUri($redirect_uri);
+$client->addScope("https://www.googleapis.com/auth/drive");
+
+$service = new Google_Service_Drive($client);
+
+// add "?logout" to the URL to remove a token from the session
+if (isset($_REQUEST['logout'])) {
+    unset($_SESSION['upload_token']);
+}
+
+/* * **********************************************
+ * If we have a code back from the OAuth 2.0 flow,
+ * we need to exchange that with the
+ * Google_Client::fetchAccessTokenWithAuthCode()
+ * function. We store the resultant access token
+ * bundle in the session, and redirect to ourself.
+ * ********************************************** */
+
+
+$client->refreshToken($refresh_token);
+
+$newtoken = $client->getAccessToken();
+//echo "<pre>";
+//print_r($newtoken);
+//die;
+$_SESSION['upload_token'] = $newtoken;
+// set the access token as part of the client
+
+if (!empty($_SESSION['upload_token'])) {
+ 
+    $client->setAccessToken($_SESSION['upload_token']);
+  
+    if ($client->isAccessTokenExpired()) {
+  $_SESSION['upload_token'] = $client->refreshToken($refresh_token);
+        unset($_SESSION['upload_token']);
+    }
+  
+} else {
+    
+    $authUrl = $client->createAuthUrl();
+}
+
+$pageToken = null;
+$arr = array();
+
+do {
+    $response = $service->files->listFiles(array(
+        'q' => "mimeType='application/vnd.google-apps.folder'",
+        'spaces' => 'drive',
+        'pageToken' => $pageToken,
+        'fields' => 'nextPageToken, files(id, name)',
+    ));
+    foreach ($response->files as $file) {
+        if (!array_key_exists($file->name, $arr)) {
+
+            $arr[$file->name] = $file->id;
+        }
+    }
+} while ($pageToken != null);
+
+
+?>
