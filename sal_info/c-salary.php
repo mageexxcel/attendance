@@ -138,7 +138,6 @@ class Salary extends DATABASE {
         $q = "select * from config where type = 'google_payslip_drive_token'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-
         return $row;
     }
 
@@ -887,7 +886,8 @@ class Salary extends DATABASE {
             'payslip_url' => ""
         );
         $check_google_drive_connection = self::getrefreshToken();
-        if (sizeof($check_google_drive_connection) <= 0) {
+        
+        if (!is_array($check_google_drive_connection) && sizeof($check_google_drive_connection) > 0) {
             $r_error = 1;
             $r_message = "Refresh token not found. Connect do google login first";
             $r_data['message'] = $r_message;
@@ -1079,13 +1079,13 @@ class Salary extends DATABASE {
         }
 
         $check_google_drive_connection = self::getrefreshToken();
-
+      
         $r_error = 0;
         $r_data['user_data_for_payslip'] = $user_salaryinfo;
         $r_data['user_payslip_history'] = $res;
         $r_data['google_drive_emailid'] = "";
         $r_data['employee_actual_salary'] = $actual_salary_detail;
-        if (sizeof($check_google_drive_connection) > 0) {
+        if (is_array($check_google_drive_connection) && sizeof($check_google_drive_connection) > 0) {
             //$r_data['google_drive_emailid'] = $check_google_drive_connection['email_id'];
             $r_data['google_drive_emailid'] = "Yes email id exist";
         }
@@ -1101,10 +1101,11 @@ class Salary extends DATABASE {
     public static function getTotalWorkingDays($year, $month) {
         $list = array();
         for ($d = 1; $d <= 31; $d++) {
-            $time = mktime(12, 0, 0, date('m'), $d, date('Y'));
-            if (date('m', $time) == date('m'))
+            $time = mktime(12, 0, 0, $month, $d, $year);
+            if (date('m', $time) == $month)
                 $list[] = date('m-d-Y', $time);
         }
+
         $no_of_holidays = self::getHolidaysOfMonth($year, $month);
         $weekends_of_month = self::getWeekendsOfMonth($year, $month);
 
