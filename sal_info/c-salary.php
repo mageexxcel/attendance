@@ -886,7 +886,7 @@ class Salary extends DATABASE {
             'payslip_url' => ""
         );
         $check_google_drive_connection = self::getrefreshToken();
-        
+
         if (!is_array($check_google_drive_connection) && sizeof($check_google_drive_connection) > 0) {
             $r_error = 1;
             $r_message = "Refresh token not found. Connect do google login first";
@@ -1026,7 +1026,21 @@ class Salary extends DATABASE {
 
 
 
-        $current_month_leave = $user_salaryinfo['total_working_days'] - $user_salaryinfo['days_present'];
+        // $current_month_leave = $user_salaryinfo['total_working_days'] - $user_salaryinfo['days_present'];
+        $c = self::getUserMonthLeaves($userid, $year, $month);
+
+        $current_month_leave = 0;
+        if (sizeof($c) > 0) {
+            foreach ($c as $v) {
+                if ($v['no_of_days'] < 1) {
+                    $current_month_leave = $current_month_leave + $v['no_of_days'];
+                }
+                else {
+                    $current_month_leave = $current_month_leave + 1;
+                }
+            }
+        }
+
         $leaves = $balance_leave - $current_month_leave + $user_salaryinfo['leaves_allocated'];
         if ($leaves >= 0) {
             $paid_leave = $current_month_leave;
@@ -1079,7 +1093,7 @@ class Salary extends DATABASE {
         }
 
         $check_google_drive_connection = self::getrefreshToken();
-      
+
         $r_error = 0;
         $r_data['user_data_for_payslip'] = $user_salaryinfo;
         $r_data['user_payslip_history'] = $res;
@@ -1209,7 +1223,8 @@ class Salary extends DATABASE {
             $daySummary = self::_beautyDaySummary($pp);
             $list[$pp_key] = $daySummary;
         }
-
+//      echo "<pre>";
+//      print_r($list);
         return sizeof($list);
     }
 
@@ -1468,6 +1483,53 @@ class Salary extends DATABASE {
 
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getUserMonthLeaves($userid, $year, $month) {
+        //$userid = '313';
+        $list = array();
+        $q = "SELECT * FROM leaves Where user_Id = $userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        foreach ($rows as $pp) {
+            $pp_start = $pp['from_date'];
+            $pp_end = $pp['to_date'];
+            $datesBetween = self::_getDatesBetweenTwoDates($pp_start, $pp_end);
+            foreach ($datesBetween as $d) {
+                $h_month = date('m', strtotime($d));
+                $h_year = date('Y', strtotime($d));
+                if ($h_year == $year && $h_month == $month) {
+                    $h_full_date = date("Y-m-d", strtotime($d));
+                    $h_date = date("d", strtotime($d));
+                    $list[$h_date] = $pp;
+                }
+            }
+        }
+        ksort($list);
+        ///// remove non working days from leaves
+        $monthHolidays = self::getHolidaysOfMonth($year, $month);
+        if (sizeof($monthHolidays) > 0) {
+            foreach ($monthHolidays as $d => $v) {
+                if (array_key_exists($d, $list)) {
+                    unset($list[$d]);
+                }
+            }
+        }
+        return $list;
+    }
+
+    public static function _getDatesBetweenTwoDates($startDate, $endDate) {
+        $return = array($startDate);
+        $start = $startDate;
+        $i = 1;
+        if (strtotime($startDate) < strtotime($endDate)) {
+            while (strtotime($start) < strtotime($endDate)) {
+                $start = date('Y-m-d', strtotime($startDate . '+' . $i . ' days'));
+                $return[] = $start;
+                $i++;
+            }
+        }
         return $return;
     }
 
