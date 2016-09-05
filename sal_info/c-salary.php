@@ -1078,7 +1078,9 @@ class Salary extends DATABASE {
         $user_salaryinfo['total_deduction'] = $total_deduction;
         $user_salaryinfo['net_salary'] = abs($net_salary);
 
-
+        $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
+        $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
+        
         $user_salaryinfo['paid_leaves'] = $paid_leave;
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;
