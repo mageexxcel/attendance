@@ -52,27 +52,34 @@ if (isset($_REQUEST['logout'])) {
  * function. We store the resultant access token
  * bundle in the session, and redirect to ourself.
  * ********************************************** */
+
+$q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
+
+$runquery = mysqli_query($link, $q) or die(mysqli_error($link));
+$row = array();
+while ($r = mysqli_fetch_assoc($runquery)) {
+    $row = $r;
+}
+if (sizeof($row) > 0) {
+    $q2 = "DELETE FROM config WHERE type = 'google_payslip_drive_token'";
+
+    $runquery2 = mysqli_query($link, $q2) or die(mysqli_error($link));
+}
+
 if (isset($_GET['code'])) {
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
     $client->setAccessToken($token);
-   $email = "";
+    $email = "";
 //    if ($client->getAccessToken()) {
 //        $token_data = $client->verifyIdToken();
 //        $email = $token_data['email'];
 //    }
 //    echo "<pre>";
-//    print_r($token);
+//    print_r($client);
     // store in the session also
     $_SESSION['upload_token'] = $token;
     $refresh_token = $token['refresh_token'];
-    $q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
 
-    $runquery = mysqli_query($link, $q) or die(mysqli_error($link));
-
-    $row = array();
-    while ($r = mysqli_fetch_assoc($runquery)) {
-        $row = $r;
-    }
 
     if (sizeof($row) > 0) {
         $id = $row['id'];
@@ -80,9 +87,9 @@ if (isset($_GET['code'])) {
     } else {
         $query = "INSERT INTO config (type, value, email_id) VALUES ('google_payslip_drive_token', '$refresh_token', '$email' )";
     }
-   mysqli_query($link, $query) or die (mysqli_error($link));
+    mysqli_query($link, $query) or die(mysqli_error($link));
 
-   echo "Refresh token of $email saved to database. Please redirect to homepage" ;
+    echo "Refresh token of $email saved to database. Please redirect to homepage";
 }
 
 // set the access token as part of the client

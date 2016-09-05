@@ -59,14 +59,18 @@ class Salary extends DATABASE {
             $arr['id'] = $val['user_Id'];
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
-             $arr['type'] = strtolower($val['type']);
+            $arr['type'] = strtolower($val['type']);
             //$arr['type'] = "admin";
         }
         return $arr;
     }
 
-    public function getSalaryInfo($userid) {
-        $q = "select * from salary where user_Id = $userid";
+    public function getSalaryInfo($userid, $sort = false) {
+        if ($sort == 'first_to_last') {
+            $q = "select * from salary where user_Id = $userid ORDER by id ASC";
+        } else {
+            $q = "select * from salary where user_Id = $userid";
+        }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         return $row;
@@ -76,6 +80,13 @@ class Salary extends DATABASE {
         $q = "select * from payslips where user_Id = $userid ORDER by id DESC";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    public function getUserBalanceLaveInfo($userid) {
+        $q = "select * from payslip where user_Id = $userid ORDER by id DESC";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
         return $row;
     }
 
@@ -966,39 +977,57 @@ class Salary extends DATABASE {
         $month_name = date('F', strtotime($date));
 
         $user_salaryinfo = array();
-        $res1 = self::getSalaryInfo($userid);
+        $res1 = self::getSalaryInfo($userid, "first_to_last");
         $res0 = self::getUserprofileDetail($userid);
         $latest_sal_id = sizeof($res1) - 1;
-
         $user_salaryinfo = $res1[$latest_sal_id];
-        $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
+
+        $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
+        $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
+
+        $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
+
+        //per day calculate salary
+        $pday_basic = $salary_detail['Basic'] / $user_salaryinfo['total_working_days'];
+        $pday_hra = $salary_detail['HRA'] / $user_salaryinfo['total_working_days'];
+        $pday_conve = $salary_detail['Conveyance'] / $user_salaryinfo['total_working_days'];
+        $pday_med = $salary_detail['Medical_Allowance'] / $user_salaryinfo['total_working_days'];
+        $pday_spl = $salary_detail['Special_Allowance'] / $user_salaryinfo['total_working_days'];
+        $pday_arrear = $salary_detail['Arrears'] / $user_salaryinfo['total_working_days'];
+
+        //calculate end    
+
         $user_salaryinfo['year'] = $year;
         $user_salaryinfo['month'] = $month;
         $user_salaryinfo['month_name'] = $month_name;
         $user_salaryinfo['name'] = $res0['name'];
         $user_salaryinfo['dateofjoining'] = $res0['dateofjoining'];
         $user_salaryinfo['jobtitle'] = $res0['jobtitle'];
-        $user_salaryinfo['salary_detail'] = $salary_detail;
-        $total_earning = $salary_detail['Basic'] + $salary_detail['HRA'] + $salary_detail['Conveyance'] + $salary_detail['Medical_Allowance'] + $salary_detail['Special_Allowance'] + $salary_detail['Arrears'];
 
-        $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS'];
-        $net_salary = $total_earning - $total_deduction;
-        $user_salaryinfo['total_earning'] = $total_earning;
-        $user_salaryinfo['total_deduction'] = $total_deduction;
-        $user_salaryinfo['net_salary'] = abs($net_salary);
+        $actual_salary_detail['total_earning'] = $actual_salary_detail['Basic'] + $actual_salary_detail['HRA'] + $actual_salary_detail['Conveyance'] + $actual_salary_detail['Medical_Allowance'] + $actual_salary_detail['Special_Allowance'] + $actual_salary_detail['Arrears'];
+
+        $actual_salary_detail['total_deduction'] = $salary_detail['EPF'] + $actual_salary_detail['Loan'] + $actual_salary_detail['Advance'] + $actual_salary_detail['Misc_Deductions'] + $actual_salary_detail['TDS'];
+        $actual_salary_detail['net_salary'] = $actual_salary_detail['total_earning'] - $actual_salary_detail['total_deduction'];
 
         $res = self::getUserPayslipInfo($userid);
+
         if (sizeof($res) > 0) {
 
             if ($res[0]['leave_balance'] == "") {
-                $res[0]['leave_balance'] = 0;
+                $balance_leave = 0;
+            } else {
+                $balance_leave = $res[0]['leave_balance'];
             }
+        }
+        if (sizeof($res) <= 0) {
+            $prev = self::getUserBalanceLaveInfo($userid);
+            $balance_leave = $prev['final_leave_balance'];
         }
 
 
 
-        $current_month_leave = self::getUserLeaveInfo($userid, $year, $month);
-        $leaves = $res[0]['leave_balance'] - $current_month_leave;
+        $current_month_leave = $user_salaryinfo['total_working_days'] - $user_salaryinfo['days_present'];
+        $leaves = $balance_leave - $current_month_leave + $user_salaryinfo['leaves_allocated'];
         if ($leaves >= 0) {
             $paid_leave = $current_month_leave;
             $unpaid_leave = 0;
@@ -1008,19 +1037,45 @@ class Salary extends DATABASE {
             $unpaid_leave = abs($leaves);
         }
 
-        $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
-        $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
+        //final salary calculate
+        $final_basic = $salary_detail['Basic'] - ( $pday_basic * $unpaid_leave);
+        $final_hra = $salary_detail['HRA'] - ( $pday_hra * $unpaid_leave);
+        $final_conve = $salary_detail['Conveyance'] - ( $pday_conve * $unpaid_leave);
+        $final_med = $salary_detail['Medical_Allowance'] - ( $pday_med * $unpaid_leave);
+        $final_spl = $salary_detail['Special_Allowance'] - ( $pday_spl * $unpaid_leave);
+        $final_arrear = $salary_detail['Arrears'] - ( $pday_arrear * $unpaid_leave);
+        //end calculate   
+
+        $salary_detail['Basic'] = round($final_basic, 2);
+        $salary_detail['HRA'] = round($final_hra, 2);
+        $salary_detail['Conveyance'] = round($final_conve, 2);
+        $salary_detail['Medical_Allowance'] = round($final_med, 2);
+        $salary_detail['Special_Allowance'] = round($final_spl, 2);
+        $salary_detail['Arrears'] = round($final_arrear, 2);
+
+        $user_salaryinfo['salary_detail'] = $salary_detail;
+
+        $total_earning = $salary_detail['Basic'] + $salary_detail['HRA'] + $salary_detail['Conveyance'] + $salary_detail['Medical_Allowance'] + $salary_detail['Special_Allowance'] + $salary_detail['Arrears'];
+
+        $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS'];
+        $net_salary = $total_earning - $total_deduction;
+
+        $user_salaryinfo['total_earning'] = $total_earning;
+        $user_salaryinfo['total_deduction'] = $total_deduction;
+        $user_salaryinfo['net_salary'] = abs($net_salary);
+
+
         $user_salaryinfo['paid_leaves'] = $paid_leave;
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;
-        $user_salaryinfo['leave_balance'] = $res[0]['leave_balance'];
+        $user_salaryinfo['leave_balance'] = $balance_leave;
 
-        $final_leave_balance = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
+        $final_leave_balance = $balance_leave + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
         if ($final_leave_balance <= 0) {
             $user_salaryinfo['final_leave_balance'] = 0;
         }
         if ($final_leave_balance > 0) {
-            $user_salaryinfo['final_leave_balance'] = $res[0]['leave_balance'] + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
+            $user_salaryinfo['final_leave_balance'] = $balance_leave + $res1[$latest_sal_id]['leaves_allocated'] - $current_month_leave;
         }
 
         $check_google_drive_connection = self::getrefreshToken();
@@ -1029,6 +1084,7 @@ class Salary extends DATABASE {
         $r_data['user_data_for_payslip'] = $user_salaryinfo;
         $r_data['user_payslip_history'] = $res;
         $r_data['google_drive_emailid'] = "";
+        $r_data['employee_actual_salary'] = $actual_salary_detail;
         if (sizeof($check_google_drive_connection) > 0) {
             //$r_data['google_drive_emailid'] = $check_google_drive_connection['email_id'];
             $r_data['google_drive_emailid'] = "Yes email id exist";
@@ -1267,7 +1323,7 @@ class Salary extends DATABASE {
 
         include "google-api/examples/indextest.php";
 
-        if ($file_id != false ) {
+        if ($file_id != false) {
 
             try {
                 $service->files->delete($file_id);
