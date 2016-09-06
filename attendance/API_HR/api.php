@@ -178,6 +178,16 @@
 			$google_access_token = $PARAMS['google_access_token'];
 			$res = HR::updateGooglepaySlipDriveAccessToken( $google_access_token );
 		}
+	}else if( $action == 'add_new_employee' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		if( strtolower($loggedUserInfo['role']) != 'admin' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission";
+		}else{
+			$res = HR::addNewEmployee( $PARAMS );
+		}
 	}
 
 
