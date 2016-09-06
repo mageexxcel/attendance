@@ -65,6 +65,26 @@ class Salary extends DATABASE {
         return $arr;
     }
 
+    public function getAllUserDetail() {
+        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        $row2 = array();
+        foreach ($row as $val) {
+            if ($val['username'] != "admin") {
+
+                $userid = $val['user_Id'];
+                $val['user_bank_detail'] = self::getUserBankDetail($userid);
+
+                $row2[] = $val;
+            }
+        }
+
+        return $row2;
+    }
+
     public function getSalaryInfo($userid, $sort = false) {
         if ($sort == 'first_to_last') {
             $q = "select * from salary where user_Id = $userid ORDER by id ASC";
@@ -1034,8 +1054,7 @@ class Salary extends DATABASE {
             foreach ($c as $v) {
                 if ($v['no_of_days'] < 1) {
                     $current_month_leave = $current_month_leave + $v['no_of_days'];
-                }
-                else {
+                } else {
                     $current_month_leave = $current_month_leave + 1;
                 }
             }
@@ -1080,7 +1099,7 @@ class Salary extends DATABASE {
 
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
         $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
-        
+
         $user_salaryinfo['paid_leaves'] = $paid_leave;
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;

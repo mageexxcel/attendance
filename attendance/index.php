@@ -242,7 +242,6 @@ if (isset($sendmessage)) {
                                 $ins2 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '0', '$bb','$pdate')";
                             }
                             if (mysqli_num_rows($q) <= 0) {
-
                                 mysqli_query($link, $ins2) or die(mysqli_error($link));
                             }
                         }
@@ -253,7 +252,6 @@ if (isset($sendmessage)) {
                             $msg = $msg . "Your Previous working day Entry Time: " . $aa . " Exit Time: " . $bb . "\n";
                             $q1 = mysqli_query($link, "SELECT * FROM `hr_data` WHERE `email` = '$e' AND `date` = '$pdate'");
                             if (mysqli_num_rows($q1) <= 0) {
-
                                 $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$id', '$e', '$aa', '$bb','$pdate')";
                                 mysqli_query($link, $ins3) or die(mysqli_error($link));
                             }
@@ -295,7 +293,6 @@ if (isset($sendmessage)) {
         }
     }
 }
-
 function get_time_array($date, $link, $hr = false) {
     $final = array();
     $query3 = "SELECT * FROM attendance Where timing like '%$date%' ";
@@ -332,7 +329,6 @@ function get_time_array($date, $link, $hr = false) {
     }
     return $final;
 }
-
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
         if ($data == $val['user']) {
@@ -341,7 +337,6 @@ function get_channel_id($data, $array) {
         }
     }
 }
-
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if ($sir == "You have not Entered your time Today") {
@@ -387,7 +382,6 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
     curl_close($ch);
 }
-
 function getLateComingInfo($data, $link) {
     $date = date("m-Y");
     $string = "";
@@ -408,7 +402,6 @@ function getLateComingInfo($data, $link) {
     }
     return $string;
 }
-
 function saveUserMonthPunching($userid, $email, $link) {
     $year = date("Y");
     $month = date("m");
@@ -462,7 +455,6 @@ function saveUserMonthPunching($userid, $email, $link) {
     }
     return $list;
 }
-
 function _beautyDaySummary($dayRaw) {
     $TIMESTAMP = '';
     $numberOfPunch = sizeof($dayRaw);
@@ -485,7 +477,6 @@ function _beautyDaySummary($dayRaw) {
     $return['date'] = $rf_date;
     return $return;
 }
-
 //die;
 ?>
 <html>
