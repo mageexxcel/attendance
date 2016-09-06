@@ -1747,7 +1747,7 @@
                     }else{
                         //user is inserted
                         $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email ) VALUES 
-                        ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$work_email' ) ";
+                        ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail' ) ";
                         self::DBrunQuery($q1);
                         $r_error = 0;
                         $r_message = "Employee added Successfully !!";
