@@ -568,57 +568,36 @@ class Salary extends DATABASE {
         $r_message = "";
         $r_data = array();
         $userid = $data['user_id'];
-        $user_bank_detail = self::getUserBankDetail($userid);
-        $ins = array(
-            'bank_name' => $data['bank_name'],
-            'bank_address' => $data['bank_address'],
-            'bank_account_no' => $data['account_no'],
-            'ifsc' => $data['ifsc']
-        );
-
-        $whereField = 'user_Id';
-        $whereFieldVal = $userid;
-        $msg = array();
-        $res = false;
-        if (sizeof($user_bank_detail) > 0) {
-            foreach ($user_bank_detail as $key => $val) {
-                if (array_key_exists($key, $data)) {
-                    if ($data[$key] != $user_bank_detail[$key]) {
-                        $arr = array();
-                        $arr[$key] = $data[$key];
-                        $res = self::DBupdateBySingleWhere('user_bank_details', $whereField, $whereFieldVal, $arr);
-                        $msg[$key] = $data[$key];
-                    }
-                }
-            }
-
-            if ($res == false) {
-                $r_error = 0;
-                $r_message = "No fields updated into table";
-                $r_data['message'] = $r_message;
-            } else {
-                $userInfo = self::getUserInfo($userid);
-                $userInfo_name = $userInfo['name'];
-                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-                if (sizeof($msg > 0)) {
-                    $message = "Hey $userInfo_name !!  \n Your bank details are updated \n Details: \n ";
-                    foreach ($msg as $key => $valu) {
-                        $message = $message . "$key = " . $valu . "\n";
-                    }
-                    //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
-                }
-            }
 
 
-            $r_error = 0;
-            $r_message = "Successfully Updated into table";
+        $f_bank_name = $data['bank_name'];
+        $f_bank_address = $data['bank_address'];
+        $f_bank_account_no = $data['bank_account_no'];
+        $f_ifsc = $data['ifsc'];
+
+        $q = "SELECT * from user_bank_details WHERE user_Id=$userid";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if ($row == false) {
+            $q = "INSERT INTO user_bank_details ( user_id, bank_name, bank_address, bank_account_no, ifsc ) VALUES ( $userid, '$f_bank_name', '$f_bank_address', $f_bank_account_no, '$f_ifsc' )";
+           
+            self::DBrunQuery($q);
+            
+             $r_error = 0;
+            $r_message = "Data Successfully Updated";
             $r_data['message'] = $r_message;
+            
         } else {
-            $res = self::DBinsertQuery('user_bank_details', $ins);
-            $r_error = 0;
-            $r_message = "Successfully Inserted into table";
+            $q = "UPDATE user_bank_details set bank_name='$f_bank_name', bank_address='$f_bank_address', bank_account_no=$f_bank_account_no, ifsc='$f_ifsc' WHERE user_Id=$userid";
+            
+            self::DBrunQuery($q);
+            
+             $r_error = 0;
+            $r_message = "Data Successfully Inserted";
             $r_data['message'] = $r_message;
         }
+        
+
         $return = array();
 
         $return['error'] = $r_error;
