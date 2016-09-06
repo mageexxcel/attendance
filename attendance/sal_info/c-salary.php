@@ -579,7 +579,7 @@ class Salary extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         if ($row == false) {
-            $q = "INSERT INTO user_bank_details ( user_id, bank_name, bank_address, bank_account_no, ifsc ) VALUES ( $userid, '$f_bank_name', '$f_bank_address', $f_bank_account_no, '$f_ifsc' )";
+            $q = "INSERT INTO user_bank_details ( user_id, bank_name, bank_address, bank_account_no, ifsc ) VALUES ( $userid, '$f_bank_name', '$f_bank_address', '$f_bank_account_no', '$f_ifsc' )";
            
             self::DBrunQuery($q);
             
@@ -588,7 +588,7 @@ class Salary extends DATABASE {
             $r_data['message'] = $r_message;
             
         } else {
-            $q = "UPDATE user_bank_details set bank_name='$f_bank_name', bank_address='$f_bank_address', bank_account_no=$f_bank_account_no, ifsc='$f_ifsc' WHERE user_Id=$userid";
+            $q = "UPDATE user_bank_details set bank_name='$f_bank_name', bank_address='$f_bank_address', bank_account_no='$f_bank_account_no', ifsc='$f_ifsc' WHERE user_Id=$userid";
             
             self::DBrunQuery($q);
             
