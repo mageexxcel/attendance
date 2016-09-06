@@ -31,7 +31,7 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
  * ********************************************** */
-$redirect_uri = 'http://excellencemagentoblog.com/slack_dev/hr/attendance/sal_info/google-api/examples/';
+$redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
 
 //$redirect_uri = 'http://localhost/atten/attendance/sal_info/google-api/examples/';
 
