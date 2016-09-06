@@ -13,6 +13,7 @@
         private static $SLACK_token = '';
         
         const JWT_SECRET_KEY = 'HR_APP';
+        const EMPLOYEE_FIRST_PASSWORD = "java@123";
         //-------------------------------------
         function __construct(){
             $q = "SELECT * from admin";
@@ -125,6 +126,16 @@
 
             return $return;
             
+        }
+        public static function getUserIdFromUsername( $username ){
+            $q = "SELECT * from users WHERE username='$username' ";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            if( $row == false ){
+                return false;
+            }else{
+                return $row['id'];
+            }
         }
         public static function getUserInfo( $userid ){
             $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
@@ -1668,6 +1679,88 @@
 
             return $return;
             
+        }
+
+        public static function addNewEmployee( $PARAMS ){ //api call
+            $r_error = 1;
+            $r_message = "";
+            $r_data = array();
+
+            $f_dateofjoining = $f_name = $f_jobtitle = $f_gender = $f_dob = $f_username = $f_workemail = "";
+
+            if( isset( $PARAMS['dateofjoining']) && $PARAMS['dateofjoining'] != '' ){
+                $f_dateofjoining = trim($PARAMS['dateofjoining']);
+            }
+            if( isset( $PARAMS['name']) && $PARAMS['name'] != '' ){
+                $f_name = trim($PARAMS['name']);
+            }
+            if( isset( $PARAMS['jobtitle']) && $PARAMS['jobtitle'] != '' ){
+                $f_jobtitle = trim($PARAMS['jobtitle']);
+            }
+            if( isset( $PARAMS['gender']) && $PARAMS['gender'] != '' ){
+                $f_gender = trim($PARAMS['gender']);
+            }
+            if( isset( $PARAMS['dob']) && $PARAMS['dob'] != '' ){
+                $f_dob = trim($PARAMS['dob']);
+            }
+            if( isset( $PARAMS['username']) && $PARAMS['username'] != '' ){
+                $f_username = trim($PARAMS['username']);
+            }
+            if( isset( $PARAMS['workemail']) && $PARAMS['workemail'] != '' ){
+                $f_workemail = trim( $PARAMS['workemail'] );
+            }
+            
+
+
+
+            if( $f_dateofjoining == '' ){
+                $r_message = "Date of joining is empty";
+            }else if( $f_name == '' ){
+                $r_message = "Name is empty";
+            }else if( $f_jobtitle == '' ){
+                $r_message = "Job Title is empty";
+            }else if( $f_gender == '' ){
+                $r_message = "Gender is empty";
+            }else if( $f_dob == '' ){
+                $r_message = "Date of birth is empty";
+            }else if( $f_username == '' ){
+                $r_message = "Username is empty";
+            }else if( $f_workemail == '' ){
+                $r_message = "Work email is empty";
+            }else{
+                //check user name exists
+                $q = "select * from users where username='$f_username' ";
+                $runQuery = self::DBrunQuery($q);
+                $row = self::DBfetchRow($runQuery);
+                if( $row != false ){
+                    $r_message = "Username already exists!!";
+                }else{
+                    $f_type = "Employee";
+                    $f_password = md5( self::EMPLOYEE_FIRST_PASSWORD );
+                    $f_status = "Enabled";
+                    $q = "INSERT INTO users ( username, password, type, status ) VALUES ( '$f_username', '$f_password', '$f_type', '$f_status' ) ";
+                    self::DBrunQuery($q);
+                    $userID = self::getUserIdFromUsername( $f_username );
+                    if( $userID == false ){
+                        //user is not inserted
+                        $r_message = "Errosr occurs while inserting user";
+                    }else{
+                        //user is inserted
+                        $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email ) VALUES 
+                        ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$work_email' ) ";
+                        self::DBrunQuery($q1);
+                        $r_error = 0;
+                        $r_message = "Employee added Successfully !!";
+                    }
+                }
+            }
+
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
         }
 
 
