@@ -580,34 +580,43 @@ class Salary extends DATABASE {
         $whereFieldVal = $userid;
         $msg = array();
         $res = false;
-        foreach ($user_bank_detail as $key => $val) {
-            if (array_key_exists($key, $data)) {
-                if ($data[$key] != $user_bank_detail[$key]) {
-                    $arr = array();
-                    $arr[$key] = $data[$key];
-                    $res = self::DBupdateBySingleWhere('user_bank_details', $whereField, $whereFieldVal, $arr);
-                    $msg[$key] = $data[$key];
+        if (sizeof($user_bank_detail) > 0) {
+            foreach ($user_bank_detail as $key => $val) {
+                if (array_key_exists($key, $data)) {
+                    if ($data[$key] != $user_bank_detail[$key]) {
+                        $arr = array();
+                        $arr[$key] = $data[$key];
+                        $res = self::DBupdateBySingleWhere('user_bank_details', $whereField, $whereFieldVal, $arr);
+                        $msg[$key] = $data[$key];
+                    }
                 }
             }
-        }
 
-        if ($res == false) {
-            $r_error = 0;
-            $r_message = "No fields updated into table";
-            $r_data['message'] = $r_message;
-        } else {
-            $userInfo = self::getUserInfo($userid);
-            $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            if (sizeof($msg > 0)) {
-                $message = "Hey $userInfo_name !!  \n Your bank details are updated \n Details: \n ";
-                foreach ($msg as $key => $valu) {
-                    $message = $message . "$key = " . $valu . "\n";
+            if ($res == false) {
+                $r_error = 0;
+                $r_message = "No fields updated into table";
+                $r_data['message'] = $r_message;
+            } else {
+                $userInfo = self::getUserInfo($userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+                if (sizeof($msg > 0)) {
+                    $message = "Hey $userInfo_name !!  \n Your bank details are updated \n Details: \n ";
+                    foreach ($msg as $key => $valu) {
+                        $message = $message . "$key = " . $valu . "\n";
+                    }
+                    //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
                 }
-                //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             }
+
+
             $r_error = 0;
             $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
+        } else {
+            $res = self::DBinsertQuery('user_bank_details', $ins);
+            $r_error = 0;
+            $r_message = "Successfully Inserted into table";
             $r_data['message'] = $r_message;
         }
         $return = array();
