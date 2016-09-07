@@ -103,11 +103,22 @@ class Salary extends DATABASE {
         return $row;
     }
 
-    public function getUserBalanceLaveInfo($userid) {
+    public function getUserBalanceLaveInfo($userid, $year, $month) {
+        $current_month = $year . "-" . $month;
+        $prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
         $q = "select * from payslip where user_Id = $userid ORDER by id DESC";
+
         $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
-        return $row;
+        $row = self::DBfetchRows($runQuery);
+
+        $r = array();
+        foreach ($row as $val) {
+            if (strpos($val['payslip_month'], $prev_month) !== false) {
+                $r = $val;
+            }
+        }
+
+        return $r;
     }
 
     public function getAllUserPayslip($userid, $year, $month) {
@@ -580,23 +591,22 @@ class Salary extends DATABASE {
         $row = self::DBfetchRow($runQuery);
         if ($row == false) {
             $q = "INSERT INTO user_bank_details ( user_id, bank_name, bank_address, bank_account_no, ifsc ) VALUES ( $userid, '$f_bank_name', '$f_bank_address', '$f_bank_account_no', '$f_ifsc' )";
-           
+
             self::DBrunQuery($q);
-            
-             $r_error = 0;
+
+            $r_error = 0;
             $r_message = "Data Successfully Updated";
             $r_data['message'] = $r_message;
-            
         } else {
             $q = "UPDATE user_bank_details set bank_name='$f_bank_name', bank_address='$f_bank_address', bank_account_no='$f_bank_account_no', ifsc='$f_ifsc' WHERE user_Id=$userid";
-            
+
             self::DBrunQuery($q);
-            
-             $r_error = 0;
+
+            $r_error = 0;
             $r_message = "Data Successfully Inserted";
             $r_data['message'] = $r_message;
         }
-        
+
 
         $return = array();
 
@@ -1028,7 +1038,7 @@ class Salary extends DATABASE {
             }
         }
         if (sizeof($res) <= 0) {
-            $prev = self::getUserBalanceLaveInfo($userid);
+            $prev = self::getUserBalanceLaveInfo($userid, $year, $month);
             $balance_leave = $prev['final_leave_balance'];
         }
 
@@ -1342,7 +1352,7 @@ class Salary extends DATABASE {
         //upload file in google drive;
         $parent_folder = "Employees Salary Payslips";
         $subfolder_empname = $userInfo_name;
-        $subfolder_year = date("Y");
+        $subfolder_year = $userInfo_name . " " . date("Y");
         $r_token = self::getrefreshToken();
         $refresh_token = $r_token['value'];
 
