@@ -896,11 +896,12 @@ class Salary extends DATABASE {
             'month' => $data['month'],
             'year' => $data['year'],
             'total_leave_taken' => $data['total_leave_taken'],
-            'leave_balance' => $data['final_leave_balance'],
+            'leave_balance' => $data['leave_balance'],
             'allocated_leaves' => $data['allocated_leaves'],
             'paid_leaves' => $data['paid_leaves'],
             'unpaid_leaves' => $data['unpaid_leaves'],
             'final_leave_balance' => $data['final_leave_balance'],
+            'misc_deduction_2' => $data['misc_deduction_2'],
             'payslip_url' => ""
         );
         $check_google_drive_connection = self::getrefreshToken();
@@ -947,6 +948,9 @@ class Salary extends DATABASE {
                 $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
                 mysql_query($query);
 
+                if ($data['send_email'] == 1 || $data['send_email'] == '1') {
+                    self::sendPayslipMsgEmployee($payslip_no);
+                }
 
 
                 $r_error = 0;
@@ -970,7 +974,10 @@ class Salary extends DATABASE {
                     $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
                     mysql_query($query);
 
-
+                    if ($data['send_email'] == 1 || $data['send_email'] == '1') {
+                        self::sendPayslipMsgEmployee($payslip_no);
+                    }
+                    
                     $r_error = 0;
                     $r_message = "Salary slip generated successfully";
                     $r_data['message'] = $r_message;
@@ -1091,9 +1098,9 @@ class Salary extends DATABASE {
         $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS'];
         $net_salary = $total_earning - $total_deduction;
 
-        $user_salaryinfo['total_earning'] = $total_earning;
-        $user_salaryinfo['total_deduction'] = $total_deduction;
-        $user_salaryinfo['net_salary'] = abs($net_salary);
+        $user_salaryinfo['total_earning'] = round($total_earning, 2);
+        $user_salaryinfo['total_deduction'] = round($total_deduction, 2);
+        $user_salaryinfo['net_salary'] = round($net_salary, 2);
 
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
         $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
@@ -1352,7 +1359,7 @@ class Salary extends DATABASE {
         //upload file in google drive;
         $parent_folder = "Employees Salary Payslips";
         $subfolder_empname = $userInfo_name;
-        $subfolder_year = date("Y")."-".$userid;
+        $subfolder_year = date("Y") . "-" . $userid;
         $r_token = self::getrefreshToken();
         $refresh_token = $r_token['value'];
 

@@ -209,7 +209,7 @@
 <?php echo $data['medical_allowance'] ?>
                 </td>
                 <td>
-                    Misc Deductions
+                    Holding Amount
                 </td>
                 <td>
 <?php echo $data['misc_deduction'] ?>
@@ -237,10 +237,10 @@
 <?php echo $data['arrear'] ?>
                 </td>
                 <td>
-
+                   Misc Deduction
                 </td>
                 <td>
-
+<?php echo $data['misc_deduction_2'] ?>
                 </td>
             </tr>
             <tr>
