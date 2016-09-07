@@ -977,7 +977,7 @@ class Salary extends DATABASE {
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
                         self::sendPayslipMsgEmployee($payslip_no);
                     }
-                    
+
                     $r_error = 0;
                     $r_message = "Salary slip generated successfully";
                     $r_data['message'] = $r_message;
@@ -1057,10 +1057,12 @@ class Salary extends DATABASE {
         $current_month_leave = 0;
         if (sizeof($c) > 0) {
             foreach ($c as $v) {
-                if ($v['no_of_days'] < 1) {
-                    $current_month_leave = $current_month_leave + $v['no_of_days'];
-                } else {
-                    $current_month_leave = $current_month_leave + 1;
+                if ($v['status'] == "Approved" || $v['status'] == "approved") {
+                    if ($v['no_of_days'] < 1) {
+                        $current_month_leave = $current_month_leave + $v['no_of_days'];
+                    } else {
+                        $current_month_leave = $current_month_leave + 1;
+                    }
                 }
             }
         }
