@@ -107,7 +107,9 @@
                         "role" => $userInfo['type'],
                         "name" =>  $userInfo['name'],
                         "jobtitle" => $userInfo['jobtitle'],
-                        "profileImage" => $userProfileImage
+                        "profileImage" => $userProfileImage,
+                        "login_time" => time(),
+                        "login_date_time" => date('d-M-Y H:i:s')
                     );
 
                     $jwtToken = JWT::encode( $u, self::JWT_SECRET_KEY );
