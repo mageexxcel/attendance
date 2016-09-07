@@ -942,7 +942,7 @@ class Salary extends DATABASE {
                     }
                 }
 
-                $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $file_id);
+                $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid, $file_id);
 
                 $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
                 mysql_query($query);
@@ -965,7 +965,7 @@ class Salary extends DATABASE {
 
                     $suc = self::createPDf($html, $payslip_name, $path = "payslip");
 
-                    $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name);
+                    $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid);
 
                     $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
                     mysql_query($query);
@@ -1347,12 +1347,12 @@ class Salary extends DATABASE {
         include "phpmailer/examples/gmail.php";
     }
 
-    public static function saveFileToGoogleDrive($payslip_no, $userInfo_name, $file_id = false) {
+    public static function saveFileToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_id = false) {
         $filename = $payslip_no . ".pdf";
         //upload file in google drive;
         $parent_folder = "Employees Salary Payslips";
         $subfolder_empname = $userInfo_name;
-        $subfolder_year = $userInfo_name . " " . date("Y");
+        $subfolder_year = date("Y")."-".$userid;
         $r_token = self::getrefreshToken();
         $refresh_token = $r_token['value'];
 
