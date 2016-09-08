@@ -5,8 +5,8 @@ ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-$PARAMS = json_decode($request_body, true);
-//$PARAMS = $_GET;
+//$PARAMS = json_decode($request_body, true);
+$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -19,13 +19,37 @@ $res = array(
 //validate a token
 
 $token = $PARAMS['token'];
-$user_id = Salary::getIdUsingToken($token);
-$userinfo = Salary::getUserDetail($user_id);
+$validateToken = Salary::validateToken($token);
 
-if ($user_id == "") {
+if ($validateToken != false) {
+    
+    //start -- check for token expiry
+    $tokenInfo = JWT::decode($token, Salary::JWT_SECRET_KEY);
+    $tokenInfo = json_decode(json_encode($tokenInfo), true);
+  
+    if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
+        $token_start_time = $tokenInfo['login_time'];
+        $current_time = time();
+        $time_diff = $current_time - $token_start_time;
+        $mins = $time_diff / 60;
+       
+        if ($mins > 60) { //if 60 mins more
+            $validateToken = false;
+        }
+    } else {
+        $validateToken = false;
+    }
+    //end -- check for token expiry
+    
+}
+if ($validateToken == false) {
     header("HTTP/1.1 401 Unauthorized");
     exit;
 }
+$user_id = Salary::getIdUsingToken($token);
+$userinfo = Salary::getUserDetail($user_id);
+
+
 
 
 if ($action == 'get_user_profile_detail') {
@@ -285,9 +309,8 @@ if ($action == 'send_payslips_to_employees') {
                 foreach ($payslip_id as $val) {
                     $res = Salary::sendPayslipMsgEmployee($val);
                 }
-            }
-            else{
-                $res['data']['message'] .= 'Please give payslip_ids '; 
+            } else {
+                $res['data']['message'] .= 'Please give payslip_ids ';
             }
         }
     } else {

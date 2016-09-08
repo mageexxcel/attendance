@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
      exit(0);
 }
 require_once 'c-database.php';
+require_once 'c-jwt.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -19,6 +20,7 @@ class Salary extends DATABASE {
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
+    const JWT_SECRET_KEY = 'HR_APP';
 
     //-------------------------------------
     public function __construct() {
@@ -35,6 +37,20 @@ class Salary extends DATABASE {
         //self::getSlackChannelIds();
         //die;
     }
+    
+     public static function validateToken( $token ){
+            $token = mysql_real_escape_string( $token );
+            $q = "select * from login_tokens where token='$token' ";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            if( sizeof( $rows ) > 0 ){
+                return true;
+            }else{
+                return false;
+            }
+
+        }
+    
 
     public static function getIdUsingToken($token) {
         $token = mysql_real_escape_string($token);
