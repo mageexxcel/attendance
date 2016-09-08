@@ -5,8 +5,8 @@ ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-//$PARAMS = json_decode($request_body, true);
-$PARAMS = $_GET;
+$PARAMS = json_decode($request_body, true);
+//$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
