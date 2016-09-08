@@ -1766,6 +1766,84 @@
         }
 
 
+        public static function _randomString($length = 4, $result='') {
+            for($i = 0; $i < $length; $i++) {
+                $case = mt_rand(0, 1);
+                switch($case){
+                    case 0:
+                        $data = mt_rand(0, 9);
+                        break;
+                    case 1:
+                        $alpha = range('a','z');
+                        $item = mt_rand(0, 26);
+                        $data = strtoupper($alpha[$item]);
+                    break;
+                }
+                $result .= $data;
+            }
+            return $result;
+        }
+
+        public static function updateUserPassword( $userid, $newPasswordString ){
+            $newPassword = md5( $newPasswordString );
+            $q = "UPDATE users set password='$newPassword' WHERE id=$userid";
+            self::DBrunQuery($q);
+            //deletes existing tokens of user
+            self::deleteUserTokens( $userid );
+            return true;
+        }
+
+        public static function forgotPassword( $username ){ // api call
+            $r_error = 1;
+            $r_message = "";
+            $r_data = array();
+
+            if( $username == 'global_guest'){
+                $r_message = "You don't have permission to reset password !!";
+            }else{
+
+                $q = "select * from users where username='$username' ";
+                $runQuery = self::DBrunQuery($q);
+                $row = self::DBfetchRow($runQuery);
+                if( $row == false ){
+                    $r_message = "Username not exists!!";
+                }else{
+                    $userId = $row['id'];
+                    $status = $row['status'];
+                    $type = $row['type'];
+
+                    if( $type != 'Employee' ){
+                        $r_message = "You can't reset pasword. Contact Admin.!!";  
+                    }else{
+                        if( $status != 'Enabled' ){
+                          $r_message = "Employee is disabled!!";  
+                        }else{
+                            $newPassword = self::_randomString( 5 );
+                            self::updateUserPassword( $userId, $newPassword );
+                            $r_error = 0;
+                            $r_message = "Password reset Successfully. Check you slack for new password!!";  
+
+                            //send slack message
+                            $userInfo = self::getUserInfo( $userId );
+                            $userInfo_name = $userInfo['name'];
+                            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                            $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
+                            $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+                        }
+                    }
+                }
+            }
+
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
+
+        }
+
     }
 
     new HR();

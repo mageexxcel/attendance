@@ -12,10 +12,9 @@
 	}
 
 	//echo '<pre>';
-
 	require_once 'c-hr.php';
-        
-        $request_body = file_get_contents('php://input');
+
+	$request_body = file_get_contents('php://input');
 	$PARAMS = json_decode($request_body, true );
 
 	$action = false;
@@ -26,7 +25,8 @@
 	$token = $PARAMS['token'];
 
 	//validate a token
-	if( $action != 'login' ){
+
+	if( $action != 'login' && $action != 'forgot_password' ){
 		$token = $PARAMS['token'];
 		$validateToken = HR::validateToken( $token );
 
@@ -67,6 +67,12 @@
 			$password = md5( $PARAMS['password'] );
 		}
 		$res = HR::login( $username, $password );
+	}else if( $action == 'forgot_password' ){
+		$username = '';	
+		if( isset( $PARAMS['username']) ){
+			$username = $PARAMS['username'];
+		}
+		$res = HR::forgotPassword( $username );
 	}else if( $action == 'logout' ){
 		$res = HR::logout( $PARAMS['token'] );
 	}else if( $action == 'month_attendance' ){
