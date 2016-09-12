@@ -212,6 +212,18 @@
 		}else{
 			$res = HR::addNewEmployee( $PARAMS );
 		}
+	}else if( $action == 'update_new_password' ){  // only employee can update his password
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+		
+		//check for employee so that he can only update his password
+		if( strtolower($loggedUserInfo['role']) != 'employee' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission to update your password!!";
+		}else{
+			$res = HR::updatePassoword( $PARAMS );
+		}
 	}
 
 
