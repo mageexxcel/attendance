@@ -1844,6 +1844,55 @@
 
         }
 
+        public static function updatePassoword( $PARAMS ){
+            $r_error = 1;
+            $r_message = "";
+            $r_data = array();
+
+            $f_userid = "";
+            $f_newPassword = "";
+
+            $token = $PARAMS['token'];
+
+            $loggedUserInfo = JWT::decode( $token, self::JWT_SECRET_KEY );
+            $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+            if( isset($loggedUserInfo['id']) ){
+                $f_userid = $loggedUserInfo['id'];
+                if( isset( $PARAMS['password']) && $PARAMS['password'] != '' ){
+                    $f_newPassword = trim($PARAMS['password']);
+                }
+                if( $f_newPassword == '' ){
+                    $r_message = "Password is empty!!";
+                }else if( strlen( $f_newPassword) < 4 ){
+                    $r_message = "Password must be atleast 4 characters!!";
+                }else{
+                    self::updateUserPassword( $f_userid, $f_newPassword );
+                    $r_error = 0;
+                    $r_message = "Password updated Successfully!!";
+
+                    //send slack message to user
+                    $userInfo = self::getUserInfo( $f_userid );
+                    $userInfo_name = $userInfo['name'];
+                    $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                    $message_to_user = "Hi $userInfo_name !!  \n Your had just updated your HR Portal password.";
+                    $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message_to_user );
+                }
+            }else{
+                $res['error'] = 1;
+                $res['data']['message'] = "User not found";
+            }
+
+            $return = array();
+            $return['error'] = $r_error;
+            $r_data['message'] = $r_message;
+            $return['data'] = $r_data;
+
+            return $return;
+
+        }
+
     }
 
     new HR();
