@@ -20,6 +20,7 @@ class Salary extends DATABASE {
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
+
     const JWT_SECRET_KEY = 'HR_APP';
 
     //-------------------------------------
@@ -37,20 +38,18 @@ class Salary extends DATABASE {
         //self::getSlackChannelIds();
         //die;
     }
-    
-     public static function validateToken( $token ){
-            $token = mysql_real_escape_string( $token );
-            $q = "select * from login_tokens where token='$token' ";
-            $runQuery = self::DBrunQuery($q);
-            $rows = self::DBfetchRows($runQuery);
-            if( sizeof( $rows ) > 0 ){
-                return true;
-            }else{
-                return false;
-            }
 
+    public static function validateToken($token) {
+        $token = mysql_real_escape_string($token);
+        $q = "select * from login_tokens where token='$token' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) > 0) {
+            return true;
+        } else {
+            return false;
         }
-    
+    }
 
     public static function getIdUsingToken($token) {
         $token = mysql_real_escape_string($token);
@@ -389,17 +388,15 @@ class Salary extends DATABASE {
 
         $ins = array(
             'user_Id' => $data['user_id'],
-            'id_proof' => $data['id_proof'],
-            'address_proof' => $data['address_proof'],
-            'passport_photo' => $data['passport_photo'],
-            'certificate' => $data['certificate'],
-            'pancard' => $data['pancard'],
-            'user_id_for_bank' => $data['uid_for_bank'],
-            'prev_company_doc' => $data['previous_comp_doc'],
+            'document_type' => $data['document_type'],
+            'link_1' => "",
+            'link_2' => "",
+            'link_3' => ""
         );
-        $whereField = 'user_Id';
-        $whereFieldVal = $data['user_id'];
-        $q = 'select * from user_document_detail where user_Id=' . $whereFieldVal;
+        $document = $data['document_type'];
+        $whereField = 'id';
+        $file_link = $data['link_1'];
+        $q = "select * from user_document_detail where user_Id=" . $whereFieldVal . " AND document_type='" . $data['document_type'] . "'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         $num_rows = mysql_num_rows($runQuery);
@@ -416,7 +413,8 @@ class Salary extends DATABASE {
             }
         }
         if ($num_rows <= 0) {
-            $res = self::DBinsertQuery('user_document_detail', $ins);
+            //  $res = self::DBinsertQuery('user_document_detail', $ins);
+            $save = self::saveDocumentToGoogleDrive($document, $userInfo_name, $userid, $file_link, $file_id = false);
         }
 
         if ($res == false) {
@@ -427,19 +425,7 @@ class Salary extends DATABASE {
             $userid = $data['user_id'];
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            $message = "Hey $userInfo_name !!  \n Your document details are updated \n Details: \n ";
 
-            $message = $message . "Id Proof = " . $data['id_proof'] . "\n";
-            $message = $message . "Address Proof = " . $data['address_proof'] . "\n";
-            $message = $message . "Passport Photo = " . $data['passport_photo'] . "\n";
-            $message = $message . "Ceritficate = " . $data['certificate'] . "\n";
-            $message = $message . "Pancard = " . $data['pancard'] . "\n";
-            $message = $message . "User Id for Bank = " . $data['uid_for_bank'] . "\n";
-            $message = $message . "Previous Company Document = " . $data['previous_comp_doc'] . "\n";
-
-            //  echo $message;
-            //$slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
 
             $r_error = 0;
             $r_message = "Successfully Updated into table";
@@ -1324,12 +1310,12 @@ class Salary extends DATABASE {
         return $total_no_of_leaves;
     }
 
-    public static function getUserDocumentDetail($userid) {
+    public static function getUserDocumentDetail($userid, $document_type) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $q = "SELECT * FROM user_document_detail where user_Id = $userid";
-
+        $row = array();
+        $q = "SELECT * FROM user_document_detail where user_Id = $userid AND document_type='$document_type'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
 
@@ -1575,6 +1561,115 @@ class Salary extends DATABASE {
             }
         }
         return $return;
+    }
+
+    public static function saveDocumentToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_link, $file_id = false) {
+
+        $filename = $payslip_no . '.psd';
+
+        //upload file in google drive;
+        $parent_folder = "Employees Documents";
+        $subfolder_empname = $userInfo_name . "-" . $userid;
+
+        $r_token = self::getrefreshToken();
+
+        $refresh_token = $r_token['value'];
+        $fileId = '0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4';
+        include "google-api/examples/indextest.php";
+
+        echo "Hello";
+
+        try {
+            $file = $service->files->get($fileId);
+        } catch (Exception $e) {
+            print "An error occurred: " . $e->getMessage();
+        }
+
+        print_r($file);
+        die;
+
+        if ($file_id != false) {
+
+            try {
+                $service->files->delete($file_id);
+            } catch (Exception $e) {
+                print "An error occurred: " . $e->getMessage();
+            }
+        }
+
+        $testfile = $file_link;
+
+        if (!file_exists($testfile)) {
+            $fh = fopen($testfile, 'w');
+
+            fseek($fh, 1024 * 1024);
+            fwrite($fh, "!", 1);
+            fclose($fh);
+        }
+
+        if (array_key_exists($parent_folder, $arr)) {
+            $pfolder = $arr[$parent_folder];
+        }
+        if (array_key_exists($subfolder_empname, $arr)) {
+            $sfolder = $arr[$subfolder_empname];
+        }
+
+        if (!array_key_exists($parent_folder, $arr)) {
+
+            $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                'name' => $parent_folder,
+                'mimeType' => 'application/vnd.google-apps.folder'));
+            $filez = $service->files->create($fileMetadata, array(
+                'fields' => 'id'));
+
+
+            $pfolder = $filez->id;
+        }
+        if (!array_key_exists($subfolder_empname, $arr)) {
+
+            $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                'name' => $subfolder_empname,
+                'parents' => array($pfolder),
+                'mimeType' => 'application/vnd.google-apps.folder'));
+            $filez = $service->files->create($fileMetadata, array(
+                'fields' => 'id'));
+
+
+            $sfolder = $filez->id;
+        }
+
+
+        $file = new Google_Service_Drive_DriveFile(
+                array(
+            'name' => $filename,
+            'parents' => array($sfolder)
+        ));
+
+        $result2 = $service->files->create(
+                $file, array(
+            'data' => file_get_contents($testfile),
+            'mimeType' => 'application/octet-stream',
+            'uploadType' => 'multipart'
+                )
+        );
+
+        $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
+        $url['file_id'] = $result2->id;
+////                    //  echo $url;
+        $permission = new Google_Service_Drive_Permission();
+        $permission->setRole('writer');
+        $permission->setType('anyone');
+////$permission->setValue( 'me' );
+        try {
+            $service->permissions->create($result2->id, $permission);
+        } catch (Exception $e) {
+            print "An error occurred: " . $e->getMessage();
+        }
+
+
+        // return $url;
+        print_r($url);
+        die;
     }
 
 }

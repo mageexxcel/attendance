@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Copyright 2011 Google Inc.
  *
@@ -15,15 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 include_once __DIR__ . '/../vendor/autoload.php';
-
 include_once "templates/base.php";
-
 include_once __DIR__ . '/../../../../../connection.php';
-
 //echo pageHeader("File Upload - Uploading a simple file");
-
 /* * ***********************************************
  * Ensure you've downloaded your oauth credentials
  * ********************************************** */
@@ -31,28 +25,21 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
     echo missingOAuth2CredentialsWarning();
     return;
 }
-
 /* * **********************************************
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
  * ********************************************** */
 $redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
-
 //$redirect_uri = 'http://localhost/atten/attendance/sal_info/google-api/examples/';
-
-
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
 $client->setRedirectUri($redirect_uri);
 $client->addScope("https://www.googleapis.com/auth/drive");
-
 $service = new Google_Service_Drive($client);
-
 // add "?logout" to the URL to remove a token from the session
 if (isset($_REQUEST['logout'])) {
     unset($_SESSION['upload_token']);
 }
-
 /* * **********************************************
  * If we have a code back from the OAuth 2.0 flow,
  * we need to exchange that with the
@@ -60,17 +47,13 @@ if (isset($_REQUEST['logout'])) {
  * function. We store the resultant access token
  * bundle in the session, and redirect to ourself.
  * ********************************************** */
-
-
 $client->refreshToken($refresh_token);
-
 $newtoken = $client->getAccessToken();
 //echo "<pre>";
 //print_r($newtoken);
 //die;
 $_SESSION['upload_token'] = $newtoken;
 // set the access token as part of the client
-
 if (!empty($_SESSION['upload_token'])) {
  
     $client->setAccessToken($_SESSION['upload_token']);
@@ -84,10 +67,8 @@ if (!empty($_SESSION['upload_token'])) {
     
     $authUrl = $client->createAuthUrl();
 }
-
 $pageToken = null;
 $arr = array();
-
 do {
     $response = $service->files->listFiles(array(
         'q' => "mimeType='application/vnd.google-apps.folder'",
@@ -97,11 +78,8 @@ do {
     ));
     foreach ($response->files as $file) {
         if (!array_key_exists($file->name, $arr)) {
-
             $arr[$file->name] = $file->id;
         }
     }
 } while ($pageToken != null);
-
-
 ?>

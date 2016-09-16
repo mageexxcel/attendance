@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 include_once __DIR__ . '/../vendor/autoload.php';
 include_once "templates/base.php";
 include_once __DIR__ . '/../../../../../connection.php';
-
 /* * ***********************************************
  * Ensure you've downloaded your oauth credentials
  * ********************************************** */
@@ -26,25 +24,20 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
     echo missingOAuth2CredentialsWarning();
     return;
 }
-
 /* * **********************************************
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
  * ********************************************** */
 $redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
-
 //$redirect_uri = 'http://localhost/atten/attendance/sal_info/google-api/examples/';
-
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
 $client->setRedirectUri($redirect_uri);
 $client->addScope("https://www.googleapis.com/auth/drive");
 $service = new Google_Service_Drive($client);
-
 if (isset($_REQUEST['logout'])) {
     unset($_SESSION['upload_token']);
 }
-
 /* * **********************************************
  * If we have a code back from the OAuth 2.0 flow,
  * we need to exchange that with the
@@ -52,9 +45,7 @@ if (isset($_REQUEST['logout'])) {
  * function. We store the resultant access token
  * bundle in the session, and redirect to ourself.
  * ********************************************** */
-
 $q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
-
 $runquery = mysqli_query($link, $q) or die(mysqli_error($link));
 $row = array();
 while ($r = mysqli_fetch_assoc($runquery)) {
@@ -62,10 +53,8 @@ while ($r = mysqli_fetch_assoc($runquery)) {
 }
 if (sizeof($row) > 0) {
     $q2 = "DELETE FROM config WHERE type = 'google_payslip_drive_token'";
-
     $runquery2 = mysqli_query($link, $q2) or die(mysqli_error($link));
 }
-
 if (isset($_GET['code'])) {
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
     $client->setAccessToken($token);
@@ -79,8 +68,6 @@ if (isset($_GET['code'])) {
     // store in the session also
     $_SESSION['upload_token'] = $token;
     $refresh_token = $token['refresh_token'];
-
-
     if (sizeof($row) > 0) {
         $id = $row['id'];
         $query = "UPDATE config SET value = '$refresh_token', email_id = '$email'  WHERE type = 'google_payslip_drive_token'";
@@ -88,10 +75,8 @@ if (isset($_GET['code'])) {
         $query = "INSERT INTO config (type, value, email_id) VALUES ('google_payslip_drive_token', '$refresh_token', '$email' )";
     }
     mysqli_query($link, $query) or die(mysqli_error($link));
-
     echo "Refresh token of $email saved to database. Please redirect to homepage";
 }
-
 // set the access token as part of the client
 if (!empty($_SESSION['upload_token'])) {
     $client->setAccessToken($_SESSION['upload_token']);
@@ -101,10 +86,6 @@ if (!empty($_SESSION['upload_token'])) {
 } else {
     $authUrl = $client->createAuthUrl();
 }
-
-
-
-
 //print_r($_SESSION);
 //print_r($userProfile);
 ?>

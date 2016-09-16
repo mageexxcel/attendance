@@ -1,12 +1,12 @@
 <?php
 
-error_reporting(0);
-ini_set('display_errors', 0);
+//error_reporting(0);
+//ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-$PARAMS = json_decode($request_body, true);
-//$PARAMS = $_GET;
+//$PARAMS = json_decode($request_body, true);
+$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -42,10 +42,10 @@ if ($validateToken != false) {
     //end -- check for token expiry
     
 }
-if ($validateToken == false) {
-    header("HTTP/1.1 401 Unauthorized");
-    exit;
-}
+//if ($validateToken == false) {
+//    header("HTTP/1.1 401 Unauthorized");
+//    exit;
+//}
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 
@@ -254,6 +254,16 @@ if ($action == 'get_user_manage_payslips_data') {
 }
 
 if ($action == 'insert_user_document') {
+ 
+    $PARAMS['user_id'] = 212; 
+    $PARAMS['document_type'] = 'PAN Card';
+    $PARAMS['link_1'] = 'https://drive.google.com/file/d/0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4/view?usp=sharing';
+    $PARAMS['link_2'] = 'http://www.google.com';
+    $PARAMS['link_3'] = 'http://www.google.com';
+    
+    
+    
+    
     if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::insertUserDocumentInfo($PARAMS);
@@ -261,20 +271,25 @@ if ($action == 'insert_user_document') {
             $res['data']['message'] = 'Please give user_id ';
         }
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+       $PARAMS['user_id'] = $user_id; 
+       $res = Salary::insertUserDocumentInfo($PARAMS);
     }
 }
 
-if ($action == 'get_document') {
+if ($action == 'get_user_document') {
+    $document_type = 'PAN Card';
+     $PARAMS['user_id'] = 212;  
+    
     if ($userinfo['type'] == "admin") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
-            $res = Salary::getUserDocumentDetail($user_id);
+            
+            $res = Salary::getUserDocumentDetail($user_id, $document_type);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
     } else {
-        $res = Salary::getUserDocumentDetail($user_id);
+        $res = Salary::getUserDocumentDetail($user_id, $document_type);
     }
 }
 

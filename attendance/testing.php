@@ -105,3 +105,9 @@ function _beautyDaySummary($dayRaw) {
     $return['date'] = $rf_date;
     return $return;
 }
+
+//
+//list($hrs, $mins) = explode(":", $working_hour);
+//            $mins += $hrs * 60;
+//            $endresult = $mins / 2;
+//            $half_time = gmdate("H:i", ($endresult * 60));
