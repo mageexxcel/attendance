@@ -160,9 +160,9 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 foreach ($fresult['members'] as $foo) {
                     if ($kk == $foo['profile']['email'] && $kk != "") {
                         $f = $foo['id'];
-                         if($foo['profile']['email'] == "arun@excellencetechnologies.in" || $foo['profile']['email'] == "meraj.etech@excellencetechnologies.in"){
+                        // if($foo['profile']['email'] == "arun@excellencetechnologies.in" || $foo['profile']['email'] == "meraj.etech@excellencetechnologies.in"){
 
-                        $f = "U0FJZ0KDM";
+                        //$f = "U0FJZ0KDM";
                         //  $rname = $foo['real_name'];
                         $c_id = get_channel_id($f, $cid_array);
                         $r = date('H:i', mktime(0, $to_compensate));
@@ -176,7 +176,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                           send_slack_message($c_id = 'hr_system', $token, $pmessage);
                         echo $pmessage;
                         echo "<br>";
-                      }
+                     // }
                     }
                 }
             }
