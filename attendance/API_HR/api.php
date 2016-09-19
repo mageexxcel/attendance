@@ -47,10 +47,10 @@
 			}
 			//end -- check for token expiry
 		}
-		if( $validateToken == false ){
-			header("HTTP/1.1 401 Unauthorized");
-			exit;
-		}
+//		if( $validateToken == false ){
+//			header("HTTP/1.1 401 Unauthorized");
+//			exit;
+//		}
 	}
 
 
@@ -212,7 +212,29 @@
 		}else{
 			$res = HR::addNewEmployee( $PARAMS );
 		}
-	}else if( $action == 'update_new_password' ){  // only employee can update his password
+	}else if( $action == 'change_employee_status' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		if( strtolower($loggedUserInfo['role']) != 'admin' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission";
+		}else{
+			$res = HR::changeEmployeeStatus($PARAMS);
+		}
+	}
+        else if( $action == 'show_disabled_users' ){
+		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
+		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+		//check for guest so that he can't update
+		if( strtolower($loggedUserInfo['role']) != 'admin' ){
+			$res['error'] = 1;
+            $res['data']['message'] = "You don't have permission";
+		}else{
+			$res = HR::getDisabledUsersList();
+		}
+	}
+        else if( $action == 'update_new_password' ){  // only employee can update his password
 		$loggedUserInfo = JWT::decode( $token, HR::JWT_SECRET_KEY );
 		$loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 

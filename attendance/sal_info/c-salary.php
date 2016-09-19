@@ -389,10 +389,13 @@ class Salary extends DATABASE {
         $ins = array(
             'user_Id' => $data['user_id'],
             'document_type' => $data['document_type'],
-            'link_1' => "",
-            'link_2' => "",
-            'link_3' => ""
+            'link_1' => $data['link_1'],
+            'link_2' => $data['link_2'],
+            'link_3' => $data['link_3']
         );
+        $userid = $data['user_id'];
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
         $document = $data['document_type'];
         $whereField = 'id';
         $file_link = $data['link_1'];
@@ -402,6 +405,10 @@ class Salary extends DATABASE {
         $num_rows = mysql_num_rows($runQuery);
 
         if ($num_rows > 0) {
+
+
+
+
             foreach ($row as $key => $val) {
                 if (array_key_exists($key, $ins)) {
                     if ($ins[$key] != $row[$key]) {
@@ -413,8 +420,18 @@ class Salary extends DATABASE {
             }
         }
         if ($num_rows <= 0) {
+
+            foreach ($ins as $k => $v) {
+                
+                if (strpos($v, 'https://') !== false) {
+                    
+                   $save = self::saveDocumentToGoogleDrive($document, $userInfo_name, $userid, $file_link, $file_id = false);
+                    
+                }
+            }
+
             //  $res = self::DBinsertQuery('user_document_detail', $ins);
-            $save = self::saveDocumentToGoogleDrive($document, $userInfo_name, $userid, $file_link, $file_id = false);
+            
         }
 
         if ($res == false) {
@@ -422,9 +439,7 @@ class Salary extends DATABASE {
             $r_message = "No fields updated into table";
             $r_data['message'] = $r_message;
         } else {
-            $userid = $data['user_id'];
-            $userInfo = self::getUserInfo($userid);
-            $userInfo_name = $userInfo['name'];
+            
 
 
             $r_error = 0;
@@ -1565,7 +1580,13 @@ class Salary extends DATABASE {
 
     public static function saveDocumentToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_link, $file_id = false) {
 
-        $filename = $payslip_no . '.psd';
+        $filename = 'Letter Head.docx';
+        
+//        $break = explode("/",$file_link);
+//   
+//       $file_id =  $break[5];
+      
+        
 
         //upload file in google drive;
         $parent_folder = "Employees Documents";
@@ -1574,30 +1595,42 @@ class Salary extends DATABASE {
         $r_token = self::getrefreshToken();
 
         $refresh_token = $r_token['value'];
-        $fileId = '0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4';
+        
         include "google-api/examples/indextest.php";
 
-        echo "Hello";
+//        try {
+//            $file = $service->files->get($file_id, array(
+//  'alt' => 'media' ));
+//        } catch (Exception $e) {
+//            print "An error occurred: " . $e->getMessage();
+//        }
+//echo "<pre>";
+//        print_r($file);
+        
+        
+        
+//        $filename = $file['name'];
+//        
+//      
+////        
+//        $fileId = $file['id'];
+//        $mime = $file['mimeType'];
+//$content = $service->files->export($fileId, $mime, array(
+//  'alt' => 'media' ));
+//
+//       // echo $content;
+    //    die;
 
-        try {
-            $file = $service->files->get($fileId);
-        } catch (Exception $e) {
-            print "An error occurred: " . $e->getMessage();
-        }
+//        if ($file_id != false) {
+//
+//            try {
+//                $service->files->delete($file_id);
+//            } catch (Exception $e) {
+//                print "An error occurred: " . $e->getMessage();
+//            }
+//        }
 
-        print_r($file);
-        die;
-
-        if ($file_id != false) {
-
-            try {
-                $service->files->delete($file_id);
-            } catch (Exception $e) {
-                print "An error occurred: " . $e->getMessage();
-            }
-        }
-
-        $testfile = $file_link;
+        $testfile = 'demo/' . $filename;
 
         if (!file_exists($testfile)) {
             $fh = fopen($testfile, 'w');
@@ -1671,6 +1704,7 @@ class Salary extends DATABASE {
         print_r($url);
         die;
     }
+    
 
 }
 

@@ -1,5 +1,30 @@
 <?php
 
+//$link = "https://drive.google.com/file/d/0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4/view?usp=sharing"; 
+//
+//$a = explode("/",$link);
+//echo "<pre>";
+//print_r($a);
+
+$ins = array(
+            'user_Id' => 212,
+            'document_type' => "PAN Card",
+            'link_1' => "https://drive.google.com/file/d/0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4/view?usp=sharing",
+            'link_2' => "https://docs.google.com/document/d/1pJ1798WjRxpnYXFNouBMAxUW2wkiNLH_zGEk5WRE5r8/edit?usp=sharing",
+            'link_3' => ""
+        );
+echo "<pre>";
+print_r($ins);
+
+foreach($ins as $k => $v){
+   if(strpos($v, 'https://') !== false){
+        echo $k."---".$v;
+        
+    }
+}
+die;
+
+
 require_once ("../connection.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
