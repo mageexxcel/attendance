@@ -394,9 +394,9 @@ class Salary extends DATABASE {
             'link_3' => $data['link_3']
         );
         $userid = $data['user_id'];
-            $userInfo = self::getUserInfo($userid);
-            $userInfo_name = $userInfo['name'];
-        $document = $data['document_type'];
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        $document_type = $data['document_type'];
         $whereField = 'id';
         $file_link = $data['link_1'];
         $q = "select * from user_document_detail where user_Id=" . $whereFieldVal . " AND document_type='" . $data['document_type'] . "'";
@@ -405,10 +405,6 @@ class Salary extends DATABASE {
         $num_rows = mysql_num_rows($runQuery);
 
         if ($num_rows > 0) {
-
-
-
-
             foreach ($row as $key => $val) {
                 if (array_key_exists($key, $ins)) {
                     if ($ins[$key] != $row[$key]) {
@@ -422,16 +418,14 @@ class Salary extends DATABASE {
         if ($num_rows <= 0) {
 
             foreach ($ins as $k => $v) {
-                
+
                 if (strpos($v, 'https://') !== false) {
-                    
-                   $save = self::saveDocumentToGoogleDrive($document, $userInfo_name, $userid, $file_link, $file_id = false);
-                    
+
+                    $save = self::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_link, $file_id = false);
                 }
             }
 
             //  $res = self::DBinsertQuery('user_document_detail', $ins);
-            
         }
 
         if ($res == false) {
@@ -439,7 +433,7 @@ class Salary extends DATABASE {
             $r_message = "No fields updated into table";
             $r_data['message'] = $r_message;
         } else {
-            
+
 
 
             $r_error = 0;
@@ -1325,14 +1319,14 @@ class Salary extends DATABASE {
         return $total_no_of_leaves;
     }
 
-    public static function getUserDocumentDetail($userid, $document_type) {
+    public static function getUserDocumentDetail($userid) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $row = array();
-        $q = "SELECT * FROM user_document_detail where user_Id = $userid AND document_type='$document_type'";
+        $q = "SELECT * FROM user_document_detail where user_Id = $userid ";
         $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
+        $row = self::DBfetchRows($runQuery);
 
         if ($row == false) {
             $r_error = 1;
@@ -1342,12 +1336,32 @@ class Salary extends DATABASE {
             $r_error = 0;
             $r_data['user_document_info'] = $row;
         }
+
         $return = array();
 
         $return['error'] = $r_error;
         $return['data'] = $r_data;
         return $return;
     }
+    public static function deleteUserDocument($id){
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q = "DELETE FROM user_document_detail WHERE id = $id";
+        $runQuery = self::DBrunQuery($q);
+        
+        $r_error = 0;
+        $r_message = "Document deleted successfully";
+        $r_data['message'] = $r_message;
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+    
 
     public static function deleteUserSalary($userid, $salaryid) {
         $r_error = 1;
@@ -1578,48 +1592,16 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function saveDocumentToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_link, $file_id = false) {
+    public static function saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $filename, $file_id = false) {
 
-        $filename = 'Letter Head.docx';
-        
-//        $break = explode("/",$file_link);
-//   
-//       $file_id =  $break[5];
-      
-        
-
-        //upload file in google drive;
         $parent_folder = "Employees Documents";
-        $subfolder_empname = $userInfo_name . "-" . $userid;
+        $subfolder_empname = $userInfo_name . " doc -" . $userid;
 
         $r_token = self::getrefreshToken();
 
         $refresh_token = $r_token['value'];
-        
-        include "google-api/examples/indextest.php";
 
-//        try {
-//            $file = $service->files->get($file_id, array(
-//  'alt' => 'media' ));
-//        } catch (Exception $e) {
-//            print "An error occurred: " . $e->getMessage();
-//        }
-//echo "<pre>";
-//        print_r($file);
-        
-        
-        
-//        $filename = $file['name'];
-//        
-//      
-////        
-//        $fileId = $file['id'];
-//        $mime = $file['mimeType'];
-//$content = $service->files->export($fileId, $mime, array(
-//  'alt' => 'media' ));
-//
-//       // echo $content;
-    //    die;
+        include "google-api/examples/indextest.php";
 
 //        if ($file_id != false) {
 //
@@ -1700,11 +1682,9 @@ class Salary extends DATABASE {
         }
 
 
-        // return $url;
-        print_r($url);
-        die;
+        return $url;
+        //print_r($url);
     }
-    
 
 }
 
