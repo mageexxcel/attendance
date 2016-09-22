@@ -29,8 +29,8 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
  * ********************************************** */
-//$redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
-$redirect_uri = 'http://localhost/hr/attendance_backup/attendance/sal_info/google-api/examples/';
+$redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
+//$redirect_uri = 'http://localhost/hr/attendance_backup/attendance/sal_info/google-api/examples/';
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
 $client->setRedirectUri($redirect_uri);
