@@ -34,7 +34,7 @@ if (isset($_POST['submit'])) {
         //end -- check for token expiry
     }
     if ($validateToken == false) {
-       echo "Login token expired please login again!!! ";
+       echo "Login token expired please login again!!! . $mins ";
         die;
     }
 
