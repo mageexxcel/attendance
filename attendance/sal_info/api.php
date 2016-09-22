@@ -1,12 +1,12 @@
 <?php
 
-//error_reporting(0);
-//ini_set('display_errors', 0);
+error_reporting(0);
+ini_set('display_errors', 0);
 require_once ("c-salary.php");
 
 $request_body = file_get_contents('php://input');
-//$PARAMS = json_decode($request_body, true);
-$PARAMS = $_GET;
+$PARAMS = json_decode($request_body, true);
+//$PARAMS = $_GET;
 $action = false;
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -22,17 +22,17 @@ $token = $PARAMS['token'];
 $validateToken = Salary::validateToken($token);
 
 if ($validateToken != false) {
-    
+
     //start -- check for token expiry
     $tokenInfo = JWT::decode($token, Salary::JWT_SECRET_KEY);
     $tokenInfo = json_decode(json_encode($tokenInfo), true);
-  
+
     if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
         $token_start_time = $tokenInfo['login_time'];
         $current_time = time();
         $time_diff = $current_time - $token_start_time;
         $mins = $time_diff / 60;
-       
+
         if ($mins > 60) { //if 60 mins more
             $validateToken = false;
         }
@@ -40,20 +40,17 @@ if ($validateToken != false) {
         $validateToken = false;
     }
     //end -- check for token expiry
-    
 }
-//if ($validateToken == false) {
-//    header("HTTP/1.1 401 Unauthorized");
-//    exit;
-//}
+if ($validateToken == false) {
+    header("HTTP/1.1 401 Unauthorized");
+    exit;
+}
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 
 
-
-
 if ($action == 'get_user_profile_detail') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::getUserDetailInfo($user_id);
@@ -67,7 +64,7 @@ if ($action == 'get_user_profile_detail') {
 
 if ($action == 'update_user_profile_detail') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::UpdateUserInfo($PARAMS);
@@ -81,7 +78,7 @@ if ($action == 'update_user_profile_detail') {
 }
 
 if ($action == 'update_user_bank_detail') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::UpdateUserBankInfo($PARAMS);
@@ -94,7 +91,7 @@ if ($action == 'update_user_bank_detail') {
     }
 }
 if ($action == 'create_user_salary') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
             $res = Salary::generateUserSalary($user_id);
@@ -107,7 +104,7 @@ if ($action == 'create_user_salary') {
 }
 
 if ($action == 'create_new_client') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (!isset($PARAMS['name']) || $PARAMS['name'] == "") {
             $res['data']['message'][] = 'Please Insert name';
         }
@@ -123,7 +120,7 @@ if ($action == 'create_new_client') {
 
 if ($action == 'update_client_details') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
             $clientid = $PARAMS['client_id'];
             $res = Salary::UpdateClientDetails($PARAMS);
@@ -137,7 +134,7 @@ if ($action == 'update_client_details') {
 
 if ($action == 'get_all_clients') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         $res = Salary::getAllClient();
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
@@ -146,7 +143,7 @@ if ($action == 'get_all_clients') {
 
 if ($action == 'create_client_invoice') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (!isset($PARAMS['client_id']) || $PARAMS['client_id'] == "") {
             $res['data']['message'][] = 'Please Insert client_id';
         }
@@ -184,7 +181,7 @@ if ($action == 'create_client_invoice') {
 
 if ($action == 'delete_invoice') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['invoice_id']) && $PARAMS['invoice_id'] != "") {
             $invoiceid = $PARAMS['invoice_id'];
             $res = Salary::DeleteInvoice($PARAMS);
@@ -197,7 +194,7 @@ if ($action == 'delete_invoice') {
 }
 
 if ($action == 'get_client_detail') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
             $client_id = $PARAMS['client_id'];
             $res = Salary::getClientDetails($client_id);
@@ -211,7 +208,7 @@ if ($action == 'get_client_detail') {
 
 if ($action == 'create_employee_salary_slip') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::createUserPayslip($PARAMS);
         } else {
@@ -223,7 +220,7 @@ if ($action == 'create_employee_salary_slip') {
 }
 
 if ($action == 'get_user_manage_payslips_data') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $userid = $PARAMS['user_id'];
             if (isset($PARAMS['year'])) {
@@ -254,47 +251,64 @@ if ($action == 'get_user_manage_payslips_data') {
 }
 
 if ($action == 'insert_user_document') {
- 
-    $PARAMS['user_id'] = 212; 
+
+    $PARAMS['user_id'] = 288;
     $PARAMS['document_type'] = 'PAN Card';
     $PARAMS['link_1'] = 'https://drive.google.com/file/d/0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4/view?usp=sharing';
-    $PARAMS['link_2'] = 'http://www.google.com';
+    $PARAMS['link_2'] = 'https://docs.google.com/document/d/1pJ1798WjRxpnYXFNouBMAxUW2wkiNLH_zGEk5WRE5r8/edit?usp=sharing';
     $PARAMS['link_3'] = 'http://www.google.com';
-    
-    
-    
-    
-    if ($userinfo['type'] == "admin") {
+
+
+
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::insertUserDocumentInfo($PARAMS);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
     } else {
-       $PARAMS['user_id'] = $user_id; 
-       $res = Salary::insertUserDocumentInfo($PARAMS);
+        $PARAMS['user_id'] = $user_id;
+        $res = Salary::insertUserDocumentInfo($PARAMS);
     }
 }
 
 if ($action == 'get_user_document') {
-    $document_type = 'PAN Card';
-     $PARAMS['user_id'] = 212;  
-    
-    if ($userinfo['type'] == "admin") {
+   
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $user_id = $PARAMS['user_id'];
-            
-            $res = Salary::getUserDocumentDetail($user_id, $document_type);
+
+            $res = Salary::getUserDocumentDetail($user_id);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
     } else {
-        $res = Salary::getUserDocumentDetail($user_id, $document_type);
+        $res = Salary::getUserDocumentDetail($user_id);
     }
 }
 
+if ($action == 'delete_user_document') {
+    
+
+    if ($userinfo['type'] == "guest") {
+         $res['data']['message'] = 'You are not authorise for this operation';
+    } else {
+        if (isset($PARAMS['id']) && $PARAMS['id'] != "") {
+            $id = $PARAMS['id'];
+           $res = Salary::deleteUserDocument($id);
+        } else {
+            $res['data']['message'] = 'Please give document id';
+        }
+       
+    }
+}
+
+
+
 if ($action == 'delete_salary') {
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         $res['data']['message'] = "";
         if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
             $res['data']['message'] .= 'Please give user_id ';
@@ -313,7 +327,7 @@ if ($action == 'delete_salary') {
 
 if ($action == 'send_payslips_to_employees') {
 
-    if ($userinfo['type'] == "admin") {
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         $res['data']['message'] = "";
         if (!isset($PARAMS['payslip_ids']) || (isset($PARAMS['payslip_ids']) && $PARAMS['payslip_ids'] == "")) {
             $res['data']['message'] .= 'Please give payslip_ids ';

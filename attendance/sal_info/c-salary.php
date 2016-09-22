@@ -336,6 +336,8 @@ class Salary extends DATABASE {
     public function UpdateUserInfo($data) {
         $r_error = 1;
         $r_message = "";
+        
+        $data['updated_on'] = date("Y-m-d");
         $r_data = array();
         $userid = $data['user_id'];
         $user_profile_detail = self::getUserprofileDetail($userid);
@@ -367,7 +369,7 @@ class Salary extends DATABASE {
                 foreach ($msg as $key => $valu) {
                     $message = $message . "$key = " . $valu . "\n";
                 }
-                //    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             }
 
             $r_error = 0;
@@ -389,11 +391,14 @@ class Salary extends DATABASE {
         $ins = array(
             'user_Id' => $data['user_id'],
             'document_type' => $data['document_type'],
-            'link_1' => "",
-            'link_2' => "",
-            'link_3' => ""
+            'link_1' => $data['link_1'],
+            'link_2' => $data['link_2'],
+            'link_3' => $data['link_3']
         );
-        $document = $data['document_type'];
+        $userid = $data['user_id'];
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        $document_type = $data['document_type'];
         $whereField = 'id';
         $file_link = $data['link_1'];
         $q = "select * from user_document_detail where user_Id=" . $whereFieldVal . " AND document_type='" . $data['document_type'] . "'";
@@ -413,8 +418,16 @@ class Salary extends DATABASE {
             }
         }
         if ($num_rows <= 0) {
+
+            foreach ($ins as $k => $v) {
+
+                if (strpos($v, 'https://') !== false) {
+
+                    $save = self::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_link, $file_id = false);
+                }
+            }
+
             //  $res = self::DBinsertQuery('user_document_detail', $ins);
-            $save = self::saveDocumentToGoogleDrive($document, $userInfo_name, $userid, $file_link, $file_id = false);
         }
 
         if ($res == false) {
@@ -422,9 +435,7 @@ class Salary extends DATABASE {
             $r_message = "No fields updated into table";
             $r_data['message'] = $r_message;
         } else {
-            $userid = $data['user_id'];
-            $userInfo = self::getUserInfo($userid);
-            $userInfo_name = $userInfo['name'];
+
 
 
             $r_error = 0;
@@ -582,12 +593,15 @@ class Salary extends DATABASE {
         $r_data = array();
         $userid = $data['user_id'];
 
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
         $f_bank_name = $data['bank_name'];
         $f_bank_address = $data['bank_address'];
         $f_bank_account_no = $data['bank_account_no'];
         $f_ifsc = $data['ifsc'];
-
+        $message = "";
         $q = "SELECT * from user_bank_details WHERE user_Id=$userid";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
@@ -595,6 +609,11 @@ class Salary extends DATABASE {
             $q = "INSERT INTO user_bank_details ( user_id, bank_name, bank_address, bank_account_no, ifsc ) VALUES ( $userid, '$f_bank_name', '$f_bank_address', '$f_bank_account_no', '$f_ifsc' )";
 
             self::DBrunQuery($q);
+            $message = "Hey $userInfo_name !!  \n Your bank details are inserted \n Details: \n ";
+            $message = $message . "Bank name = $f_bank_name \n ";
+            $message = $message . "Bank address = $f_bank_address \n ";
+            $message = $message . "Bank Account No = $f_bank_account_no \n ";
+            $message = $message . "Bank IFSC Code = $f_ifsc \n ";
 
             $r_error = 0;
             $r_message = "Data Successfully Updated";
@@ -603,12 +622,18 @@ class Salary extends DATABASE {
             $q = "UPDATE user_bank_details set bank_name='$f_bank_name', bank_address='$f_bank_address', bank_account_no='$f_bank_account_no', ifsc='$f_ifsc' WHERE user_Id=$userid";
 
             self::DBrunQuery($q);
-
+            $message = "Hey $userInfo_name !!  \n Your bank details are updated \n Details: \n ";
+            $message = $message . "Bank name = $f_bank_name \n ";
+            $message = $message . "Bank address = $f_bank_address \n ";
+            $message = $message . "Bank Account No = $f_bank_account_no \n ";
+            $message = $message . "Bank IFSC Code = $f_ifsc \n ";
             $r_error = 0;
             $r_message = "Data Successfully Inserted";
             $r_data['message'] = $r_message;
         }
-
+        if ($message != "") {
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);  
+        }
 
         $return = array();
 
@@ -1310,22 +1335,60 @@ class Salary extends DATABASE {
         return $total_no_of_leaves;
     }
 
-    public static function getUserDocumentDetail($userid, $document_type) {
+    public static function getUserDocumentDetail($userid) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $row = array();
-        $q = "SELECT * FROM user_document_detail where user_Id = $userid AND document_type='$document_type'";
+        $q = "SELECT * FROM user_document_detail where user_Id = $userid ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+
+        $r_error = 0;
+        $r_data['user_document_info'] = $row;
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function deleteUserDocument($id) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $q = "SELECT link_1 FROM user_document_detail WHERE id = $id";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
 
-        if ($row == false) {
-            $r_error = 1;
-            $r_message = "Error occured while fetching data";
-            $r_data['message'] = $r_message;
-        } else {
-            $r_error = 0;
-            $r_data['user_document_info'] = $row;
+        $a = str_replace("iframe", " ", $row['link_1']);
+        $b = explode("/", $a);
+        $file_id = $b[5];
+
+        $r_token = self::getrefreshToken();
+
+        $refresh_token = $r_token['value'];
+
+        include "google-api/examples/indextest.php";
+
+        if ($file_id != false) {
+
+            try {
+                $service->files->delete($file_id);
+                $q = "DELETE FROM user_document_detail WHERE id = $id";
+                $runQuery = self::DBrunQuery($q);
+                $r_error = 0;
+                $r_message = "Document deleted successfully";
+                $r_data['message'] = $r_message;
+            } catch (Exception $e) {
+                $r_error = 1;
+
+                $r_data['message'] = $e->getMessage();
+            }
         }
         $return = array();
 
@@ -1563,113 +1626,92 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function saveDocumentToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_link, $file_id = false) {
+    public static function saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $filename, $file_id = false) {
 
-        $filename = $payslip_no . '.psd';
-
-        //upload file in google drive;
         $parent_folder = "Employees Documents";
-        $subfolder_empname = $userInfo_name . "-" . $userid;
-
+        $subfolder_empname = $userInfo_name . " doc -" . $userid;
+        $rest = array();
         $r_token = self::getrefreshToken();
 
-        $refresh_token = $r_token['value'];
-        $fileId = '0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4';
-        include "google-api/examples/indextest.php";
+        if (sizeof($r_token) > 0) {
+            $refresh_token = $r_token['value'];
 
-        echo "Hello";
+            include "google-api/examples/indextest.php";
 
-        try {
-            $file = $service->files->get($fileId);
-        } catch (Exception $e) {
-            print "An error occurred: " . $e->getMessage();
-        }
+            $testfile = 'demo/' . $filename;
 
-        print_r($file);
-        die;
+            if (!file_exists($testfile)) {
+                $fh = fopen($testfile, 'w');
 
-        if ($file_id != false) {
+                fseek($fh, 1024 * 1024);
+                fwrite($fh, "!", 1);
+                fclose($fh);
+            }
 
+            if (array_key_exists($parent_folder, $arr)) {
+                $pfolder = $arr[$parent_folder];
+            }
+            if (array_key_exists($subfolder_empname, $arr)) {
+                $sfolder = $arr[$subfolder_empname];
+            }
+
+            if (!array_key_exists($parent_folder, $arr)) {
+
+                $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                    'name' => $parent_folder,
+                    'mimeType' => 'application/vnd.google-apps.folder'));
+                $filez = $service->files->create($fileMetadata, array(
+                    'fields' => 'id'));
+
+
+                $pfolder = $filez->id;
+            }
+            if (!array_key_exists($subfolder_empname, $arr)) {
+
+                $fileMetadata = new Google_Service_Drive_DriveFile(array(
+                    'name' => $subfolder_empname,
+                    'parents' => array($pfolder),
+                    'mimeType' => 'application/vnd.google-apps.folder'));
+                $filez = $service->files->create($fileMetadata, array(
+                    'fields' => 'id'));
+
+
+                $sfolder = $filez->id;
+            }
+
+
+            $file = new Google_Service_Drive_DriveFile(
+                    array(
+                'name' => $filename,
+                'parents' => array($sfolder)
+            ));
+
+            $result2 = $service->files->create(
+                    $file, array(
+                'data' => file_get_contents($testfile),
+                'mimeType' => 'application/octet-stream',
+                'uploadType' => 'multipart'
+                    )
+            );
+
+            $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
+            $url['file_id'] = $result2->id;
+////                    //  echo $url;
+            $permission = new Google_Service_Drive_Permission();
+            $permission->setRole('writer');
+            $permission->setType('anyone');
+////$permission->setValue( 'me' );
             try {
-                $service->files->delete($file_id);
+                $service->permissions->create($result2->id, $permission);
             } catch (Exception $e) {
                 print "An error occurred: " . $e->getMessage();
             }
+
+            $rest = $url;
+            unlink($testfile);
         }
-
-        $testfile = $file_link;
-
-        if (!file_exists($testfile)) {
-            $fh = fopen($testfile, 'w');
-
-            fseek($fh, 1024 * 1024);
-            fwrite($fh, "!", 1);
-            fclose($fh);
-        }
-
-        if (array_key_exists($parent_folder, $arr)) {
-            $pfolder = $arr[$parent_folder];
-        }
-        if (array_key_exists($subfolder_empname, $arr)) {
-            $sfolder = $arr[$subfolder_empname];
-        }
-
-        if (!array_key_exists($parent_folder, $arr)) {
-
-            $fileMetadata = new Google_Service_Drive_DriveFile(array(
-                'name' => $parent_folder,
-                'mimeType' => 'application/vnd.google-apps.folder'));
-            $filez = $service->files->create($fileMetadata, array(
-                'fields' => 'id'));
-
-
-            $pfolder = $filez->id;
-        }
-        if (!array_key_exists($subfolder_empname, $arr)) {
-
-            $fileMetadata = new Google_Service_Drive_DriveFile(array(
-                'name' => $subfolder_empname,
-                'parents' => array($pfolder),
-                'mimeType' => 'application/vnd.google-apps.folder'));
-            $filez = $service->files->create($fileMetadata, array(
-                'fields' => 'id'));
-
-
-            $sfolder = $filez->id;
-        }
-
-
-        $file = new Google_Service_Drive_DriveFile(
-                array(
-            'name' => $filename,
-            'parents' => array($sfolder)
-        ));
-
-        $result2 = $service->files->create(
-                $file, array(
-            'data' => file_get_contents($testfile),
-            'mimeType' => 'application/octet-stream',
-            'uploadType' => 'multipart'
-                )
-        );
-
-        $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
-        $url['file_id'] = $result2->id;
-////                    //  echo $url;
-        $permission = new Google_Service_Drive_Permission();
-        $permission->setRole('writer');
-        $permission->setType('anyone');
-////$permission->setValue( 'me' );
-        try {
-            $service->permissions->create($result2->id, $permission);
-        } catch (Exception $e) {
-            print "An error occurred: " . $e->getMessage();
-        }
-
-
-        // return $url;
-        print_r($url);
-        die;
+        return $rest;
+        //print_r($url);
     }
 
 }
