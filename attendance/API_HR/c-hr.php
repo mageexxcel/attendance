@@ -346,6 +346,15 @@ class HR extends DATABASE {
         }
         return $list;
     }
+    
+    public static function getNonworkingdayAsWorking($year, $month) {
+        $list = array();
+        $list = self::getWorkingHoursOfMonth($year, $month);
+    
+        
+        return $list;
+    }
+    
 
     public static function getMonthTotalWorkingHours($month) {
         
@@ -447,6 +456,7 @@ class HR extends DATABASE {
         $daysOfMonth = self::_addRequiredKeysForADay($daysOfMonth);
         $holidaysOfMonth = self::getHolidaysOfMonth($year, $month);
         $weekendsOfMonth = self::getWeekendsOfMonth($year, $month);
+        $nonworkingdayasWorking = self::getNonworkingdayAsWorking($year, $month);
         $workingHoursOfMonth = self::getWorkingHoursOfMonth($year, $month); // change thisis arun 
 
         if (sizeof($holidaysOfMonth) > 0) {
@@ -461,8 +471,15 @@ class HR extends DATABASE {
                 $daysOfMonth[$hm_key]['day_text'] = 'Weekend Off';
             }
         }
+//        if (sizeof($nonworkingdayasWorking) > 0) {
+//            foreach ($nonworkingdayasWorking as $hm_key => $hm) {
+//                $daysOfMonth[$hm_key]['day_type'] = 'WORKING_DAY';
+//                $daysOfMonth[$hm_key]['day_text'] = '';
+//            }
+//        }
         if (sizeof($workingHoursOfMonth) > 0) {
             foreach ($workingHoursOfMonth as $hm_key => $hm) {
+                  $daysOfMonth[$hm_key]['day_type'] = 'WORKING_DAY';
                 $daysOfMonth[$hm_key]['office_working_hours'] = $hm['working_hours'];
             }
         }

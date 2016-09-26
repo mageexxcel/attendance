@@ -17,6 +17,7 @@
 include_once __DIR__ . '/../vendor/autoload.php';
 include_once "templates/base.php";
 include_once __DIR__ . '/../../../../../connection.php';
+//echo pageHeader("File Upload - Uploading a simple file");
 /* * ***********************************************
  * Ensure you've downloaded your oauth credentials
  * ********************************************** */
@@ -28,13 +29,14 @@ if (!$oauth_credentials = getOAuthCredentialsFile()) {
  * The redirect URI is to the current page, e.g:
  * http://localhost:8080/simple-file-upload.php
  * ********************************************** */
-$redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/examples/';
-//$redirect_uri = 'http://localhost/hr/attendance_backup/attendance/sal_info/google-api/examples/';
+$redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/drive_file/';
+//$redirect_uri = 'http://localhost/hr/attendance_backup/attendance/sal_info/google-api/drive_file/';
 $client = new Google_Client();
 $client->setAuthConfig($oauth_credentials);
 $client->setRedirectUri($redirect_uri);
 $client->addScope("https://www.googleapis.com/auth/drive");
 $service = new Google_Service_Drive($client);
+// add "?logout" to the URL to remove a token from the session
 if (isset($_REQUEST['logout'])) {
     unset($_SESSION['upload_token']);
 }
@@ -45,55 +47,39 @@ if (isset($_REQUEST['logout'])) {
  * function. We store the resultant access token
  * bundle in the session, and redirect to ourself.
  * ********************************************** */
-$q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
-$runquery = mysqli_query($link, $q) or die(mysqli_error($link));
-$row = array();
-while ($r = mysqli_fetch_assoc($runquery)) {
-    $row = $r;
-}
-if (sizeof($row) > 0) {
-    $q2 = "DELETE FROM config WHERE type = 'google_payslip_drive_token'";
-    $runquery2 = mysqli_query($link, $q2) or die(mysqli_error($link));
-}
-if (isset($_GET['code'])) {
-    $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
-    $client->setAccessToken($token);
-    $email = "";
-//    if ($client->getAccessToken()) {
-//        $token_data = $client->verifyIdToken();
-//        $email = $token_data['email'];
-//    }
-//    echo "<pre>";
-//    print_r($client);
-    // store in the session also
-    $_SESSION['upload_token'] = $token;
-    $refresh_token = $token['refresh_token'];
-    if (sizeof($row) > 0) {
-        $id = $row['id'];
-        $query = "UPDATE config SET value = '$refresh_token', email_id = '$email'  WHERE type = 'google_payslip_drive_token'";
-    } else {
-        $query = "INSERT INTO config (type, value, email_id) VALUES ('google_payslip_drive_token', '$refresh_token', '$email' )";
-    }
-    mysqli_query($link, $query) or die(mysqli_error($link));
-    echo "Refresh token of $email saved to database. Please redirect to homepage";
-}
+$client->refreshToken($refresh_token);
+$newtoken = $client->getAccessToken();
+//echo "<pre>";
+//print_r($newtoken);
+//die;
+$_SESSION['upload_token'] = $newtoken;
 // set the access token as part of the client
 if (!empty($_SESSION['upload_token'])) {
+ 
     $client->setAccessToken($_SESSION['upload_token']);
+  
     if ($client->isAccessTokenExpired()) {
+  $_SESSION['upload_token'] = $client->refreshToken($refresh_token);
         unset($_SESSION['upload_token']);
     }
+  
 } else {
+    
     $authUrl = $client->createAuthUrl();
 }
-//print_r($_SESSION);
-//print_r($userProfile);
+$pageToken = null;
+$arr = array();
+do {
+    $response = $service->files->listFiles(array(
+        'q' => "mimeType='application/vnd.google-apps.folder'",
+        'spaces' => 'drive',
+        'pageToken' => $pageToken,
+        'fields' => 'nextPageToken, files(id, name)',
+    ));
+    foreach ($response->files as $file) {
+        if (!array_key_exists($file->name, $arr)) {
+            $arr[$file->name] = $file->id;
+        }
+    }
+} while ($pageToken != null);
 ?>
-
-<div class="box">
-    <?php if (isset($authUrl)): ?>
-        <div class="request">
-            <a class='login' href='<?= $authUrl ?>' target="_blank">Connect Me!</a>
-        </div>
-    <?php endif ?>
-</div>

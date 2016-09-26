@@ -336,7 +336,7 @@ class Salary extends DATABASE {
     public function UpdateUserInfo($data) {
         $r_error = 1;
         $r_message = "";
-        
+
         $data['updated_on'] = date("Y-m-d");
         $r_data = array();
         $userid = $data['user_id'];
@@ -369,7 +369,7 @@ class Salary extends DATABASE {
                 foreach ($msg as $key => $valu) {
                     $message = $message . "$key = " . $valu . "\n";
                 }
-                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             }
 
             $r_error = 0;
@@ -632,7 +632,7 @@ class Salary extends DATABASE {
             $r_data['message'] = $r_message;
         }
         if ($message != "") {
-                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);  
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
         }
 
         $return = array();
@@ -1373,7 +1373,7 @@ class Salary extends DATABASE {
 
         $refresh_token = $r_token['value'];
 
-        include "google-api/examples/indextest.php";
+        include "google-api/drive_file/upload.php";
 
         if ($file_id != false) {
 
@@ -1430,7 +1430,7 @@ class Salary extends DATABASE {
         $r_token = self::getrefreshToken();
         $refresh_token = $r_token['value'];
 
-        include "google-api/examples/indextest.php";
+        include "google-api/drive_file/upload.php";
 
         if ($file_id != false) {
 
@@ -1636,7 +1636,7 @@ class Salary extends DATABASE {
         if (sizeof($r_token) > 0) {
             $refresh_token = $r_token['value'];
 
-            include "google-api/examples/indextest.php";
+            include "google-api/drive_file/upload.php";
 
             $testfile = 'demo/' . $filename;
 
@@ -1712,6 +1712,114 @@ class Salary extends DATABASE {
         }
         return $rest;
         //print_r($url);
+    }
+
+    public static function getUsersBankAcNo($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $year = date('Y', strtotime(date('Y-m') . " -1 month"));
+        $month = date('m', strtotime(date('Y-m') . " -1 month"));
+        $ar = array();
+        if (sizeof($data) > 0) {
+            foreach ($data as $val) {
+                $bank_ac_no = "";
+                $net_salary="";
+                $name = "";
+                $s = array();
+                $r1 = self::getUserBankDetail($val);
+                $r2 = self::getUserManagePayslip($val, $year, $month);
+                if(sizeof($r1) > 0){
+                 $bank_ac_no = $r1['bank_account_no'];   
+                }
+                if(sizeof($r2) > 0){
+                 $net_salary=$r2['data']['user_data_for_payslip']['net_salary'];
+                $name = $r2['data']['user_data_for_payslip']['name']; 
+                }
+
+                $s[] = $bank_ac_no;
+                $s[] = $net_salary;
+                $s[] = $name;
+
+                $ar[] = implode("\t", $s);
+            }
+        }
+
+        $return = array();
+        $r_error = 0;
+        $return['error'] = $r_error;
+        $return['data'] = $ar;
+        return $return;
+    }
+
+    public static function getUserlatestSalary($userid) {
+
+        $q = "select * from salary where user_Id = $userid ORDER BY id DESC LIMIT 2";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    public static function getAllUserInfo() {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $a = self::getAllUserDetail();
+        $row2 = array();
+        foreach ($a as $val) {
+            $userid = $val['user_Id'];
+            $sal = self::getUserlatestSalary($userid);
+            $salary_detail = "";
+            $previous_increment = "";
+            $next_increment_date = "";
+            $slack_image = "";
+            $holding = "";
+            
+            $emailid = $val['work_email'];
+            if(sizeof($sal) >= 2){
+              $previous_increment = abs($sal[0]['total_salary'] - $sal[1]['total_salary']);
+              $salary_detail = $sal[0]['total_salary'];
+              $next_increment_date = $sal[0]['applicable_till'];
+            }
+            if(sizeof($sal) >= 1 && sizeof($sal) < 2){
+             
+              $salary_detail = $sal[0]['total_salary'];
+              $next_increment_date = $sal[0]['applicable_till'];
+            }
+            $now = time(); // or your date as well
+            $your_date = strtotime($val['dateofjoining']);
+            $datediff = $now - $your_date;
+
+            $sl = self::getSlackUserInfo($emailid);
+            if(sizeof($sl) > 0){
+             
+              $slack_image = $sl['profile']['image_72'];
+              
+            }
+            $h = self::getHoldingDetail($userid);
+             if(sizeof($h) > 0){
+            $holding  = end($h);
+            
+            }
+            $val['slack_image'] = $slack_image;
+            $val['salary_detail'] = $salary_detail;
+            $val['previous_increment'] = $previous_increment;
+            $val['next_increment_date'] = $next_increment_date;
+            $val['no_of_days_join'] = floor($datediff / (60 * 60 * 24));
+            $val['holdin_amt_detail'] = $holding;
+
+            $row2[] = $val;
+        }
+       
+        $return = array();
+        $r_error = 0;
+        $return['error'] = $r_error;
+        $return['data'] = $row2;
+        return $return;
     }
 
 }

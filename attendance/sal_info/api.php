@@ -250,31 +250,8 @@ if ($action == 'get_user_manage_payslips_data') {
     }
 }
 
-if ($action == 'insert_user_document') {
-
-    $PARAMS['user_id'] = 288;
-    $PARAMS['document_type'] = 'PAN Card';
-    $PARAMS['link_1'] = 'https://drive.google.com/file/d/0Bw7RILovH7OLQnJtbHk2cFBoakU4WnBHNVJvUEZXYnFMTTE4/view?usp=sharing';
-    $PARAMS['link_2'] = 'https://docs.google.com/document/d/1pJ1798WjRxpnYXFNouBMAxUW2wkiNLH_zGEk5WRE5r8/edit?usp=sharing';
-    $PARAMS['link_3'] = 'http://www.google.com';
-
-
-
-
-    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = Salary::insertUserDocumentInfo($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
-    } else {
-        $PARAMS['user_id'] = $user_id;
-        $res = Salary::insertUserDocumentInfo($PARAMS);
-    }
-}
-
 if ($action == 'get_user_document') {
-   
+
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
@@ -290,18 +267,17 @@ if ($action == 'get_user_document') {
 }
 
 if ($action == 'delete_user_document') {
-    
+
 
     if ($userinfo['type'] == "guest") {
-         $res['data']['message'] = 'You are not authorise for this operation';
+        $res['data']['message'] = 'You are not authorise for this operation';
     } else {
         if (isset($PARAMS['id']) && $PARAMS['id'] != "") {
             $id = $PARAMS['id'];
-           $res = Salary::deleteUserDocument($id);
+            $res = Salary::deleteUserDocument($id);
         } else {
             $res['data']['message'] = 'Please give document id';
         }
-       
     }
 }
 
@@ -342,6 +318,32 @@ if ($action == 'send_payslips_to_employees') {
                 $res['data']['message'] .= 'Please give payslip_ids ';
             }
         }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_users_bankaccount_no') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res['data']['message'] = "";
+        if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
+            $res['data']['message'] .= 'Please give user_id ';
+        } else {
+
+            $userid = $PARAMS['user_id'];
+
+            $res = Salary::getUsersBankAcNo($userid);
+        }
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_all_users_detail') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+       $res = Salary::getAllUserInfo();
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }

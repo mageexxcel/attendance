@@ -93,6 +93,7 @@ if (isset($_POST['submit'])) {
     $message = "Hi " . $userInfo_name . ". \n Your document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
     //  echo  $message;
     $slackMessageStatus = Salary::sendSlackMessageToUser($slack_userChannelid, $message);
+    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr_system", $message);
 
     header("Location: $return");
     exit;
