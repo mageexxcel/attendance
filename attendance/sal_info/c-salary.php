@@ -1725,17 +1725,17 @@ class Salary extends DATABASE {
         if (sizeof($data) > 0) {
             foreach ($data as $val) {
                 $bank_ac_no = "";
-                $net_salary="";
+                $net_salary = "";
                 $name = "";
                 $s = array();
                 $r1 = self::getUserBankDetail($val);
                 $r2 = self::getUserManagePayslip($val, $year, $month);
-                if(sizeof($r1) > 0){
-                 $bank_ac_no = $r1['bank_account_no'];   
+                if (sizeof($r1) > 0) {
+                    $bank_ac_no = $r1['bank_account_no'];
                 }
-                if(sizeof($r2) > 0){
-                 $net_salary=$r2['data']['user_data_for_payslip']['net_salary'];
-                $name = $r2['data']['user_data_for_payslip']['name']; 
+                if (sizeof($r2) > 0) {
+                    $net_salary = $r2['data']['user_data_for_payslip']['net_salary'];
+                    $name = $r2['data']['user_data_for_payslip']['name'];
                 }
 
                 $s[] = $bank_ac_no;
@@ -1778,43 +1778,44 @@ class Salary extends DATABASE {
             $next_increment_date = "";
             $slack_image = "";
             $holding = "";
-            
+
             $emailid = $val['work_email'];
-            if(sizeof($sal) >= 2){
-              $previous_increment = abs($sal[0]['total_salary'] - $sal[1]['total_salary']);
-              $salary_detail = $sal[0]['total_salary'];
-              $next_increment_date = $sal[0]['applicable_till'];
+            if (sizeof($sal) >= 2) {
+                $previous_increment = abs($sal[0]['total_salary'] - $sal[1]['total_salary']);
+                $salary_detail = $sal[0]['total_salary'];
+                $next_increment_date = $sal[0]['applicable_till'];
             }
-            if(sizeof($sal) >= 1 && sizeof($sal) < 2){
-             
-              $salary_detail = $sal[0]['total_salary'];
-              $next_increment_date = $sal[0]['applicable_till'];
+            if (sizeof($sal) >= 1 && sizeof($sal) < 2) {
+
+                $salary_detail = $sal[0]['total_salary'];
+                $next_increment_date = $sal[0]['applicable_till'];
             }
-            $now = time(); // or your date as well
-            $your_date = strtotime($val['dateofjoining']);
-            $datediff = $now - $your_date;
+            $now = date("Y-m-d"); // or your date as well
+            $your_date = $val['dateofjoining'];
+
+            $date1 = new DateTime($your_date);
+            $date2 = new DateTime($now);
+            $interval = $date1->diff($date2);
 
             $sl = self::getSlackUserInfo($emailid);
-            if(sizeof($sl) > 0){
-             
-              $slack_image = $sl['profile']['image_72'];
-              
+            if (sizeof($sl) > 0) {
+
+                $slack_image = $sl['profile']['image_72'];
             }
             $h = self::getHoldingDetail($userid);
-             if(sizeof($h) > 0){
-            $holding  = end($h);
-            
+            if (sizeof($h) > 0) {
+                $holding = end($h);
             }
             $val['slack_image'] = $slack_image;
             $val['salary_detail'] = $salary_detail;
             $val['previous_increment'] = $previous_increment;
             $val['next_increment_date'] = $next_increment_date;
-            $val['no_of_days_join'] = floor($datediff / (60 * 60 * 24));
+            $val['no_of_days_join'] = $interval->y . " years, " . $interval->m." months, ".$interval->d." days "; 
             $val['holdin_amt_detail'] = $holding;
 
             $row2[] = $val;
         }
-       
+
         $return = array();
         $r_error = 0;
         $return['error'] = $r_error;

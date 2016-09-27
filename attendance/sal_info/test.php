@@ -1,4 +1,11 @@
+<?php
+$date1 = new DateTime("2016-03-01");
+$date2 = new DateTime("2016-04-02");
+$interval = $date1->diff($date2);
+echo "difference " . $interval->y . " years, " . $interval->m." months, ".$interval->d." days "; 
 
+
+?>
 <html>
     <body>
         <form action="display_user_info.php" method="POST" >
