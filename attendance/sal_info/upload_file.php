@@ -90,9 +90,9 @@ if (isset($_POST['submit'])) {
     $id = mysql_insert_id();
     $res = Salary::DBupdateBySingleWhere('user_document_detail', $whereField, $id, $arr);
 
-    $message = "Hi " . $userInfo_name . ". \n Your document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
+    $message = $userInfo_name . ". document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
     //  echo  $message;
-    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_userChannelid, $message);
+    //$slackMessageStatus = Salary::sendSlackMessageToUser($slack_userChannelid, $message);
     $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr_system", $message);
 
     header("Location: $return");

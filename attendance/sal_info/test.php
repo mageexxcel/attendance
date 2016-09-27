@@ -1,16 +1,3 @@
-<?php
-
-
-$now = time(); // or your date as well
-$your_date = strtotime("2016-08-24");
-$datediff = $now - $your_date;
-
-echo floor($datediff / (60 * 60 * 24));
-
-die;
-
-?>
-
 
 <html>
     <body>
