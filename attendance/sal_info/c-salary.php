@@ -249,7 +249,7 @@ class Salary extends DATABASE {
         $message = $message . "Misc Deductions = " . $data['Misc_deduction'] . " Rs \n";
         $message = $message . "TDS = " . $data['tds'] . " Rs \n";
 
-        //  $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
+        $slackMessageStatus = self::sendSlackMessageToUser( $slack_userChannelid, $message );
 
         return "Successfully Salary Updated";
     }
@@ -290,7 +290,7 @@ class Salary extends DATABASE {
             $message = $message . "Reason = " . $data['reason'] . "\n";
 
             $slack_userChannelid = "hr_system";
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+           // $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
 
             return "Successfully Inserted into table";
         }
@@ -1417,10 +1417,6 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function sendEmail($userinfo) {
-        include "phpmailer/examples/gmail.php";
-    }
-
     public static function saveFileToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_id = false) {
         $filename = $payslip_no . ".pdf";
         //upload file in google drive;
@@ -1714,45 +1710,6 @@ class Salary extends DATABASE {
         //print_r($url);
     }
 
-    public static function getUsersBankAcNo($data) {
-
-        $r_error = 1;
-        $r_message = "";
-        $r_data = array();
-        $year = date('Y', strtotime(date('Y-m') . " -1 month"));
-        $month = date('m', strtotime(date('Y-m') . " -1 month"));
-        $ar = array();
-        if (sizeof($data) > 0) {
-            foreach ($data as $val) {
-                $bank_ac_no = "";
-                $net_salary = "";
-                $name = "";
-                $s = array();
-                $r1 = self::getUserBankDetail($val);
-                $r2 = self::getUserManagePayslip($val, $year, $month);
-                if (sizeof($r1) > 0) {
-                    $bank_ac_no = $r1['bank_account_no'];
-                }
-                if (sizeof($r2) > 0) {
-                    $net_salary = $r2['data']['user_data_for_payslip']['net_salary'];
-                    $name = $r2['data']['user_data_for_payslip']['name'];
-                }
-
-                $s[] = $bank_ac_no;
-                $s[] = $net_salary;
-                $s[] = $name;
-
-                $ar[] = implode("\t", $s);
-            }
-        }
-
-        $return = array();
-        $r_error = 0;
-        $return['error'] = $r_error;
-        $return['data'] = $ar;
-        return $return;
-    }
-
     public static function getUserlatestSalary($userid) {
 
         $q = "select * from salary where user_Id = $userid ORDER BY id DESC LIMIT 2";
@@ -1810,7 +1767,7 @@ class Salary extends DATABASE {
             $val['salary_detail'] = $salary_detail;
             $val['previous_increment'] = $previous_increment;
             $val['next_increment_date'] = $next_increment_date;
-            $val['no_of_days_join'] = $interval->y . " years, " . $interval->m." months, ".$interval->d." days "; 
+            $val['no_of_days_join'] = $interval->y . " years, " . $interval->m . " months, " . $interval->d . " days ";
             $val['holdin_amt_detail'] = $holding;
 
             $row2[] = $val;
@@ -1821,6 +1778,326 @@ class Salary extends DATABASE {
         $return['error'] = $r_error;
         $return['data'] = $row2;
         return $return;
+    }
+
+    public function getAllTemplateVariable() {
+        $q = "SELECT * FROM template_variables";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        return $row;
+    }
+
+    public function createTemplateVariable($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $ins = array(
+            'name' => $data['name'],
+            'value' => $data['value'],
+        );
+
+        $q1 = "select * from template_variables where name ='" . $data['name'] . "'";
+
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+
+            $res = self::DBinsertQuery('template_variables', $ins);
+            $r_error = 0;
+            $r_message = "Variable Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 1;
+            $r_message = "Variable name already exist";
+            $r_data['message'] = $r_message;
+        }
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function updateTemplateVariable($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $ins = array(
+            'name' => $data['name'],
+            'value' => $data['value'],
+        );
+
+        $id = $data['id'];
+        $q = "select * from template_variables where id = $id ";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        $whereFieldVal = $id;
+
+        $whereField = 'id';
+        foreach ($row as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $row[$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('template_variables', $whereField, $whereFieldVal, $arr);
+                }
+            }
+        }
+        $r_error = 0;
+        $r_message = "Variable Successfully Updated";
+        $r_data['message'] = $r_message;
+
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function deleteTemplateVariable($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $id = $data['id'];
+        $q = "DELETE from template_variables where id = $id ";
+
+        $runQuery = self::DBrunQuery($q);
+
+        $r_error = 0;
+        $r_message = "Variable Successfully deleted";
+        $r_data['message'] = $r_message;
+
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function getAllEmailTemplate() {
+        $q = "SELECT * FROM email_templates";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        return $row;
+    }
+
+    public function createEmailTemplate($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $ins = array(
+            'name' => $data['name'],
+            'subject' => $data['subject'],
+            'body' => $data['body'],
+        );
+
+        $q1 = "select * from email_templates where name ='" . $data['name'] . "'";
+        echo $q1;
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+
+        if ($no_of_rows == 0) {
+
+            $res = self::DBinsertQuery('email_templates', $ins);
+            $r_error = 0;
+            $r_message = "Template Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 1;
+            $r_message = "Template name already exist";
+            $r_data['message'] = $r_message;
+        }
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function updateEmailTemplate($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $ins = array(
+            'name' => $data['name'],
+            'subject' => $data['subject'],
+            'body' => $data['body'],
+        );
+
+        $id = $data['id'];
+        $q = "select * from email_templates where id = $id ";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        $whereFieldVal = $id;
+
+        $whereField = 'id';
+        foreach ($row as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $row[$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('email_templates', $whereField, $whereFieldVal, $arr);
+                }
+            }
+        }
+        $r_error = 0;
+        $r_message = "Template Successfully Updated";
+        $r_data['message'] = $r_message;
+
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function deleteEmailTemplate($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+
+        $id = $data['id'];
+        $q = "DELETE from email_templates where id = $id ";
+
+        $runQuery = self::DBrunQuery($q);
+
+        $r_error = 0;
+        $r_message = "Template Successfully deleted";
+        $r_data['message'] = $r_message;
+
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public function getEmailTemplateById($data) {
+        $q = "SELECT * FROM email_templates where id=" . $data['id'];
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        return $row;
+    }
+
+    public static function sendEmployeeEmail($data) {
+        
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $userid = $data['user_id'];
+        $array = array();
+        $row = self::getUserDetail($userid);
+
+        if (sizeof($row) > 0) {
+            $array['name'] = $row['name'];
+            $array['work_email'] = $row['email'];
+        }
+        
+        $q = "SELECT * FROM email_templates WHERE id=".$data['template_id'];
+        $runQuery = self::DBrunQuery($q);
+        $row2 = self::DBfetchRow($runQuery);
+       
+        $body= $row2['body'];
+        $subject = "";
+        foreach ($data as $key=>$val){
+            if(strpos($row2['subject'], $key) !==false){
+                $subject = $val;
+            }
+            if(strpos($row2['body'], $key)){
+                $body = str_replace($key, $val, $body);
+                
+            }
+        }
+        
+        $body = str_replace('\\', '', $body);
+      
+       $array['subject'] = $subject;
+        $array['body'] = $body;
+        $row3 = self::sendEmail($array);
+
+        $r_error = 0;
+        $r_message = $row3;
+        $r_data['message'] = $r_message;
+
+        if ($row3 != "Message sent") {
+            $r_error = 1;
+            $r_message = $row3;
+            $r_data['message'] = $r_message;
+        }
+
+
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function sendEmail($data) {
+        $work_email = $data['work_email'];
+        $name = $data['name'];
+        $subject = $data['subject'];
+        $body = $data['body'];
+
+
+        include "phpmailer/PHPMailerAutoload.php";
+        $mail = new PHPMailer;
+        $mail->isSMTP();
+        $mail->SMTPDebug = 0;
+        $mail->Debugoutput = 'html';
+        $mail->Host = 'smtp.gmail.com';
+        $mail->Port = 587;
+        $mail->SMTPSecure = 'tls';
+        $mail->SMTPAuth = true;
+        $mail->Username = "exceltes@gmail.com";
+        $mail->Password = "java@123";
+        $mail->setFrom('exceltes@gmail.com', 'Excellence');
+        $mail->addReplyTo('replyto@example.com', 'no-reply');
+        $mail->addAddress($work_email, $name);
+        $mail->Subject = $subject;
+        $mail->msgHTML($body);
+        $mail->AltBody = 'This is a plain-text message body';
+
+//Attach an image file
+//$mail->addAttachment('images/phpmailer_mini.png');
+//send the message, check for errors
+        if (!$mail->send()) {
+            return $mail->ErrorInfo;
+        } else {
+            return "Message sent";
+        }
     }
 
 }

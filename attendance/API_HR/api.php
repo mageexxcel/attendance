@@ -16,6 +16,7 @@
 
 	$request_body = file_get_contents('php://input');
 	$PARAMS = json_decode($request_body, true );
+       // $PARAMS = $_GET;
 
 	$action = false;
 	if( isset( $PARAMS['action'] ) ){
@@ -47,10 +48,10 @@
 			}
 			//end -- check for token expiry
 		}
-//		if( $validateToken == false ){
-//			header("HTTP/1.1 401 Unauthorized");
-//			exit;
-//		}
+		if( $validateToken == false ){
+			header("HTTP/1.1 401 Unauthorized");
+			exit;
+		}
 	}
 
 

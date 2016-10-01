@@ -552,8 +552,11 @@ class HR extends DATABASE {
             }
         }
         ksort($list);
+       
+        
         ///// remove non working days from leaves
         $monthHolidays = self::getHolidaysOfMonth($year, $month);
+        $monthWeekends = self::getWeekendsOfMonth($year,$month);
         if (sizeof($monthHolidays) > 0) {
             foreach ($monthHolidays as $d => $v) {
                 if (array_key_exists($d, $list)) {
@@ -561,6 +564,14 @@ class HR extends DATABASE {
                 }
             }
         }
+        if (sizeof($monthWeekends) > 0) {
+            foreach ($monthWeekends as $w => $v2) {
+                if (array_key_exists($w, $list)) {
+                    unset($list[$w]);
+                }
+            }
+        }
+     
         return $list;
     }
 
@@ -580,6 +591,7 @@ class HR extends DATABASE {
                 }
             }
         }
+     
         //end ---added on 8th august to ignore if leaves are not pending and approved
 
         $return = array();
@@ -631,10 +643,6 @@ class HR extends DATABASE {
             $finalReturn[] = $r;
         }
 
-
-
-        // echo '<pre>';
-        // print_r( $return );
 
 
         return $finalReturn;
@@ -775,8 +783,7 @@ class HR extends DATABASE {
         $r_data['nextMonth'] = $nextMonth;
         $r_data['previousMonth'] = $previousMonth;
         $r_data['attendance'] = $beautyMonthAttendance;
-
-
+ 
         $r_error = 0;
         $return = array();
         $return['error'] = $r_error;

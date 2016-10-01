@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -323,31 +323,114 @@ if ($action == 'send_payslips_to_employees') {
     }
 }
 
-if ($action == 'get_users_bankaccount_no') {
+if ($action == 'get_all_users_detail') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
-        $res['data']['message'] = "";
-        if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
-            $res['data']['message'] .= 'Please give user_id ';
+        $res = Salary::getAllUserInfo();
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'get_template_variable') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::getAllTemplateVariable();
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'create_template_variable') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::createTemplateVariable($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'update_template_variable') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::updateTemplateVariable($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'delete_template_variable') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::deleteTemplateVariable($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+if ($action == 'get_email_template') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::getAllEmailTemplate();
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+
+if ($action == 'create_email_template') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::createEmailTemplate($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'update_email_template') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::updateEmailTemplate($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'delete_email_template') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::deleteEmailTemplate($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'get_email_template_byId') {
+
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+        $res = Salary::getEmailTemplateById($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'send_employee_email') {
+      $PARAMS['template_id']= 1;
+      $PARAMS['#template_subject']="First round email";
+      $PARAMS['#current_date']=date("d-m-Y");
+      $PARAMS['#employee_name']="Candidate Name";
+      $PARAMS['#schedule_date']="01-10-2016";
+      $PARAMS['#company_address']="C-84 A Sector 8 Noida";
+      $PARAMS['#schedule_time']="12:00 noon";
+      $PARAMS['#company_name']="Excellence Technologies";
+      $PARAMS['#phone_number']="8080808080";
+      
+    
+    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
+       if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            
+            $res = Salary::sendEmployeeEmail($PARAMS);
         } else {
-
-            $userid = $PARAMS['user_id'];
-
-            $res = Salary::getUsersBankAcNo($userid);
+            $res['data']['message'] = 'Please give user_id ';
         }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
 
-if ($action == 'get_all_users_detail') {
-
-    if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
-       $res = Salary::getAllUserInfo();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
 
 
 

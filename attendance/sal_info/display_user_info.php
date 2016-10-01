@@ -40,7 +40,7 @@ if (isset($_POST['submit'])) {
     $year = date('Y', strtotime(date('Y-m') . " -1 month"));
     $month = date('m', strtotime(date('Y-m') . " -1 month"));
     $ar = array();
-    $ar[] = "Account No\tCurrent Salary\tName";
+    
     if (sizeof($data) > 0) {
         foreach ($data as $val) {
             $s = array();
