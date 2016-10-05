@@ -976,7 +976,7 @@ class Salary extends DATABASE {
                 mysql_query($query);
 
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
-                    self::sendPayslipMsgEmployee($payslip_no);
+                  //  self::sendPayslipMsgEmployee($payslip_no);
                 }
 
 
@@ -1002,7 +1002,7 @@ class Salary extends DATABASE {
                     mysql_query($query);
 
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
-                        self::sendPayslipMsgEmployee($payslip_no);
+                      //  self::sendPayslipMsgEmployee($payslip_no);
                     }
 
                     $r_error = 0;
@@ -1031,6 +1031,8 @@ class Salary extends DATABASE {
         $user_salaryinfo = array();
         $res1 = self::getSalaryInfo($userid, "first_to_last");
         $res0 = self::getUserprofileDetail($userid);
+        
+        
         $latest_sal_id = sizeof($res1) - 1;
         $user_salaryinfo = $res1[$latest_sal_id];
 
@@ -1038,7 +1040,11 @@ class Salary extends DATABASE {
         $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
 
         $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
-
+         
+        $misc_deduction = self::getUserMiscDeduction($userid, $year, $month);
+        $salary_detail['misc_deduction2'] = $misc_deduction;
+      
+  
         //per day calculate salary
         $pday_basic = $salary_detail['Basic'] / $user_salaryinfo['total_working_days'];
         $pday_hra = $salary_detail['HRA'] / $user_salaryinfo['total_working_days'];
@@ -1048,7 +1054,7 @@ class Salary extends DATABASE {
         $pday_arrear = $salary_detail['Arrears'] / $user_salaryinfo['total_working_days'];
 
         //calculate end    
-
+        
         $user_salaryinfo['year'] = $year;
         $user_salaryinfo['month'] = $month;
         $user_salaryinfo['month_name'] = $month_name;
@@ -1058,7 +1064,10 @@ class Salary extends DATABASE {
 
         $actual_salary_detail['total_earning'] = $actual_salary_detail['Basic'] + $actual_salary_detail['HRA'] + $actual_salary_detail['Conveyance'] + $actual_salary_detail['Medical_Allowance'] + $actual_salary_detail['Special_Allowance'] + $actual_salary_detail['Arrears'];
 
-        $actual_salary_detail['total_deduction'] = $salary_detail['EPF'] + $actual_salary_detail['Loan'] + $actual_salary_detail['Advance'] + $actual_salary_detail['Misc_Deductions'] + $actual_salary_detail['TDS'];
+        $actual_salary_detail['total_deduction'] = $salary_detail['EPF'] + $actual_salary_detail['Loan'] + $actual_salary_detail['Advance'] + $actual_salary_detail['Misc_Deductions'] + $actual_salary_detail['TDS'] ;
+
+           
+        
         $actual_salary_detail['net_salary'] = $actual_salary_detail['total_earning'] - $actual_salary_detail['total_deduction'];
 
         $res = self::getUserPayslipInfo($userid);
@@ -1124,7 +1133,7 @@ class Salary extends DATABASE {
 
         $total_earning = $salary_detail['Basic'] + $salary_detail['HRA'] + $salary_detail['Conveyance'] + $salary_detail['Medical_Allowance'] + $salary_detail['Special_Allowance'] + $salary_detail['Arrears'];
 
-        $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS'];
+        $total_deduction = $salary_detail['EPF'] + $salary_detail['Loan'] + $salary_detail['Advance'] + $salary_detail['Misc_Deductions'] + $salary_detail['TDS']+ $salary_detail['misc_deduction2'];
         $net_salary = $total_earning - $total_deduction;
 
         $user_salaryinfo['total_earning'] = round($total_earning, 2);
@@ -1605,6 +1614,16 @@ class Salary extends DATABASE {
                 }
             }
         }
+        
+        $weekendHolidays = self::getWeekendsOfMonth($year, $month);
+        if (sizeof($weekendHolidays) > 0) {
+            foreach ($weekendHolidays as $d => $v) {
+                if (array_key_exists($d, $list)) {
+                    unset($list[$d]);
+                }
+            }
+        }
+        
         return $list;
     }
 
@@ -2098,6 +2117,18 @@ class Salary extends DATABASE {
         } else {
             return "Message sent";
         }
+    }
+    
+    public static function getUserMiscDeduction($userid, $year, $month){
+        $result = 0;
+        $q = "SELECT * FROM payslips WHERE user_Id= $userid  AND month = '$month' AND year= '$year' " ;
+        $runQuery = self::DBrunQuery($q);
+        $row2 = self::DBfetchRow($runQuery);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if($no_of_rows > 0){
+            $result = $row2['misc_deduction_2'];
+        }
+        return $result;
     }
 
 }

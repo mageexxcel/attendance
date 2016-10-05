@@ -3,7 +3,7 @@
 require_once "dompdf-master/dompdf_config.inc.php";
 $html = '';
 $html=ob_start();
-require_once 'template_payslip.php';
+require_once 'test.php';
 
 $html = ob_get_clean();
 $pname = "test.pdf";
