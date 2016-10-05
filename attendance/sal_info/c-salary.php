@@ -976,7 +976,7 @@ class Salary extends DATABASE {
                 mysql_query($query);
 
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
-                  //  self::sendPayslipMsgEmployee($payslip_no);
+                    self::sendPayslipMsgEmployee($payslip_no);
                 }
 
 
@@ -1002,7 +1002,7 @@ class Salary extends DATABASE {
                     mysql_query($query);
 
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
-                      //  self::sendPayslipMsgEmployee($payslip_no);
+                        self::sendPayslipMsgEmployee($payslip_no);
                     }
 
                     $r_error = 0;
