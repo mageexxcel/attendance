@@ -1,9 +1,12 @@
 <?php
+/* 
+file to upload  employee documents on google drive 
+and send slack notification on success to employee. 
+  */
 
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
-
 
 if (isset($_POST['submit'])) {
 
