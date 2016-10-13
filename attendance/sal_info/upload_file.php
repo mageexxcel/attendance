@@ -1,6 +1,6 @@
 <?php
 /* 
-file to upload  employee documents on google drive 
+Upload  employee documents on google drive 
 and send slack notification on success to employee. 
   */
 
@@ -70,13 +70,13 @@ if (isset($_POST['submit'])) {
                 echo "Please upload the document in correct format.";
                 die;
             }
-
+//upload file to demo folder on server.
             if (!move_uploaded_file($file_tmp, "demo/" . $file_name)) {
                 echo "File Not uploaded";
                 die;
             }
 
-
+//save file to google drive
             $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
 
             if (sizeof($save) <= 0) {
@@ -88,15 +88,15 @@ if (isset($_POST['submit'])) {
         }
         $arr[$k] = "<iframe src='$url'></iframe>";
     }
+    
     $qu = "INSERT INTO user_document_detail (user_Id, document_type, link_1) VALUES ($userid, '$doc_type', '')";
-    $run = Salary::DBrunQuery($qu);
+   $run = Salary::DBrunQuery($qu);
     $id = mysql_insert_id();
     $res = Salary::DBupdateBySingleWhere('user_document_detail', $whereField, $id, $arr);
 
     $message = $userInfo_name . ". document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
-    //  echo  $message;
-    //$slackMessageStatus = Salary::sendSlackMessageToUser($slack_userChannelid, $message);
-    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr", $message);
+
+    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr", $message); // send salck message to hr channel
 
     header("Location: $return");
     exit;
