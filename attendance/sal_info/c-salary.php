@@ -1,5 +1,6 @@
 <?php
-/* Allow cross origin resource access methods */ 
+
+/* Allow cross origin resource access methods */
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
@@ -8,9 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
     exit(0);
 }
-require_once 'c-database.php';// DB class file
+require_once 'c-database.php'; // DB class file
 require_once 'c-jwt.php'; // Access token class file
-
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 class Salary extends DATABASE {
 
@@ -267,7 +267,7 @@ class Salary extends DATABASE {
             'last_updated_on' => date("Y-m-d")
         );
         $userid = $data['user_id'];
-        $username = self::getUserDetail($userid); 
+        $username = self::getUserDetail($userid);
         $res = self::DBinsertQuery('user_holding_info', $ins);
         if ($res == false) {
             return false;
@@ -356,7 +356,7 @@ class Salary extends DATABASE {
                 foreach ($msg as $key => $valu) {
                     $message = $message . "$key = " . $valu . "\n";
                 }
-                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);// send slack message
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
             }
             $r_error = 0;
             $r_message = "Successfully Updated into table";
@@ -367,7 +367,7 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-
+// CURL operation for slack api
     public static function getHtml($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -381,7 +381,7 @@ class Salary extends DATABASE {
 
     ///----slacks fns
     public static function sendSlackMessageToUser($channelid, $message) {
-       //include url variables files. 
+        //include url variables files. 
         include "config.php";
         $return = false;
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
@@ -402,7 +402,7 @@ class Salary extends DATABASE {
 
     //get employee slack channel id
     public static function getSlackChannelIds() {
-      //include url variables files
+        //include url variables files
         include "config.php";
         $return = array();
         $url = $slack_channel_id_url . self::$SLACK_token;
@@ -453,7 +453,7 @@ class Salary extends DATABASE {
                     $slack_channel_id_info = array();
                     $slack_channel_id = '';
                     foreach ($slackChannelIdsLists as $chid) {
-                        if ($pp['id'] == $chid['user']) { 
+                        if ($pp['id'] == $chid['user']) {
                             $slack_channel_id = $chid['id'];
                             $slack_channel_id_info = $chid;
                             break;
@@ -555,7 +555,7 @@ class Salary extends DATABASE {
             $r_data['message'] = $r_message;
         }
         if ($message != "") {
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);// send slack message
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
         }
         $return = array();
         $return['error'] = $r_error;
@@ -792,7 +792,7 @@ class Salary extends DATABASE {
         //dom pdf library file
         require_once "dompdf-master/dompdf_config.inc.php";
         $pname = $invoice_no . ".pdf";
-        $theme_root = "a_pdfs/" . $pname;
+        $theme_root = "invoice/" . $pname;
         if ($path != false) {
             $theme_root = $path . "/" . $pname;
         }
@@ -1027,7 +1027,6 @@ class Salary extends DATABASE {
         $final_spl = $salary_detail['Special_Allowance'] - ( $pday_spl * $unpaid_leave);
         $final_arrear = $salary_detail['Arrears'] - ( $pday_arrear * $unpaid_leave);
         //end final salary calculation 
-        
         //array formation with values to display on hr system.
         $salary_detail['Basic'] = round($final_basic, 2);
         $salary_detail['HRA'] = round($final_hra, 2);
@@ -1083,7 +1082,7 @@ class Salary extends DATABASE {
             if (date('m', $time) == $month)
                 $list[] = date('m-d-Y', $time);
         }
-        $no_of_holidays = self::getHolidaysOfMonth($year, $month); 
+        $no_of_holidays = self::getHolidaysOfMonth($year, $month);
         $weekends_of_month = self::getWeekendsOfMonth($year, $month);
         if (sizeof($weekends_of_month) > 0) {
             $arru = $weekends_of_month;
@@ -1350,6 +1349,7 @@ class Salary extends DATABASE {
             $syearfolder = $arr[$subfolder_year];
         }
         if (!array_key_exists($parent_folder, $arr)) {
+            // create a parent folder in  google drive 
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $parent_folder,
                 'mimeType' => 'application/vnd.google-apps.folder'));
@@ -1358,6 +1358,7 @@ class Salary extends DATABASE {
             $pfolder = $filez->id;
         }
         if (!array_key_exists($subfolder_empname, $arr)) {
+            // create a sub folder inside parent folder in google drive.
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $subfolder_empname,
                 'parents' => array($pfolder),
@@ -1367,6 +1368,7 @@ class Salary extends DATABASE {
             $sfolder = $filez->id;
         }
         if (!array_key_exists($subfolder_year, $arr)) {
+            // create a sub sub folder inside  sub folder in google drive.
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $subfolder_year,
                 'parents' => array($sfolder),
@@ -1376,6 +1378,8 @@ class Salary extends DATABASE {
             //printf("Folder ID: %s\n", $filez->title);
             $syearfolder = $filez->id;
         }
+
+        // upload file in google drive   
         $file = new Google_Service_Drive_DriveFile(
                 array(
             'name' => $filename,
@@ -1391,16 +1395,17 @@ class Salary extends DATABASE {
 
         $url['url'] = $google_drive_url . $result2->id . "/preview";
         $url['file_id'] = $result2->id;
-
+// change uploaded file permission in google drive
         $permission = new Google_Service_Drive_Permission();
         $permission->setRole('writer');
         $permission->setType('anyone');
-////$permission->setValue( 'me' );
+
         try {
             $service->permissions->create($result2->id, $permission);
         } catch (Exception $e) {
             print "An error occurred: " . $e->getMessage();
         }
+        // delete file from folder
         unlink($testfile);
         return $url;
     }
@@ -1430,7 +1435,7 @@ class Salary extends DATABASE {
             }
             $message = "Hi " . $userInfo_name . ". \n Your salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
 
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             mysql_query($query);
             $r_error = 0;
@@ -1449,7 +1454,7 @@ class Salary extends DATABASE {
 
     // get employee particular month and year leaves 
     public static function getUserMonthLeaves($userid, $year, $month) {
-        //$userid = '313';
+       
         $list = array();
         $q = "SELECT * FROM leaves Where user_Id = $userid";
         $runQuery = self::DBrunQuery($q);
@@ -1513,9 +1518,9 @@ class Salary extends DATABASE {
         $r_token = self::getrefreshToken();
         if (sizeof($r_token) > 0) {
             $refresh_token = $r_token['value'];
-   //include google drive api file to upload document in google drive.
+            //include google drive api file to upload document in google drive.
             include "google-api/drive_file/upload.php";
-             //include url variables file.
+            //include url variables file.
             include "config.php";
 
 //'demo' folder from where file to be fetched.
@@ -1533,6 +1538,7 @@ class Salary extends DATABASE {
                 $sfolder = $arr[$subfolder_empname];
             }
             if (!array_key_exists($parent_folder, $arr)) {
+                // create parent folder in google drive
                 $fileMetadata = new Google_Service_Drive_DriveFile(array(
                     'name' => $parent_folder,
                     'mimeType' => 'application/vnd.google-apps.folder'));
@@ -1541,6 +1547,7 @@ class Salary extends DATABASE {
                 $pfolder = $filez->id;
             }
             if (!array_key_exists($subfolder_empname, $arr)) {
+                // create sub folder inside parent folder in google drive
                 $fileMetadata = new Google_Service_Drive_DriveFile(array(
                     'name' => $subfolder_empname,
                     'parents' => array($pfolder),
@@ -1563,21 +1570,22 @@ class Salary extends DATABASE {
             );
             $url['url'] = $google_drive_url . $result2->id . "/preview";
             $url['file_id'] = $result2->id;
-
+// change file permisison in google drive
             $permission = new Google_Service_Drive_Permission();
             $permission->setRole('writer');
             $permission->setType('anyone');
-////$permission->setValue( 'me' );
+
             try {
                 $service->permissions->create($result2->id, $permission);
             } catch (Exception $e) {
                 print "An error occurred: " . $e->getMessage();
             }
             $rest = $url;
+
+            // delete file from folder   
             unlink($testfile);
         }
         return $rest;
-        //print_r($url);
     }
 
     // get employee latest salary info 

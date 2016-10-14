@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -48,7 +48,7 @@ if ($validateToken == false) {
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 
-
+// action to get employee profile detail
 if ($action == 'get_user_profile_detail') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
@@ -62,6 +62,7 @@ if ($action == 'get_user_profile_detail') {
     }
 }
 
+// action to update employee profile detail.
 if ($action == 'update_user_profile_detail') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -77,6 +78,7 @@ if ($action == 'update_user_profile_detail') {
     }
 }
 
+// action to update employee bank details
 if ($action == 'update_user_bank_detail') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
@@ -90,6 +92,8 @@ if ($action == 'update_user_bank_detail') {
         $res = Salary::UpdateUserBankInfo($PARAMS);
     }
 }
+
+// action  to generate user salary.
 if ($action == 'create_user_salary') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
@@ -103,6 +107,7 @@ if ($action == 'create_user_salary') {
     }
 }
 
+// action to create a new client.
 if ($action == 'create_new_client') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (!isset($PARAMS['name']) || $PARAMS['name'] == "") {
@@ -118,6 +123,7 @@ if ($action == 'create_new_client') {
     }
 }
 
+// action to update client details 
 if ($action == 'update_client_details') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -132,6 +138,7 @@ if ($action == 'update_client_details') {
     }
 }
 
+// action to get all client details 
 if ($action == 'get_all_clients') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -141,6 +148,7 @@ if ($action == 'get_all_clients') {
     }
 }
 
+// action to create a client invoice
 if ($action == 'create_client_invoice') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -179,6 +187,7 @@ if ($action == 'create_client_invoice') {
     }
 }
 
+// action to delete client invoice
 if ($action == 'delete_invoice') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -193,6 +202,7 @@ if ($action == 'delete_invoice') {
     }
 }
 
+// action to get client detail.
 if ($action == 'get_client_detail') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
@@ -206,6 +216,7 @@ if ($action == 'get_client_detail') {
     }
 }
 
+// action to create an employee salary slip pdf
 if ($action == 'create_employee_salary_slip') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -219,6 +230,7 @@ if ($action == 'create_employee_salary_slip') {
     }
 }
 
+// aciton to get employee last month salary details 
 if ($action == 'get_user_manage_payslips_data') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
@@ -250,6 +262,7 @@ if ($action == 'get_user_manage_payslips_data') {
     }
 }
 
+// action to get employee document detail
 if ($action == 'get_user_document') {
 
 
@@ -266,6 +279,7 @@ if ($action == 'get_user_document') {
     }
 }
 
+// action to delete employee document detail.
 if ($action == 'delete_user_document') {
 
 
@@ -281,8 +295,7 @@ if ($action == 'delete_user_document') {
     }
 }
 
-
-
+// action to delete employee salary detail
 if ($action == 'delete_salary') {
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
         $res['data']['message'] = "";
@@ -301,6 +314,8 @@ if ($action == 'delete_salary') {
     }
 }
 
+
+// action to send payslip slack notification to employee slack channel
 if ($action == 'send_payslips_to_employees') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -323,6 +338,7 @@ if ($action == 'send_payslips_to_employees') {
     }
 }
 
+// action to get all employee details
 if ($action == 'get_all_users_detail') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -331,6 +347,8 @@ if ($action == 'get_all_users_detail') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to get all template variables
 if ($action == 'get_template_variable') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -340,6 +358,7 @@ if ($action == 'get_template_variable') {
     }
 }
 
+// action to create a template varible
 if ($action == 'create_template_variable') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -348,6 +367,8 @@ if ($action == 'create_template_variable') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to update a template variable
 if ($action == 'update_template_variable') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -356,6 +377,8 @@ if ($action == 'update_template_variable') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to delete a template variable.
 if ($action == 'delete_template_variable') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -365,6 +388,7 @@ if ($action == 'delete_template_variable') {
     }
 }
 
+// action to get all email templates
 if ($action == 'get_email_template') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -374,7 +398,7 @@ if ($action == 'get_email_template') {
     }
 }
 
-
+// action to create an email template.
 if ($action == 'create_email_template') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -383,6 +407,8 @@ if ($action == 'create_email_template') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to update an email template
 if ($action == 'update_email_template') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -391,6 +417,8 @@ if ($action == 'update_email_template') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to delete an email template
 if ($action == 'delete_email_template') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -399,6 +427,8 @@ if ($action == 'delete_email_template') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// aciton to get an email template by id 
 if ($action == 'get_email_template_byId') {
 
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
@@ -407,21 +437,23 @@ if ($action == 'get_email_template_byId') {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
+
+// action to send employee  email
 if ($action == 'send_employee_email') {
-      $PARAMS['template_id']= 1;
-      $PARAMS['#template_subject']="First round email";
-      $PARAMS['#current_date']=date("d-m-Y");
-      $PARAMS['#employee_name']="Candidate Name";
-      $PARAMS['#schedule_date']="01-10-2016";
-      $PARAMS['#company_address']="C-84 A Sector 8 Noida";
-      $PARAMS['#schedule_time']="12:00 noon";
-      $PARAMS['#company_name']="Excellence Technologies";
-      $PARAMS['#phone_number']="8080808080";
-      
-    
+    $PARAMS['template_id'] = 1;
+    $PARAMS['#template_subject'] = "First round email";
+    $PARAMS['#current_date'] = date("d-m-Y");
+    $PARAMS['#employee_name'] = "Candidate Name";
+    $PARAMS['#schedule_date'] = "01-10-2016";
+    $PARAMS['#company_address'] = "C-84 A Sector 8 Noida";
+    $PARAMS['#schedule_time'] = "12:00 noon";
+    $PARAMS['#company_name'] = "Excellence Technologies";
+    $PARAMS['#phone_number'] = "8080808080";
+
+
     if ($userinfo['type'] == "admin" || $userinfo['type'] == "hr") {
-       if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+
             $res = Salary::sendEmployeeEmail($PARAMS);
         } else {
             $res['data']['message'] = 'Please give user_id ';

@@ -1,4 +1,10 @@
 <?php
+/*
+Generates a text file name Employee_detail.txt
+containing info employee name , bank account no and salary amount.
+
+ */
+
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
@@ -35,8 +41,9 @@ if (isset($_POST['submit'])) {
    echo "Login Token Expired please login again";
     die;
 }
+// will be outputting  a text file. 
     header("Content-type: text/plain");
-    header("Content-Disposition: attachment; filename=Employee_detail.txt");
+    header("Content-Disposition: attachment; filename=Employee_detail.txt"); // download the output file.
     $year = date('Y', strtotime(date('Y-m') . " -1 month"));
     $month = date('m', strtotime(date('Y-m') . " -1 month"));
     $ar = array();

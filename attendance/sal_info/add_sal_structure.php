@@ -1,4 +1,8 @@
 <?php
+/*
+Add Salary and salary structure of employee.
+ */
+
 
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -158,7 +162,7 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
         exit;
     }
 
-    $tuserid = Salary::getIdUsingToken($PARAMS['token']);
+    $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
     $userinfo = Salary::getUserDetail($tuserid);
     if ($userinfo['type'] != "admin") {
         $result['error'][] = "You are not authorise to update salary information";

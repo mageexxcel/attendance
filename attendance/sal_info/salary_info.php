@@ -1,6 +1,7 @@
 <?php
 /*
-Get employee salary details
+Get employee salary details, holding details and 
+payslip history of an employee
  */
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -102,8 +103,6 @@ if (!isset($_GET['token'])) {
 if (isset($_GET['token']) && $_GET['token'] == "") {
     $result['error'][] = "Please insert a valid token in URL";
 }
-//echo "<pre>";
-//print_r($result);
-//die;
+
 echo json_encode($result);
 ?>

@@ -1,4 +1,7 @@
 <?php
+/*
+Add the holding amount informaiton of an employee.
+ */
 
 error_reporting(0);
 ini_set('display_errors', 0);

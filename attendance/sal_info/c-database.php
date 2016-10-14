@@ -1,4 +1,8 @@
 <?php
+/*
+Class file fo database operations
+ */
+
     require_once '../../../connection.php';
 
     class DATABASE
