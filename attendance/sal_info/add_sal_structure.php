@@ -7,6 +7,10 @@ Add Salary and salary structure of employee.
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
+
+// constants define
+define("admin", "admin");
+
 $result = array(
     'data' => array(),
     'error' => array()
@@ -135,7 +139,7 @@ if (sizeof($result['error']) <= 0) {
 if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
 
     $token = $PARAMS['token'];
-    $validateToken = Salary::validateToken($token);
+    $validateToken = Salary::validateToken($token); // token validation
 
     if ($validateToken == false) {
         header("HTTP/1.1 401 Unauthorized");
@@ -143,12 +147,12 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
     }
 
     $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
-    $userinfo = Salary::getUserDetail($tuserid);
-    if ($userinfo['type'] != "admin") {
+    $userinfo = Salary::getUserDetail($tuserid); // get user details
+    if ($userinfo['type'] != admin) {
         $result['error'][] = "You are not authorise to update salary information";
     }
     if (sizeof($result['error']) <= 0) {
-        $re = Salary::updateSalary($PARAMS);
+        $re = Salary::updateSalary($PARAMS); // update salary details
         if ($re == "Successfully Salary Updated") {
             $result['data'] = $re;
         } else {

@@ -41,7 +41,7 @@ class Salary extends DATABASE {
         //die;
     }
 
-    //check user token in database table
+    //check user token in database table and its time difference
 
     public static function validateToken($token) {
         $token = mysql_real_escape_string($token);
