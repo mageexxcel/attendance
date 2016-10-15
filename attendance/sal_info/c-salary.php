@@ -1,5 +1,6 @@
 <?php
 
+/* Allow cross origin resource access methods */
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
@@ -8,16 +9,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
     exit(0);
 }
-require_once 'c-database.php';
-require_once 'c-jwt.php';
-
+require_once 'c-database.php'; // DB class file
+require_once 'c-jwt.php'; // Access token class file
 //comman format for dates = "Y-m-d" eg "04/07/2016"
+
 class Salary extends DATABASE {
 
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
+    public static $Sunday = 'Sunday';
+    public static $Saturday = 'Saturday';
+    public static $Admin = 'Admin';
+    
 
+// key for token generate do not change. 
     const JWT_SECRET_KEY = 'HR_APP';
 
     //-------------------------------------
@@ -30,9 +36,12 @@ class Salary extends DATABASE {
             self::$SLACK_client_secret = $p['client_secret'];
             self::$SLACK_token = $p['token'];
         }
+     
         //self::getSlackChannelIds();
         //die;
     }
+
+    //check user token in database table and its time difference
 
     public static function validateToken($token) {
         $token = mysql_real_escape_string($token);
@@ -40,12 +49,33 @@ class Salary extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         if (sizeof($rows) > 0) {
-            return true;
+            //start -- check for token expiry
+            $tokenInfo = JWT::decode($token, self::JWT_SECRET_KEY);
+            $tokenInfo = json_decode(json_encode($tokenInfo), true);
+
+
+            if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
+                $token_start_time = $tokenInfo['login_time'];
+                $current_time = time();
+                $time_diff = $current_time - $token_start_time;
+                $mins = $time_diff / 60;
+
+                if ($mins > 60) { //if 60 mins more
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+
+                return false;
+            }
+            //end -- check for token expiry
         } else {
             return false;
         }
     }
 
+    // get user id  on basis of access token
     public static function getIdUsingToken($token) {
         $token = mysql_real_escape_string($token);
         $q = "select * from login_tokens where token='$token' ";
@@ -58,6 +88,7 @@ class Salary extends DATABASE {
         }
     }
 
+    //get details of an employee
     public function getUserDetail($userid) {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
         $runQuery = self::DBrunQuery($q);
@@ -68,25 +99,27 @@ class Salary extends DATABASE {
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
             $arr['type'] = strtolower($val['type']);
-            //$arr['type'] = "admin";
         }
         return $arr;
     }
 
+    // get all employee detail
     public function getAllUserDetail() {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         $row2 = array();
         foreach ($row as $val) {
-            if ($val['username'] != "admin") {
+            if ($val['username'] != strtolower(self::$Admin)) {
                 $userid = $val['user_Id'];
-                $val['user_bank_detail'] = self::getUserBankDetail($userid);
+                $val['user_bank_detail'] = self::getUserBankDetail($userid); // user bank details.
                 $row2[] = $val;
             }
         }
         return $row2;
     }
+
+    //get employee salary info 
 
     public function getSalaryInfo($userid, $sort = false) {
         if ($sort == 'first_to_last') {
@@ -99,6 +132,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    //get all payslips info of a employee
     public function getUserPayslipInfo($userid) {
         $q = "select * from payslips where user_Id = $userid ORDER by id DESC";
         $runQuery = self::DBrunQuery($q);
@@ -106,6 +140,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    // get employee balance leave info of previous month.
     public function getUserBalanceLaveInfo($userid, $year, $month) {
         $current_month = $year . "-" . $month;
         $prev_month = date('Y-m', strtotime($current_month . ' -1 month'));
@@ -121,6 +156,7 @@ class Salary extends DATABASE {
         return $r;
     }
 
+    //get all employee payslip info of particular year and month
     public function getAllUserPayslip($userid, $year, $month) {
         $q = "select * from payslips where month='$month' AND year = '$year'";
         $runQuery = self::DBrunQuery($q);
@@ -128,6 +164,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    // get Salary details on basis of salary id of employee    
     public function getSalaryDetail($salary_id) {
         $ret = array();
         $q = "select * from salary_details where salary_id = $salary_id";
@@ -139,6 +176,7 @@ class Salary extends DATABASE {
         return $ret;
     }
 
+    //get Holding amount detail of a employee
     public function getHoldingDetail($user_id) {
         $ret = array();
         $q = "select * from user_holding_info where user_Id = $user_id";
@@ -148,13 +186,14 @@ class Salary extends DATABASE {
         return $ret;
     }
 
+    // get all enabled employee list.
     public static function getEnabledUsersList() {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();
         foreach ($rows as $pp) {
-            if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
+            if ($pp['username'] == self::$Admin || $pp['username'] == strtolower(self::$Admin)) {
                 
             } else {
                 $newRows[] = $pp;
@@ -163,6 +202,7 @@ class Salary extends DATABASE {
         return $newRows;
     }
 
+    // get refresh token of google drive from database
     public function getrefreshToken() {
         $ret = array();
         $q = "select * from config where type = 'google_payslip_drive_token'";
@@ -171,6 +211,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    //Update employee salary details with slack notification message send to employee 
     public static function updateSalary($data) {
         $token = $data['token'];
         $update_by = self::getUserName($token);
@@ -201,8 +242,11 @@ class Salary extends DATABASE {
             'Loan' => $data['loan'],
             'EPF' => $data['epf']
         );
+       // In Salary structure type = 1 for earnings 
+        // type= 2 for deductions
         $type = 1;
         foreach ($ins2 as $key => $val) {
+         // change value of type on and after array key TDS    
             if ($key == 'TDS') {
                 $type = 2;
             }
@@ -225,10 +269,11 @@ class Salary extends DATABASE {
         $message = $message . "Advance = " . $data['advance'] . " Rs \n";
         $message = $message . "Misc Deductions = " . $data['Misc_deduction'] . " Rs \n";
         $message = $message . "TDS = " . $data['tds'] . " Rs \n";
-        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack notification.
         return "Successfully Salary Updated";
     }
 
+    //get the name of employee
     public static function getUserName($data) {
         $q = "select login_tokens.userid,user_profile.name from login_tokens LEFT JOIN user_profile ON login_tokens.userid = user_profile.user_Id where login_tokens.token='$data'";
         $runQuery = self::DBrunQuery($q);
@@ -240,6 +285,7 @@ class Salary extends DATABASE {
         }
     }
 
+    //Insert the holding amount details of a employee
     public function insertHoldingInfo($data) {
         $ins = array(
             'user_Id' => $data['user_id'],
@@ -266,6 +312,7 @@ class Salary extends DATABASE {
         }
     }
 
+    //insert or update employee bank info of na employee
     public function insertUserBankInfo($data) {
         $ins = array(
             'user_Id' => $data['user_id'],
@@ -292,16 +339,18 @@ class Salary extends DATABASE {
         }
     }
 
+    // get an employee all info with iits slack info details
     public static function getUserInfo($userid) {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-        //slack info if user
+        //slack info of user
         $userSlackInfo = self::getSlackUserInfo($row['work_email']);
         $row['slack_profile'] = $userSlackInfo;
         return $row;
     }
 
+    //update employee profile details with update slack message notification
     public function UpdateUserInfo($data) {
         $r_error = 1;
         $r_message = "";
@@ -336,7 +385,7 @@ class Salary extends DATABASE {
                 foreach ($msg as $key => $valu) {
                     $message = $message . "$key = " . $valu . "\n";
                 }
-                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
             }
             $r_error = 0;
             $r_message = "Successfully Updated into table";
@@ -348,61 +397,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public function insertUserDocumentInfo($data) {
-        $r_error = 1;
-        $r_message = "";
-        $r_data = array();
-        $ins = array(
-            'user_Id' => $data['user_id'],
-            'document_type' => $data['document_type'],
-            'link_1' => $data['link_1'],
-            'link_2' => $data['link_2'],
-            'link_3' => $data['link_3']
-        );
-        $userid = $data['user_id'];
-        $userInfo = self::getUserInfo($userid);
-        $userInfo_name = $userInfo['name'];
-        $document_type = $data['document_type'];
-        $whereField = 'id';
-        $file_link = $data['link_1'];
-        $q = "select * from user_document_detail where user_Id=" . $whereFieldVal . " AND document_type='" . $data['document_type'] . "'";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
-        $num_rows = mysql_num_rows($runQuery);
-        if ($num_rows > 0) {
-            foreach ($row as $key => $val) {
-                if (array_key_exists($key, $ins)) {
-                    if ($ins[$key] != $row[$key]) {
-                        $arr = array();
-                        $arr[$key] = $ins[$key];
-                        $res = self::DBupdateBySingleWhere('user_document_detail', $whereField, $whereFieldVal, $ins);
-                    }
-                }
-            }
-        }
-        if ($num_rows <= 0) {
-            foreach ($ins as $k => $v) {
-                if (strpos($v, 'https://') !== false) {
-                    $save = self::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_link, $file_id = false);
-                }
-            }
-            //  $res = self::DBinsertQuery('user_document_detail', $ins);
-        }
-        if ($res == false) {
-            $r_error = 1;
-            $r_message = "No fields updated into table";
-            $r_data['message'] = $r_message;
-        } else {
-            $r_error = 0;
-            $r_message = "Successfully Updated into table";
-            $r_data['message'] = $r_message;
-        }
-        $return = array();
-        $return['error'] = $r_error;
-        $return['data'] = $r_data;
-        return $return;
-    }
-
+// CURL operation for slack api
     public static function getHtml($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -416,11 +411,13 @@ class Salary extends DATABASE {
 
     ///----slacks fns
     public static function sendSlackMessageToUser($channelid, $message) {
+        //include url variables files. 
+        include "config.php";
         $return = false;
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
         $message = str_replace("", "%20", $message);
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
-        $url = "https://slack.com/api/chat.postMessage?token=" . self::$SLACK_token . "&attachments=" . urlencode($message) . "&channel=" . $channelid;
+        $url = $send_slack_message_url . self::$SLACK_token . "&attachments=" . urlencode($message) . "&channel=" . $channelid;
         $html = self::getHtml($url);
         if ($html === false) {
             
@@ -433,9 +430,12 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //get employee slack channel id
     public static function getSlackChannelIds() {
+        //include url variables files
+        include "config.php";
         $return = array();
-        $url = "https://slack.com/api/im.list?token=" . self::$SLACK_token;
+        $url = $slack_channel_id_url . self::$SLACK_token;
         $html = self::getHtml($url);
         if ($html === false) {
             
@@ -450,6 +450,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //get slack info of an employee
     public static function getSlackUserInfo($emailid) {
         $return = false;
         $allSlackUsers = self::getSlackUsersList();
@@ -464,10 +465,12 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //get all slack user list
     public static function getSlackUsersList() {
+        include "config.php";
         $return = array();
         $slackChannelIdsLists = self::getSlackChannelIds();
-        $url = "https://slack.com/api/users.list?client_id=" . self::$SLACK_client_id . "&token=" . self::$SLACK_token . "&client_secret=" . self::$SLACK_client_secret;
+        $url = $get_all_slack_user_list_url . self::$SLACK_client_id . "&token=" . self::$SLACK_token . "&client_secret=" . self::$SLACK_client_secret; // slack user list url with variable token and client_secret.
         $html = self::getHtml($url);
         if ($html === false) {
             //echo 'Curl error: ' . curl_error($ch);
@@ -496,6 +499,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //get employee hr system profile details 
     public function getUserprofileDetail($userid) {
         $q = "SELECT users.status,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
         $runQuery = self::DBrunQuery($q);
@@ -505,6 +509,7 @@ class Salary extends DATABASE {
         return $arr;
     }
 
+    //get all holiday list of particular year and month
     public function getCurrentMonthHoliday($year, $month) {
         $q = "SELECT * from holidays where date like '%" . $year . "-" . $month . "%'";
         $runQuery = self::DBrunQuery($q);
@@ -514,6 +519,7 @@ class Salary extends DATABASE {
         return $arr;
     }
 
+    // get employee bank details    
     public function getUserBankDetail($userid) {
         $q = "SELECT * FROM user_bank_details WHERE user_Id = $userid";
         $runQuery = self::DBrunQuery($q);
@@ -523,6 +529,7 @@ class Salary extends DATABASE {
         return $arr;
     }
 
+// get employee profile details with bank details.
     public static function getUserDetailInfo($userid) {
         $r_error = 1;
         $r_message = "";
@@ -537,6 +544,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // update employee bank details with slack notification message to employee 
     public static function UpdateUserBankInfo($data) {
         $r_error = 1;
         $r_message = "";
@@ -577,7 +585,7 @@ class Salary extends DATABASE {
             $r_data['message'] = $r_message;
         }
         if ($message != "") {
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
         }
         $return = array();
         $return['error'] = $r_error;
@@ -600,6 +608,7 @@ class Salary extends DATABASE {
         }
     }
 
+    // create a new client
     public static function createNewClient($data) {
         $r_error = 1;
         $r_message = "";
@@ -626,6 +635,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+// update existing client details 
     public static function UpdateClientDetails($data) {
         $r_error = 1;
         $r_message = "";
@@ -662,6 +672,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // get all clients list
     public static function getAllClient() {
         $r_error = 1;
         $r_message = "";
@@ -683,6 +694,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // create client invoice pdf and save invoice detail.  
     public static function createClientInvoice($data) {
         $r_error = 1;
         $r_message = "";
@@ -738,7 +750,7 @@ class Salary extends DATABASE {
             $html = str_replace("##total_amount##", $data['total_amount'], $html);
             $html = str_replace("##currency##", $data['currency'], $html);
             $suc = self::createPDf($html, $invoice_no);
-            $file_path = "http://" . $_SERVER['SERVER_NAME'] . "/slack_dev/attendance/sal_info/" . $suc;
+            $file_path = $suc;
             $query = "UPDATE clients_invoices SET file_address= '" . mysql_real_escape_string($file_path) . "' WHERE id = $invoice_no";
             mysql_query($query);
             $r_error = 0;
@@ -751,6 +763,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // delete client invoice 
     public static function DeleteInvoice($data) {
         $r_error = 1;
         $r_message = "";
@@ -772,6 +785,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // get client all details 
     public static function getClientDetails($client_id) {
         $r_error = 1;
         $r_message = "";
@@ -803,10 +817,12 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // function to create pdf file from html text 
     public static function createPDf($html, $invoice_no, $path = false) {
+        //dom pdf library file
         require_once "dompdf-master/dompdf_config.inc.php";
         $pname = $invoice_no . ".pdf";
-        $theme_root = "a_pdfs/" . $pname;
+        $theme_root = "invoice/" . $pname;
         if ($path != false) {
             $theme_root = $path . "/" . $pname;
         }
@@ -824,6 +840,9 @@ class Salary extends DATABASE {
             return $e;
         }
     }
+
+//employee payslip----------------------------------------
+    // create employee payslip and save pdf to google drive
 
     public static function createUserPayslip($data) {
         $r_error = 1;
@@ -845,6 +864,7 @@ class Salary extends DATABASE {
             'bonus' => $data['bonus'],
             'payslip_url' => ""
         );
+        // check refresh token of google drive 
         $check_google_drive_connection = self::getrefreshToken();
         if (!is_array($check_google_drive_connection) && sizeof($check_google_drive_connection) > 0) {
             $r_error = 1;
@@ -856,15 +876,18 @@ class Salary extends DATABASE {
             $userInfo_name = $userInfo['name'];
             $html = '';
             $html = ob_start();
+            //get payslip template
             require_once 'template_payslip.php';
             $html = ob_get_clean();
             $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
+            //if current month payslip already present in database
             if (mysql_num_rows($runQuery) > 0) {
                 $payslip_no = $row['id'];
                 $file_id = $row['payslip_file_id'];
                 $payslip_name = $month_name;
+                //create pdf file of payslip template    
                 $suc = self::createPDf($html, $payslip_name, $path = "payslip");
                 $whereFieldVal = $row['id'];
                 $whereField = 'id';
@@ -877,16 +900,18 @@ class Salary extends DATABASE {
                         }
                     }
                 }
+                // upload created payslip pdf file in google drive
                 $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid, $file_id);
                 $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
                 mysql_query($query);
+                // if send mail option is true
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
                     self::sendPayslipMsgEmployee($payslip_no);
                 }
                 $r_error = 0;
                 $r_message = "Salary slip updated successfully";
                 $r_data['message'] = $r_message;
-            } else {
+            } else { // if current month payslip is not present in database
                 $res = self::DBinsertQuery('payslips', $ins);
                 if ($res == false) {
                     $r_error = 1;
@@ -895,11 +920,15 @@ class Salary extends DATABASE {
                 } else {
                     $payslip_no = mysql_insert_id();
                     $payslip_name = $month_name;
+                    //create pdf of payslip template
                     $suc = self::createPDf($html, $payslip_name, $path = "payslip");
+                    // upload created payslip pdf file in google drive
                     $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid);
                     $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
                     mysql_query($query);
+                    // if send mail option is true
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
+                        // send slack notification message 
                         self::sendPayslipMsgEmployee($payslip_no);
                     }
                     $r_error = 0;
@@ -914,6 +943,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+// get employee particular month and year  salary details 
     public function getUserManagePayslip($userid, $year, $month) {
         $r_error = 1;
         $r_message = "";
@@ -921,19 +951,29 @@ class Salary extends DATABASE {
         $date = $year . "-" . $month . "-01";
         $month_name = date('F', strtotime($date));
         $user_salaryinfo = array();
+        //get all salary list of employee
         $res1 = self::getSalaryInfo($userid, "first_to_last");
+        //get employee profile detail.   
         $res0 = self::getUserprofileDetail($userid);
 
-
+// get latest salary id
         $latest_sal_id = sizeof($res1) - 1;
         $user_salaryinfo = $res1[$latest_sal_id];
+
+        //get total working days of month
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
+
+        //get employee month attendance
         $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
+
+        //get employee month salary details
         $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
 
+        //get misc deduction of salary month form payslips table. 
         $misc_deduction = self::getUserMiscDeduction($userid, $year, $month);
         $salary_detail['misc_deduction2'] = $misc_deduction;
-        
+
+        //get bonus of salary month form payslips table.
         $bonus = self::getUserBonus($userid, $year, $month);
         $salary_detail['bonus'] = $bonus;
 
@@ -953,11 +993,15 @@ class Salary extends DATABASE {
         $user_salaryinfo['name'] = $res0['name'];
         $user_salaryinfo['dateofjoining'] = $res0['dateofjoining'];
         $user_salaryinfo['jobtitle'] = $res0['jobtitle'];
+
+        // get employee actual salary total earning and total deduction.
         $actual_salary_detail['total_earning'] = $actual_salary_detail['Basic'] + $actual_salary_detail['HRA'] + $actual_salary_detail['Conveyance'] + $actual_salary_detail['Medical_Allowance'] + $actual_salary_detail['Special_Allowance'] + $actual_salary_detail['Arrears'];
         $actual_salary_detail['total_deduction'] = $salary_detail['EPF'] + $actual_salary_detail['Loan'] + $actual_salary_detail['Advance'] + $actual_salary_detail['Misc_Deductions'] + $actual_salary_detail['TDS'];
 
-
+        //employee actual net salary
         $actual_salary_detail['net_salary'] = $actual_salary_detail['total_earning'] - $actual_salary_detail['total_deduction'];
+
+        // get employee month payslip info   
         $res = self::getUserPayslipInfo($userid);
         if (sizeof($res) > 0) {
             if ($res[0]['month'] == $month) {
@@ -974,13 +1018,16 @@ class Salary extends DATABASE {
                 }
             }
         }
+        // if no data of employee in payslips table   
         if (sizeof($res) <= 0) {
+            //get employee detail from payslip table of previous  hr system
             $prev = self::getUserBalanceLaveInfo($userid, $year, $month);
             $balance_leave = $prev['final_leave_balance'];
         }
-        // $current_month_leave = $user_salaryinfo['total_working_days'] - $user_salaryinfo['days_present'];
+        //get employee month leave info
         $c = self::getUserMonthLeaves($userid, $year, $month);
         $current_month_leave = 0;
+        // get employee total no. of leave taken in month
         if (sizeof($c) > 0) {
             foreach ($c as $v) {
                 if ($v['status'] == "Approved" || $v['status'] == "approved") {
@@ -992,6 +1039,7 @@ class Salary extends DATABASE {
                 }
             }
         }
+        // get final leave balance of employee
         $leaves = $balance_leave - $current_month_leave + $user_salaryinfo['leaves_allocated'];
         if ($leaves >= 0) {
             $paid_leave = $current_month_leave;
@@ -1008,7 +1056,8 @@ class Salary extends DATABASE {
         $final_med = $salary_detail['Medical_Allowance'] - ( $pday_med * $unpaid_leave);
         $final_spl = $salary_detail['Special_Allowance'] - ( $pday_spl * $unpaid_leave);
         $final_arrear = $salary_detail['Arrears'] - ( $pday_arrear * $unpaid_leave);
-        //end calculate   
+        //end final salary calculation 
+        //array formation with values to display on hr system.
         $salary_detail['Basic'] = round($final_basic, 2);
         $salary_detail['HRA'] = round($final_hra, 2);
         $salary_detail['Conveyance'] = round($final_conve, 2);
@@ -1045,12 +1094,16 @@ class Salary extends DATABASE {
             //$r_data['google_drive_emailid'] = $check_google_drive_connection['email_id'];
             $r_data['google_drive_emailid'] = "Yes email id exist";
         }
+        //get employee all previous payslip.
+
         $r_data['all_users_latest_payslip'] = self::getAllUserPayslip($userid, $year, $month);
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
         return $return;
     }
+
+    // get particular month and year total working days
 
     public static function getTotalWorkingDays($year, $month) {
         $list = array();
@@ -1075,6 +1128,8 @@ class Salary extends DATABASE {
         return $total_no_of_workdays;
     }
 
+    // get holidays list of month and year
+
     public static function getHolidaysOfMonth($year, $month) {
         $q = "SELECT * FROM holidays";
         $runQuery = self::DBrunQuery($q);
@@ -1088,23 +1143,23 @@ class Salary extends DATABASE {
                 $h_full_date = date("Y-m-d", strtotime($h_date));
                 $h_date = date("d", strtotime($h_date));
                 $pp['date'] = $h_date;
-                $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                $pp['full_date'] = $h_full_date; // added on 27 for days between leaves
                 $list[$h_date] = $pp;
             }
         }
         return $list;
     }
 
-    // get weekends off list
+    // get weekends off days list
     public static function getWeekendsOfMonth($year, $month) {
         $list = array();
         $monthDays = self::getDaysOfMonth($year, $month);
         $alternateSaturdayCheck = false;
         foreach ($monthDays as $k => $v) {
-            if ($v['day'] == 'Sunday') {
+            if ($v['day'] == self::$Sunday) {
                 $list[$k] = $v;
             }
-            if ($v['day'] == 'Saturday') {
+            if ($v['day'] == self::$Saturday) {
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -1116,6 +1171,7 @@ class Salary extends DATABASE {
         return $list;
     }
 
+    // get generic month days will have date, day, and full date
     public static function getDaysOfMonth($year, $month) {
         $list = array();
         for ($d = 1; $d <= 31; $d++) {
@@ -1135,9 +1191,12 @@ class Salary extends DATABASE {
         return $list;
     }
 
+//employee attendace--------------------------------------
+    //get employee attendance in particular month and year
     public static function getUserMonthPunching($userid, $year, $month) {
-        //$userid = '313';
+
         $list = array();
+        // get all attendance detail of an employee.
         $q = "SELECT * FROM attendance Where user_id = $userid";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
@@ -1151,20 +1210,21 @@ class Salary extends DATABASE {
             $d_year = date("Y", $d_timestamp);
             $d_date = date("d", $d_timestamp);
             //$d_date = (int)$d_date;
+            //get the particular year and month attendance
             if ($d_year == $year && $d_month == $month) {
                 $d['timestamp'] = $d_timestamp;
                 $allMonthAttendance[$d_date][] = $d;
             }
         }
         foreach ($allMonthAttendance as $pp_key => $pp) {
-            $daySummary = self::_beautyDaySummary($pp);
+            $daySummary = self::_beautyDaySummary($pp); // get summery of the date
             $list[$pp_key] = $daySummary;
         }
-//      echo "<pre>";
-//      print_r($list);
+
         return sizeof($list);
     }
 
+// get employee present date summery
     public static function _beautyDaySummary($dayRaw) {
         $TIMESTAMP = '';
         $numberOfPunch = sizeof($dayRaw);
@@ -1173,16 +1233,21 @@ class Salary extends DATABASE {
             $TIMESTAMP = $pp['timestamp'];
             $timeStampWise[$pp['timestamp']] = $pp;
         }
+        // sort on the basis of timestamp 
         ksort($timeStampWise);
         $inTimeKey = key($timeStampWise);
         end($timeStampWise);
         $outTimeKey = key($timeStampWise);
+        // employee in time   
         $inTime = date('h:i A', $inTimeKey);
+        // employee out time   
         $outTime = date('h:i A', $outTimeKey);
         $r_date = (int) date('d', $TIMESTAMP);
         $r_day = date('l', $TIMESTAMP);
         $r_total_time = $r_extra_time_status = $r_extra_time = '';
+        // total no of hours present  
         $r_total_time = (int) $outTimeKey - (int) $inTimeKey;
+        // extra time  
         $r_extra_time = (int) $r_total_time - (int) ( 9 * 60 * 60 );
         if ($r_extra_time < 0) { // not completed minimum hours
             $r_extra_time_status = "-";
@@ -1199,6 +1264,8 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //get employee leave info of particular month and year
+
     public static function getUserLeaveInfo($userid, $year, $month) {
         $list = array();
         $q = "SELECT * FROM leaves Where user_id = $userid AND from_date like '%" . $year . "-" . $month . "%'";
@@ -1213,6 +1280,7 @@ class Salary extends DATABASE {
         return $total_no_of_leaves;
     }
 
+    //get all document detail of an employee.    
     public static function getUserDocumentDetail($userid) {
         $r_error = 1;
         $r_message = "";
@@ -1229,6 +1297,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+// Delete document of an employee.
     public static function deleteUserDocument($id) {
         $r_error = 1;
         $r_message = "";
@@ -1261,6 +1330,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //Delete salary detail of an employee
     public static function deleteUserSalary($userid, $salaryid) {
         $r_error = 1;
         $r_message = "";
@@ -1278,6 +1348,8 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //save payslip file to google drive 
+
     public static function saveFileToGoogleDrive($payslip_no, $userInfo_name, $userid, $file_id = false) {
         $filename = $payslip_no . ".pdf";
         //upload file in google drive;
@@ -1286,7 +1358,11 @@ class Salary extends DATABASE {
         $subfolder_year = date("Y") . "-" . $userid;
         $r_token = self::getrefreshToken();
         $refresh_token = $r_token['value'];
+        //include url variables file.
+        include "config.php";
+        //include google drive api file to upload file in google drive 
         include "google-api/drive_file/upload.php";
+
         if ($file_id != false) {
             try {
                 $service->files->delete($file_id);
@@ -1311,6 +1387,7 @@ class Salary extends DATABASE {
             $syearfolder = $arr[$subfolder_year];
         }
         if (!array_key_exists($parent_folder, $arr)) {
+            // create a parent folder in  google drive 
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $parent_folder,
                 'mimeType' => 'application/vnd.google-apps.folder'));
@@ -1319,6 +1396,7 @@ class Salary extends DATABASE {
             $pfolder = $filez->id;
         }
         if (!array_key_exists($subfolder_empname, $arr)) {
+            // create a sub folder inside parent folder in google drive.
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $subfolder_empname,
                 'parents' => array($pfolder),
@@ -1328,6 +1406,7 @@ class Salary extends DATABASE {
             $sfolder = $filez->id;
         }
         if (!array_key_exists($subfolder_year, $arr)) {
+            // create a sub sub folder inside  sub folder in google drive.
             $fileMetadata = new Google_Service_Drive_DriveFile(array(
                 'name' => $subfolder_year,
                 'parents' => array($sfolder),
@@ -1337,6 +1416,8 @@ class Salary extends DATABASE {
             //printf("Folder ID: %s\n", $filez->title);
             $syearfolder = $filez->id;
         }
+
+        // upload file in google drive   
         $file = new Google_Service_Drive_DriveFile(
                 array(
             'name' => $filename,
@@ -1349,22 +1430,25 @@ class Salary extends DATABASE {
             'uploadType' => 'multipart'
                 )
         );
-        $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
+
+        $url['url'] = $google_drive_url . $result2->id . "/preview";
         $url['file_id'] = $result2->id;
-////                    //  echo $url;
+// change uploaded file permission in google drive
         $permission = new Google_Service_Drive_Permission();
         $permission->setRole('writer');
         $permission->setType('anyone');
-////$permission->setValue( 'me' );
+
         try {
             $service->permissions->create($result2->id, $permission);
         } catch (Exception $e) {
             print "An error occurred: " . $e->getMessage();
         }
+        // delete file from folder
         unlink($testfile);
         return $url;
     }
 
+// send payslip slack notification message to employee 
     public static function sendPayslipMsgEmployee($payslip_id) {
         $r_error = 1;
         $r_message = "";
@@ -1388,8 +1472,8 @@ class Salary extends DATABASE {
                 }
             }
             $message = "Hi " . $userInfo_name . ". \n Your salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
-            // echo  $message;
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             mysql_query($query);
             $r_error = 0;
@@ -1406,8 +1490,9 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // get employee particular month and year leaves 
     public static function getUserMonthLeaves($userid, $year, $month) {
-        //$userid = '313';
+
         $list = array();
         $q = "SELECT * FROM leaves Where user_Id = $userid";
         $runQuery = self::DBrunQuery($q);
@@ -1436,7 +1521,7 @@ class Salary extends DATABASE {
                 }
             }
         }
-
+        /// remove weekends from leaves
         $weekendHolidays = self::getWeekendsOfMonth($year, $month);
         if (sizeof($weekendHolidays) > 0) {
             foreach ($weekendHolidays as $d => $v) {
@@ -1463,6 +1548,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // function to save employee documents  to google drive 
     public static function saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $filename, $file_id = false) {
         $parent_folder = "Employees Documents";
         $subfolder_empname = $userInfo_name . " doc -" . $userid;
@@ -1470,7 +1556,12 @@ class Salary extends DATABASE {
         $r_token = self::getrefreshToken();
         if (sizeof($r_token) > 0) {
             $refresh_token = $r_token['value'];
+            //include google drive api file to upload document in google drive.
             include "google-api/drive_file/upload.php";
+            //include url variables file.
+            include "config.php";
+
+//'demo' folder from where file to be fetched.
             $testfile = 'demo/' . $filename;
             if (!file_exists($testfile)) {
                 $fh = fopen($testfile, 'w');
@@ -1485,6 +1576,7 @@ class Salary extends DATABASE {
                 $sfolder = $arr[$subfolder_empname];
             }
             if (!array_key_exists($parent_folder, $arr)) {
+                // create parent folder in google drive
                 $fileMetadata = new Google_Service_Drive_DriveFile(array(
                     'name' => $parent_folder,
                     'mimeType' => 'application/vnd.google-apps.folder'));
@@ -1493,6 +1585,7 @@ class Salary extends DATABASE {
                 $pfolder = $filez->id;
             }
             if (!array_key_exists($subfolder_empname, $arr)) {
+                // create sub folder inside parent folder in google drive
                 $fileMetadata = new Google_Service_Drive_DriveFile(array(
                     'name' => $subfolder_empname,
                     'parents' => array($pfolder),
@@ -1513,25 +1606,27 @@ class Salary extends DATABASE {
                 'uploadType' => 'multipart'
                     )
             );
-            $url['url'] = "https://drive.google.com/file/d/" . $result2->id . "/preview";
+            $url['url'] = $google_drive_url . $result2->id . "/preview";
             $url['file_id'] = $result2->id;
-////                    //  echo $url;
+// change file permisison in google drive
             $permission = new Google_Service_Drive_Permission();
             $permission->setRole('writer');
             $permission->setType('anyone');
-////$permission->setValue( 'me' );
+
             try {
                 $service->permissions->create($result2->id, $permission);
             } catch (Exception $e) {
                 print "An error occurred: " . $e->getMessage();
             }
             $rest = $url;
+
+            // delete file from folder   
             unlink($testfile);
         }
         return $rest;
-        //print_r($url);
     }
 
+    // get employee latest salary info 
     public static function getUserlatestSalary($userid) {
         $q = "select * from salary where user_Id = $userid ORDER BY id DESC LIMIT 2";
         $runQuery = self::DBrunQuery($q);
@@ -1539,6 +1634,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    // get all employee info with salary detail and holding details
     public static function getAllUserInfo() {
         $r_error = 1;
         $r_message = "";
@@ -1591,6 +1687,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // get all email templates variables
     public function getAllTemplateVariable() {
         $q = "SELECT * FROM template_variables";
         $runQuery = self::DBrunQuery($q);
@@ -1598,6 +1695,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+// create an email template variables
     public function createTemplateVariable($data) {
         $r_error = 1;
         $r_message = "";
@@ -1625,6 +1723,8 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
+
+    // update email template variables 
 
     public function updateTemplateVariable($data) {
         $r_error = 1;
@@ -1658,6 +1758,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+// delete an email template variable
     public function deleteTemplateVariable($data) {
         $r_error = 1;
         $r_message = "";
@@ -1674,6 +1775,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+// get all email templates
     public function getAllEmailTemplate() {
         $q = "SELECT * FROM email_templates";
         $runQuery = self::DBrunQuery($q);
@@ -1681,6 +1783,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+// create an email template
     public function createEmailTemplate($data) {
         $r_error = 1;
         $r_message = "";
@@ -1711,6 +1814,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //update an email template
     public function updateEmailTemplate($data) {
         $r_error = 1;
         $r_message = "";
@@ -1744,6 +1848,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //delete an email template
     public function deleteEmailTemplate($data) {
         $r_error = 1;
         $r_message = "";
@@ -1760,6 +1865,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // fetch a particular email template
     public function getEmailTemplateById($data) {
         $q = "SELECT * FROM email_templates where id=" . $data['id'];
         $runQuery = self::DBrunQuery($q);
@@ -1767,6 +1873,7 @@ class Salary extends DATABASE {
         return $row;
     }
 
+// send email to employee
     public static function sendEmployeeEmail($data) {
 
         $r_error = 1;
@@ -1814,6 +1921,7 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    // function to send email
     public static function sendEmail($data) {
         $work_email = $data['work_email'];
         $name = $data['name'];
@@ -1828,13 +1936,13 @@ class Salary extends DATABASE {
         $mail->Port = 587;
         $mail->SMTPSecure = 'tls';
         $mail->SMTPAuth = true;
-        $mail->Username = "exceltes@gmail.com";
-        $mail->Password = "java@123";
-        $mail->setFrom('exceltes@gmail.com', 'Excellence');
-        $mail->addReplyTo('replyto@example.com', 'no-reply');
-        $mail->addAddress($work_email, $name);
-        $mail->Subject = $subject;
-        $mail->msgHTML($body);
+        $mail->Username = "exceltes@gmail.com"; //sender email address 
+        $mail->Password = "java@123"; // sender email password
+        $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
+        $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
+        $mail->addAddress($work_email, $name); // name and address to whome mail is to send
+        $mail->Subject = $subject; // subject of email message 
+        $mail->msgHTML($body); // main message 
         $mail->AltBody = 'This is a plain-text message body';
 //Attach an image file
 //$mail->addAttachment('images/phpmailer_mini.png');
@@ -1846,6 +1954,7 @@ class Salary extends DATABASE {
         }
     }
 
+    // get employee misc deduction amount of particular month and year 
     public static function getUserMiscDeduction($userid, $year, $month) {
         $result = 0;
         $q = "SELECT * FROM payslips WHERE user_Id= $userid  AND month = '$month' AND year= '$year' ";
@@ -1857,7 +1966,8 @@ class Salary extends DATABASE {
         }
         return $result;
     }
-    
+
+    // get employee bonus amount of particular month and year 
     public static function getUserBonus($userid, $year, $month) {
         $result = 0;
         $q = "SELECT * FROM payslips WHERE user_Id= $userid  AND month = '$month' AND year= '$year' ";

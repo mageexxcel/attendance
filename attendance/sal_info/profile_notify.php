@@ -1,5 +1,7 @@
 <?php
-
+/* 
+Cron file to notify about profile update and bank detail update if empty.
+ */
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
@@ -17,6 +19,7 @@ foreach ($res as $val) {
     $username = $slackinfo['real_name'];
     $slack_channel_id = $slackinfo['slack_channel_id'];
     $message = "";
+ // bank detail check   
     if ($val['user_bank_detail'] == "" && $numberOfMonths > 2) {
 
         
@@ -27,7 +30,7 @@ foreach ($res as $val) {
         $nofmonth = abs((date('Y', $endDate) - date('Y', strtotime($val['updated_on']))) * 12 + (date('m', $endDate) - date('m', strtotime($val['updated_on']))));
     }
 
-
+// profile update check
     if ($val['updated_on'] == "" || $nofmonth > 3) {
         if ($message != "") {
             $message = $message . "\n Your Profile details are not Updated. Please update it on your hr profile asap\n ";
@@ -39,7 +42,7 @@ foreach ($res as $val) {
     if ($message != "") {
          echo $message;
     echo "<br>";
-          $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message );  
+          $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message );  // send slack notification to employee
     }
 }
 

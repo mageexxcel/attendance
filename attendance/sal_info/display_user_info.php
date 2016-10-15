@@ -1,4 +1,10 @@
 <?php
+/*
+Generates a text file name Employee_detail.txt
+containing info employee name , bank account no and salary amount.
+
+ */
+
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
@@ -14,29 +20,14 @@ if (isset($_POST['submit'])) {
         die;
     }
     $validateToken = Salary::validateToken($token);
-    if ($validateToken != false) {
-        //start -- check for token expiry
-        $tokenInfo = JWT::decode($token, Salary::JWT_SECRET_KEY);
-        $tokenInfo = json_decode(json_encode($tokenInfo), true);
-        if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
-            $token_start_time = $tokenInfo['login_time'];
-            $current_time = time();
-            $time_diff = $current_time - $token_start_time;
-            $mins = $time_diff / 60;
-            if ($mins > 60) { //if 60 mins more
-                $validateToken = false;
-            }
-        } else {
-            $validateToken = false;
-        }
-        //end -- check for token expiry
-    }
+    
     if ($validateToken == false) {
    echo "Login Token Expired please login again";
     die;
 }
+// will be outputting  a text file. 
     header("Content-type: text/plain");
-    header("Content-Disposition: attachment; filename=Employee_detail.txt");
+    header("Content-Disposition: attachment; filename=Employee_detail.txt"); // download the output file.
     $year = date('Y', strtotime(date('Y-m') . " -1 month"));
     $month = date('m', strtotime(date('Y-m') . " -1 month"));
     $ar = array();

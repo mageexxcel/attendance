@@ -1,8 +1,16 @@
 <?php
+/*
+Add Salary and salary structure of employee.
+ */
+
 
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
+
+// constants define
+define("admin", "admin");
+
 $result = array(
     'data' => array(),
     'error' => array()
@@ -131,40 +139,20 @@ if (sizeof($result['error']) <= 0) {
 if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
 
     $token = $PARAMS['token'];
-    $validateToken = Salary::validateToken($token);
+    $validateToken = Salary::validateToken($token); // token validation
 
-    if ($validateToken != false) {
-
-        //start -- check for token expiry
-        $tokenInfo = JWT::decode($token, Salary::JWT_SECRET_KEY);
-        $tokenInfo = json_decode(json_encode($tokenInfo), true);
-
-        if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
-            $token_start_time = $tokenInfo['login_time'];
-            $current_time = time();
-            $time_diff = $current_time - $token_start_time;
-            $mins = $time_diff / 60;
-
-            if ($mins > 60) { //if 60 mins more
-                $validateToken = false;
-            }
-        } else {
-            $validateToken = false;
-        }
-        //end -- check for token expiry
-    }
     if ($validateToken == false) {
         header("HTTP/1.1 401 Unauthorized");
         exit;
     }
 
-    $tuserid = Salary::getIdUsingToken($PARAMS['token']);
-    $userinfo = Salary::getUserDetail($tuserid);
-    if ($userinfo['type'] != "admin") {
+    $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
+    $userinfo = Salary::getUserDetail($tuserid); // get user details
+    if ($userinfo['type'] != admin) {
         $result['error'][] = "You are not authorise to update salary information";
     }
     if (sizeof($result['error']) <= 0) {
-        $re = Salary::updateSalary($PARAMS);
+        $re = Salary::updateSalary($PARAMS); // update salary details
         if ($re == "Successfully Salary Updated") {
             $result['data'] = $re;
         } else {
