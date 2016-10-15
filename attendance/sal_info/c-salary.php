@@ -12,11 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 require_once 'c-database.php'; // DB class file
 require_once 'c-jwt.php'; // Access token class file
 //comman format for dates = "Y-m-d" eg "04/07/2016"
+
 class Salary extends DATABASE {
 
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
+    public static $Sunday = 'Sunday';
+    public static $Saturday = 'Saturday';
+    public static $Admin = 'Admin';
+    
 
 // key for token generate do not change. 
     const JWT_SECRET_KEY = 'HR_APP';
@@ -31,6 +36,7 @@ class Salary extends DATABASE {
             self::$SLACK_client_secret = $p['client_secret'];
             self::$SLACK_token = $p['token'];
         }
+     
         //self::getSlackChannelIds();
         //die;
     }
@@ -43,7 +49,27 @@ class Salary extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         if (sizeof($rows) > 0) {
-            return true;
+            //start -- check for token expiry
+            $tokenInfo = JWT::decode($token, self::JWT_SECRET_KEY);
+            $tokenInfo = json_decode(json_encode($tokenInfo), true);
+
+
+            if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
+                $token_start_time = $tokenInfo['login_time'];
+                $current_time = time();
+                $time_diff = $current_time - $token_start_time;
+                $mins = $time_diff / 60;
+
+                if ($mins > 60) { //if 60 mins more
+                    return false;
+                } else {
+                    return true;
+                }
+            } else {
+
+                return false;
+            }
+            //end -- check for token expiry
         } else {
             return false;
         }
@@ -84,7 +110,7 @@ class Salary extends DATABASE {
         $row = self::DBfetchRows($runQuery);
         $row2 = array();
         foreach ($row as $val) {
-            if ($val['username'] != "admin") {
+            if ($val['username'] != strtolower(self::$Admin)) {
                 $userid = $val['user_Id'];
                 $val['user_bank_detail'] = self::getUserBankDetail($userid); // user bank details.
                 $row2[] = $val;
@@ -167,7 +193,7 @@ class Salary extends DATABASE {
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();
         foreach ($rows as $pp) {
-            if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
+            if ($pp['username'] == self::$Admin || $pp['username'] == strtolower(self::$Admin)) {
                 
             } else {
                 $newRows[] = $pp;
@@ -216,8 +242,11 @@ class Salary extends DATABASE {
             'Loan' => $data['loan'],
             'EPF' => $data['epf']
         );
+       // In Salary structure type = 1 for earnings 
+        // type= 2 for deductions
         $type = 1;
         foreach ($ins2 as $key => $val) {
+         // change value of type on and after array key TDS    
             if ($key == 'TDS') {
                 $type = 2;
             }
@@ -367,6 +396,7 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
+
 // CURL operation for slack api
     public static function getHtml($url) {
         $ch = curl_init();
@@ -1113,7 +1143,7 @@ class Salary extends DATABASE {
                 $h_full_date = date("Y-m-d", strtotime($h_date));
                 $h_date = date("d", strtotime($h_date));
                 $pp['date'] = $h_date;
-                $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                $pp['full_date'] = $h_full_date; // added on 27 for days between leaves
                 $list[$h_date] = $pp;
             }
         }
@@ -1126,10 +1156,10 @@ class Salary extends DATABASE {
         $monthDays = self::getDaysOfMonth($year, $month);
         $alternateSaturdayCheck = false;
         foreach ($monthDays as $k => $v) {
-            if ($v['day'] == 'Sunday') {
+            if ($v['day'] == self::$Sunday) {
                 $list[$k] = $v;
             }
-            if ($v['day'] == 'Saturday') {
+            if ($v['day'] == self::$Saturday) {
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -1164,8 +1194,9 @@ class Salary extends DATABASE {
 //employee attendace--------------------------------------
     //get employee attendance in particular month and year
     public static function getUserMonthPunching($userid, $year, $month) {
-        //$userid = '313';
+
         $list = array();
+        // get all attendance detail of an employee.
         $q = "SELECT * FROM attendance Where user_id = $userid";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
@@ -1179,19 +1210,21 @@ class Salary extends DATABASE {
             $d_year = date("Y", $d_timestamp);
             $d_date = date("d", $d_timestamp);
             //$d_date = (int)$d_date;
+            //get the particular year and month attendance
             if ($d_year == $year && $d_month == $month) {
                 $d['timestamp'] = $d_timestamp;
                 $allMonthAttendance[$d_date][] = $d;
             }
         }
         foreach ($allMonthAttendance as $pp_key => $pp) {
-            $daySummary = self::_beautyDaySummary($pp);
+            $daySummary = self::_beautyDaySummary($pp); // get summery of the date
             $list[$pp_key] = $daySummary;
         }
 
         return sizeof($list);
     }
 
+// get employee present date summery
     public static function _beautyDaySummary($dayRaw) {
         $TIMESTAMP = '';
         $numberOfPunch = sizeof($dayRaw);
@@ -1200,16 +1233,21 @@ class Salary extends DATABASE {
             $TIMESTAMP = $pp['timestamp'];
             $timeStampWise[$pp['timestamp']] = $pp;
         }
+        // sort on the basis of timestamp 
         ksort($timeStampWise);
         $inTimeKey = key($timeStampWise);
         end($timeStampWise);
         $outTimeKey = key($timeStampWise);
+        // employee in time   
         $inTime = date('h:i A', $inTimeKey);
+        // employee out time   
         $outTime = date('h:i A', $outTimeKey);
         $r_date = (int) date('d', $TIMESTAMP);
         $r_day = date('l', $TIMESTAMP);
         $r_total_time = $r_extra_time_status = $r_extra_time = '';
+        // total no of hours present  
         $r_total_time = (int) $outTimeKey - (int) $inTimeKey;
+        // extra time  
         $r_extra_time = (int) $r_total_time - (int) ( 9 * 60 * 60 );
         if ($r_extra_time < 0) { // not completed minimum hours
             $r_extra_time_status = "-";
@@ -1454,7 +1492,7 @@ class Salary extends DATABASE {
 
     // get employee particular month and year leaves 
     public static function getUserMonthLeaves($userid, $year, $month) {
-       
+
         $list = array();
         $q = "SELECT * FROM leaves Where user_Id = $userid";
         $runQuery = self::DBrunQuery($q);
