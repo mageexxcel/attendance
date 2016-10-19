@@ -165,8 +165,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
                 if ($employee_status == 1 && $whour_already_updated == 0) {
                     $pdate = $current_date;
-                    $qt = "INSERT INTO user_working_hours (user_Id,date,working_hours,reason) value (" . $qs['id'] . ", '$pdate', '$ptime', '$reason')";
-                    $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
+                   // $qt = "INSERT INTO user_working_hours (user_Id,date,working_hours,reason) value (" . $qs['id'] . ", '$pdate', '$ptime', '$reason')";
+                  //  $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
                     $prev_mtime[$wmail] = $qs;
                     $prev_mtime[$wmail]['pending'] = $previous_month_time;
                     $prev_mtime[$wmail]['worktime'] = $ptime;
