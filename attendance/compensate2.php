@@ -7,6 +7,7 @@ date_default_timezone_set('UTC');
 
 define("hr_system", "hr_system");
 define("weekoff", "Sunday");
+define("reason", "previous month pending time"); // reason for prevous month pending time.
 
 $de = date("m-Y");
 $current_date = date("Y-m-d");
@@ -157,11 +158,11 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $ptime = 0;
             if ($previous_month_time > 0) {
                 $ptime = date('H:i', mktime(0, 540 + $previous_month_time));
-                $reason = "previous month pending time";
+                $reason = reason; 
                 $ui = getMonthWorkingDays($year = date('Y'), $month = date('m'), $link); // get working days of current month.
                 $employee_status = checkUserstatus($qs['id'], $current_date, $link); // check employee present on current date or not.
 
-                $whour_already_updated = checkUserWorkingHours($qs['id'], $current_month, $ptime, $link); // check employee pending time already updated or not
+                $whour_already_updated = checkUserWorkingHours($qs['id'], $current_month, $reason, $link); // check employee pending time already updated or not
 
                 if ($employee_status == 1 && $whour_already_updated == 0) {
                     $pdate = $current_date;
@@ -884,9 +885,9 @@ function getUserHalfDay($userid, $date, $link) {
     return mysqli_num_rows($w);
 }
 // check employee previous month working hour added or not
-function checkUserWorkingHours($uid, $date, $whours, $link) {
+function checkUserWorkingHours($uid, $date, $reason, $link) {
     $result = 0;
-    $qry = "select * from user_working_hours where user_Id = '$uid' AND date like '%$date%' AND reason= 'previous month pending time' AND working_hours= '$whours'";
+    $qry = "select * from user_working_hours where user_Id = '$uid' AND date like '%$date%' AND reason= '$reason'";
 
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
