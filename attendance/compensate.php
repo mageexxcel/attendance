@@ -10,10 +10,10 @@ define("weekoff", "Sunday");
 define("reason", "previous month pending time"); // reason for prevous month pending time.
 
 $de = date("m-Y");
-//$current_date = date("Y-m-d");
-$current_date = "2016-10-03";
-//$current_month = date("Y-m");
-$current_month = "2016-10";
+$current_date = date("Y-m-d");
+//$current_date = "2016-10-03";
+$current_month = date("Y-m");
+//$current_month = "2016-10";
 $cmonth_name = date("F Y");
 $current_day = date('l');
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
