@@ -424,7 +424,7 @@ if ($action == 'get_email_template_byId') {
 
 // action to send employee  email
 if ($action == 'send_employee_email') {
-   
+
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
 
@@ -434,6 +434,20 @@ if ($action == 'send_employee_email') {
         }
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+// action to cancel employee applied leaves
+if ($action == 'cancel_applied_leave') {
+
+    if ($userinfo['type'] == guest) {
+        $res['data']['message'] = 'You are not authorise for this operation';
+    } else {
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $res = Salary::cancelAppliedLeave($PARAMS);
+        } else {
+            $res['data']['message'] = 'Please give user_id ';
+        }
     }
 }
 

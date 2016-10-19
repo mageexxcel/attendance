@@ -1,11 +1,18 @@
 <?php
+
 require_once ("../../connection.php");
+require_once ("sal_info/config.php");
 error_reporting(E_ALL & ~E_NOTICE);
 date_default_timezone_set('UTC');
+
+define("hr_system", "hr_system");
+define("weekoff", "Sunday");
+
 $de = date("m-Y");
 $current_date = date("Y-m-d");
-//$current_date = "2016-10-07";
+//$current_date = "2016-10-03";
 $current_month = date("Y-m");
+//$current_month = "2016-10";
 $cmonth_name = date("F Y");
 $current_day = date('l');
 $next_month = date('Y-m', strtotime($current_month . ' +1 month'));
@@ -17,27 +24,8 @@ $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 $h = "SELECT * FROM holidays WHERE  date like '%$current_date%'";
 $qr = mysqli_query($link, $h) or die(mysqli_error($link));
 $holiday = mysqli_num_rows($qr);
-if ($current_date == date("Y-m-01")) {
-    $qu = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' AND users.username != 'admin'";
-    $wq = mysqli_query($link, $qu) or die(mysqli_error($link));
-    while ($qs = mysqli_fetch_assoc($wq)) {
-        $wmail = $qs['work_email'];
-        $previous_month_time = getUserPreviousMonthTime($qs['id'], $p_month, $link);
-        $ptime = 0;
-        if ($previous_month_time > 0) {
-            $ptime = date('H:i', mktime(0, 540 + $previous_month_time));
-            $reason = "previous month pending time";
-            $ui = getMonthWorkingDays($year = date('Y'), $month = date('m'), $link);
-            $pdate = $ui['full_date'];
-            $qt = "INSERT INTO user_working_hours (user_Id,date,working_hours,reason) value (" . $qs['id'] . ", '$pdate', '$ptime', '$reason')";
-                  $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
-            $prev_mtime[$wmail] = $qs;
-            $prev_mtime[$wmail]['pending'] = $previous_month_time;
-            $prev_mtime[$wmail]['worktime'] = $ptime;
-        }
-    }
-}
-if ($current_day != "Sunday" && $current_date != $second_sat && $current_date != $fourth_sat && $holiday == 0) {
+
+if ($current_day != weekoff && $current_date != $second_sat && $current_date != $fourth_sat && $holiday == 0) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
     while ($qs = mysqli_fetch_assoc($qw)) {
@@ -46,12 +34,15 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         $token = $qs['token'];
     }
 //---------get slack channel id list of users -----------
-    $url = "https://slack.com/api/im.list?token=" . $token;
+    $url = $slack_channel_id_url . $token;
     $cid_array = getCURL($url, $data = 'ims');
 //-------------get slack userinfo list----------
-    $url2 = "https://slack.com/api/users.list?client_id=" . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
+    $url2 = $get_all_slack_user_list_url . $client_id . "&token=" . $token . "&client_secret=" . $client_secret;
     $fresult = getCURL($url2);
+
+//---get all user in and out detail of current month.    
     $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.date LIKE '%$de%'";
+
     $array = array();
     $w = mysqli_query($link, $query) or die(mysqli_error($link));
     while ($s = mysqli_fetch_assoc($w)) {
@@ -69,7 +60,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
         ksort($v);
         $arr[$k] = $v;
     }
+
+    //-- get slack notification for user not entering in time or out time 
     if (isset($_GET['dailynotify'])) {
+
+        //-- send slack notification if employee miss entry or exit time   
         foreach ($arr as $kk => $vv) {
             $msg = "";
             foreach ($vv as $f) {
@@ -85,7 +80,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                             $name = $foo['real_name'];
                             $c_id = get_channel_id($f, $cid_array);
                             $r = date('H:i', mktime(0, $to_compensate));
-                            //  echo $key."----".$f."-----".$c_id;
+
                             if ($entry == 0) {
                                 $msg = $msg . " You have to not entered entry time on " . $date . "\n";
                             } else {
@@ -98,9 +93,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             if ($msg != "") {
                 $newmsg = "Hi " . $name . "\n" . $msg . "Contact HR asap to fix this";
                 echo $newmsg;
-                send_slack_message($c_id, $token, $newmsg);
+                send_slack_message($c_id, $token, $newmsg); // send slack message
             }
         }
+
+
         //-- get one or two month employee completed slack message on hr channel----- 
         $one_month = date('Y-m-d', strtotime($current_date . ' -1 month'));
         $two_month = date('Y-m-d', strtotime($current_date . ' -2 month'));
@@ -122,6 +119,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $newmes = $newmes . " " . $msg;
                 }
             }
+            // slack notification if user has completed one week in company.-----      
             $aa = getslacklist($fresult, $cid_array);
             if (sizeof($aa) > 0) {
                 foreach ($aa as $av) {
@@ -133,44 +131,74 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             if ($newmes != "") {
                 echo $newmes;
-                send_slack_message($c_id = 'hr_system', $token, $newmes);
+                send_slack_message($c_id = hr_system, $token, $newmes); // send slack message to hr channel
             }
+
             if ($newmes == "") {
                 $newmes = "No Message daily notify url run";
                 echo $newmes;
-                send_slack_message($c_id = 'hr_system', $token, $newmes);
+                send_slack_message($c_id = hr_system, $token, $newmes); // send slack message to hr channel
             }
+            // -- end slack notification if user has completed one week in company. ---  
         }
         //--end get one or two month employee completed slack message on hr channel-----
     }
-//--- Compensation time slack notification--------------
+
+
+//--- Compensation time, previous month pending time and leave not applied slack notification--------------
     if (isset($_GET['pending'])) {
-        //---------get all working day of current month.--------
+        //---------send notification of previous month pending time.--------
+        echo "<pre>";
+        $qu = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' AND users.username != 'admin'";
+        $wq = mysqli_query($link, $qu) or die(mysqli_error($link));
+        while ($qs = mysqli_fetch_assoc($wq)) {
+            $wmail = $qs['work_email'];
+            $previous_month_time = getUserPreviousMonthTime($qs['id'], $p_month, $link); //  get user previous month pending time.
+            $ptime = 0;
+            if ($previous_month_time > 0) {
+                $ptime = date('H:i', mktime(0, 540 + $previous_month_time));
+                $reason = "previous month pending time";
+                $ui = getMonthWorkingDays($year = date('Y'), $month = date('m'), $link); // get working days of current month.
+                $employee_status = checkUserstatus($qs['id'], $current_date, $link); // check employee present on current date or not.
+
+                $whour_already_updated = checkUserWorkingHours($qs['id'], $current_month, $ptime, $link); // check employee pending time already updated or not
+
+                if ($employee_status == 1 && $whour_already_updated == 0) {
+                    $pdate = $current_date;
+                    $qt = "INSERT INTO user_working_hours (user_Id,date,working_hours,reason) value (" . $qs['id'] . ", '$pdate', '$ptime', '$reason')";
+                    $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
+                    $prev_mtime[$wmail] = $qs;
+                    $prev_mtime[$wmail]['pending'] = $previous_month_time;
+                    $prev_mtime[$wmail]['worktime'] = $ptime;
+                }
+            }
+        }
+
+
         if (sizeof($prev_mtime) > 0) {
             foreach ($prev_mtime as $kk => $vao) {
                 $pmessage = "";
                 foreach ($fresult['members'] as $foo) {
                     if ($kk == $foo['profile']['email'] && $kk != "") {
                         $f = $foo['id'];
-                        // if($foo['profile']['email'] == "arun@excellencetechnologies.in" || $foo['profile']['email'] == "meraj.etech@excellencetechnologies.in"){
                         //$f = "U0FJZ0KDM";
-                        //  $rname = $foo['real_name'];
                         $c_id = get_channel_id($f, $cid_array);
                         $r = date('H:i', mktime(0, $to_compensate));
-                        //  echo $key."----".$f."-----".$c_id;
                         $pmessage = $pmessage . "Hi " . $foo['real_name'] . " Your Working hour time for " . $pdate . " is increased to " . $vao['worktime'] . " \n";
                         $pmessage = $pmessage . "Details: \n";
                         $pmessage = $pmessage . "Previous Month Pending Time " . $vao['pending'] . " minutes \n";
                         $pmessage = $pmessage . "Incase of issues, contact HR ";
-                        send_slack_message($c_id, $token, $pmessage);
-                        send_slack_message($c_id = 'hr_system', $token, $pmessage);
+                        send_slack_message($c_id, $token, $pmessage); // send slack notification to employee channel
+                        send_slack_message($c_id = hr_system, $token, $pmessage); // send slack notification to hr channel
                         echo $pmessage;
                         echo "<br>";
                     }
                 }
             }
         }
-        echo "<pre>";
+        //-- end  send notification of previous month pending time ---------
+        //---------get all working day of current month.--------     
+
         $list = array();
         for ($d = 1; $d <= 31; $d++) {
             $time = mktime(12, 0, 0, date('m'), $d, date('Y'));
@@ -185,10 +213,11 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
         }
         array_pop($set);
-        //array_pop($set);
-//---- end-----------
+
+//---- end all working day of current month-----------
+
         foreach ($arr as $kk => $vv) {
-            // print_r($value);
+
             foreach ($vv as $f) {
                 if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
                     $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
@@ -243,6 +272,9 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             $arr2[$kk] = $vv;
         }
+
+  // calculate employee pending time and send slack notification
+        
         foreach ($arr2 as $key => $value) {
             $pending = $value['ptime'];
             $compensate = $value['ctime'];
@@ -273,15 +305,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 }
             }
             $msg = "";
-            if ($to_compensate >= 10) {
+            if ($to_compensate >= 10) {  // if pending time is greater than 10 min
                 foreach ($fresult['members'] as $foo) {
                     if ($key == $foo['profile']['email'] && $key != "") {
                         $f = $foo['id'];
-                        //$f = "U0FJZ0KDM";
-                        //  $rname = $foo['real_name'];
+                       
                         $c_id = get_channel_id($f, $cid_array);
                         $r = date('H:i', mktime(0, $to_compensate));
-                        //  echo $key."----".$f."-----".$c_id;
                         $msg = $msg . "Hi " . $foo['real_name'] . " You have to compensate " . $r . " minutes \n";
                         $msg = $msg . "Details: \n";
                         foreach ($rep as $r) {
@@ -292,12 +322,12 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                                 $msg = $msg . "On " . $dt[2] . " Entry Time: " . $dt[0] . " Exit Time: " . $dt[1] . "  Less: " . $r['pp'] . " minutes \n";
                             }
                         }
-                        if($to_compensate >= 180){
-                            $msg = $msg ."*If compensation is more than 3hr it will result in half day leave, so please compensate your time asap* \n" ; 
+                        if ($to_compensate >= 180) { // if pending time is more than 3 hr
+                            $msg = $msg . "*If compensation is more than 3hr it will result in half day leave, so please compensate your time asap* \n";
                         }
                         $msg = $msg . "Incase of issues, contact HR ";
-                          send_slack_message($c_id, $token, $msg);
-                          send_slack_message($c_id = 'hr_system', $token, $msg);
+                        send_slack_message($c_id, $token, $msg); // send slack notification to employee
+                        send_slack_message($c_id = hr_system, $token, $msg); // send slack notification to hr channel 
                         echo $msg;
                         echo "<br>";
                     }
@@ -305,9 +335,13 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
             }
             $uid = $value['userid'];
             $mm = "";
-            if (strtotime($current_date) <= strtotime(date("Y-m-07"))) {
+         // -- notificaiton for previous month pending time upto current month 7th date   
+            if (strtotime($current_date) <= strtotime(date("Y-m-07"))) {  
                 $mm = $mm . getPrevMonthLeave($uid, $p_month, $link);
             }
+         // -- end
+          
+         // check if employee applied leave or not   
             if (sizeof($wdate) > 0) {
                 $diff = array_diff($set, $wdate);
                 $arr = getLeaveNotification($uid, $link);
@@ -318,6 +352,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     }
                 }
             }
+          // check if employee applied for half day or not  
             if (sizeof($half) > 0) {
                 $arr = getLeaveNotification($uid, $link);
                 foreach ($half as $h) {
@@ -326,6 +361,7 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     }
                 }
             }
+        // send slack notification if leave not applied.    
             if (!empty($mm)) {
                 $msg2 = "";
                 foreach ($fresult['members'] as $foo) {
@@ -337,17 +373,19 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                         //  echo $key."----".$f."-----".$c_id;
                         $msg2 = $msg2 . "Hi " . $rname . "\n";
                         $msg2 = $msg2 . $mm . "Please apply asap on HR System";
-                        send_slack_message($c_id, $token, $msg2);
-                        send_slack_message($c_id = 'hr_system', $token, $msg2);
-                       echo $msg2;
+                        send_slack_message($c_id, $token, $msg2); // send slack message to employee
+                        send_slack_message($c_id = hr_system, $token, $msg2); // send slack message to hr channel
+                        echo $msg2;
                         echo "<br>";
                     }
                 }
             }
         }
-        send_slack_message($c_id = 'hr_system', $token, $m = 'Pending time message send url run');
+        send_slack_message($c_id = hr_system, $token, $m = 'Pending time message send url run'); // slack notification to tell cron has run
     }
 //--end compensate slack notification----------
+
+
 //---------Applied leave messages to Hr channel-------------
     if (isset($_GET['leave'])) {
         $raw = array();
@@ -375,25 +413,29 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                 $msg3 = $msg3 . $vale['name'] . " had appplied for leave from " . $changefrom . " to " . $changeto . ". Reason : " . $vale['reason'] . " (" . $vale['status'] . ") \n";
             }
         }
+      //----slack notification 7 days before employee applied leave starts   
         if ($msg1 != "") {
             $hr1 = "hrfile1";
-            send_slack_message($c_id = 'hr_system', $token, $msg1, $hr1);
+            send_slack_message($c_id = hr_system, $token, $msg1, $hr1);
         }
+     //----slack notification 3 days before employee applied leave starts    
         if ($msg2 != "") {
             $hr2 = "hrfile2";
-            send_slack_message($c_id = 'hr_system', $token, $msg2, $hr2);
+            send_slack_message($c_id = hr_system, $token, $msg2, $hr2);
         }
+     //----slack notification 1 days before employee applied leave starts    
         if ($msg3 != "") {
             $hr3 = "hrfile3";
-           send_slack_message($c_id = 'hr_system', $token, $msg3, $hr3);
+            send_slack_message($c_id = hr_system, $token, $msg3, $hr3);
         }
         if ($msg3 == "" && $msg2 == "" && $msg1 == "") {
             $no_msg = "No Leave notification";
             echo $no_msg;
-            send_slack_message($c_id = 'hr_system', $token, $no_msg);
+            send_slack_message($c_id = hr_system, $token, $no_msg);
         }
         echo $msg1 . "<br>" . $msg2 . "<br>" . $msg3 . "<br>";
         //--end applied leave slack message to hr ------------------ 
+       
 //----update profile pic mad phone no. slack message-----   
         foreach ($fresult['members'] as $vol) {
             $update_msg = "";
@@ -424,13 +466,14 @@ if ($current_day != "Sunday" && $current_date != $second_sat && $current_date !=
                     $c_id = get_channel_id($f, $cid_array);
                     echo "$update_msg";
                     echo "<br>";
-                    send_slack_message($c_id, $token, $update_msg, $hr3);
+                    send_slack_message($c_id, $token, $update_msg, $hr3);// send slack message
                 }
             }
         }
 //---end update profile pic and phone no. slack message--- 
     }
 }
+
 //---get channel id of a user---------
 function get_channel_id($data, $array) {
     foreach ($array as $val) {
@@ -440,8 +483,12 @@ function get_channel_id($data, $array) {
         }
     }
 }
-//--------Send slack message------------
+
+//--------Send slack message function------------
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
+    
+    include "sal_info/config.php";
+    
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if (isset($s) && $s == "hrfile1") {
         $message = '[{"text": "' . $sir . '",  "author_name": " 7 Day before leave notification ", "fallback": "Message Send to Hr Channel", "color": "#00C1F2"}]';
@@ -455,7 +502,7 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     $room = $channelid;
     $message = str_replace("", "%20", $message);
     $icon = ":boom:";
-    $url = "https://slack.com/api/chat.postMessage?token=" . $token . "&attachments=" . urlencode($message) . "&channel=" . $room;
+    $url = $send_slack_message_url . $token . "&attachments=" . urlencode($message) . "&channel=" . $room;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
@@ -471,6 +518,7 @@ function send_slack_message($channelid, $token, $sir = false, $s = false, $day =
     }
     curl_close($ch);
 }
+
 //----Get dates of working days in curerent month------------
 function getData($data, $link) {
     $result = 0;
@@ -483,12 +531,12 @@ function getData($data, $link) {
         return $result;
     }
 }
+
 //------Get leave detail of employee of current month.
 function getLeaveNotification($data, $link, $date = false) {
-    if($date == false){
-       $date = date("Y-m"); 
+    if ($date == false) {
+        $date = date("Y-m");
     }
-    
     $result = array();
     $qry = "select * from leaves where user_Id=" . $data . " AND from_date like '%$date%' AND status != 'Rejected'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
@@ -506,6 +554,7 @@ function getLeaveNotification($data, $link, $date = false) {
     }
     return $result;
 }
+
 // ----------Run curl url------
 function getCURL($url, $data = false) {
     $ch = curl_init();
@@ -525,8 +574,10 @@ function getCURL($url, $data = false) {
     return $rest;
     curl_close($ch);
 }
+
+// get office working hours on a particular date
 function getWorkingHours($data, $link) {
-    $result = "09:00";
+    $result = "09:00"; // default value
     $qry = "select * from working_hours where date='$data'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
@@ -536,9 +587,9 @@ function getWorkingHours($data, $link) {
     }
     return $result;
 }
+// get slack profile created date of employee
 function getslacklist($array1, $array2) {
-    echo "<pre>";
-    // print_r($array1);
+
     $result = array();
     if (sizeof($array1 > 0)) {
         foreach ($array1['members'] as $foo) {
@@ -555,6 +606,7 @@ function getslacklist($array1, $array2) {
     }
     return $result;
 }
+// get employee working hours on a date
 function getUserWorkingHours($uid, $date, $link) {
     $result = 0;
     $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
@@ -566,6 +618,8 @@ function getUserWorkingHours($uid, $date, $link) {
     }
     return $result;
 }
+
+//get employee previous month attendance detail.
 function getUserPreviousMonthDetail($uid, $date, $link) {
     $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND users.id = $uid AND hr_data.date LIKE '%$date%'";
     $array = array();
@@ -646,6 +700,8 @@ function getUserPreviousMonthDetail($uid, $date, $link) {
     }
     return $arr2;
 }
+
+// get employee previous month not applied leave detail
 function getPrevMonthLeave($userid, $date, $link) {
     $array = getUserPreviousMonthDetail($userid, $date, $link);
     $m = explode('-', $date);
@@ -665,7 +721,6 @@ function getPrevMonthLeave($userid, $date, $link) {
         }
     }
     array_pop($set);
-   // print_r($set);
     foreach ($array as $key => $value) {
         $pending = $value['ptime'];
         $compensate = $value['ctime'];
@@ -678,7 +733,7 @@ function getPrevMonthLeave($userid, $date, $link) {
         $mm = "";
         if (sizeof($wdate) > 0) {
             $diff = array_diff($set, $wdate);
-            $arr = getLeaveNotification($userid, $link, $date= $year.'-'.$month);
+            $arr = getLeaveNotification($userid, $link, $date = $year . '-' . $month);
             $diff2 = array_diff($diff, $arr);
             if (sizeof($diff2) > 0) {
                 foreach ($diff2 as $v) {
@@ -687,7 +742,7 @@ function getPrevMonthLeave($userid, $date, $link) {
             }
         }
         if (sizeof($half) > 0) {
-            $arr = getLeaveNotification($userid, $link, $date= $year.'-'.$month);
+            $arr = getLeaveNotification($userid, $link, $date = $year . '-' . $month);
             foreach ($half as $h) {
                 if (!in_array($h, $arr)) {
                     $mm = $mm . "You have not applied for halfday on " . date("d-m-Y", strtotime(str_replace("-", "/", $h))) . "\n";
@@ -697,6 +752,8 @@ function getPrevMonthLeave($userid, $date, $link) {
     }
     return $mm;
 }
+
+// get user previous month pending time 
 function getUserPreviousMonthTime($uid, $date, $link) {
     $arr2 = getUserPreviousMonthDetail($uid, $date, $link);
     foreach ($arr2 as $key => $value) {
@@ -732,6 +789,7 @@ function getUserPreviousMonthTime($uid, $date, $link) {
         return $to_compensate;
     }
 }
+// get holidays of particular month
 function getHolidaysOfMonth($year, $month, $link) {
     $q = "SELECT * FROM holidays";
     $resl = mysqli_query($link, $q) or die(mysqli_error($link));
@@ -753,7 +811,8 @@ function getHolidaysOfMonth($year, $month, $link) {
     }
     return $list;
 }
-// get weekends off list
+
+// get weekends off particular month
 function getWeekendsOfMonth($year, $month) {
     $list = array();
     $monthDays = getDaysOfMonth($year, $month);
@@ -773,6 +832,7 @@ function getWeekendsOfMonth($year, $month) {
     }
     return $list;
 }
+// get all days of particular month
 function getDaysOfMonth($year, $month) {
     $list = array();
     for ($d = 1; $d <= 31; $d++) {
@@ -791,6 +851,7 @@ function getDaysOfMonth($year, $month) {
     }
     return $list;
 }
+// get working days list of particular month.
 function getMonthWorkingDays($year, $month, $link) {
     $w = getHolidaysOfMonth($year, $month, $link);
     $g = getWeekendsOfMonth($year, $month);
@@ -815,8 +876,32 @@ function getMonthWorkingDays($year, $month, $link) {
     $value = reset($rae);
     return $value;
 }
+
+// get employee leave info an a particular date
 function getUserHalfDay($userid, $date, $link) {
     $query = "select * from leaves where user_Id=" . $userid . " AND from_date like '%$date%' AND status != 'Rejected'";
     $w = mysqli_query($link, $query) or die(mysqli_error($link));
     return mysqli_num_rows($w);
+}
+// check employee previous month working hour added or not
+function checkUserWorkingHours($uid, $date, $whours, $link) {
+    $result = 0;
+    $qry = "select * from user_working_hours where user_Id = '$uid' AND date like '%$date%' AND reason= 'previous month pending time' AND working_hours= '$whours'";
+
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    if (mysqli_num_rows($resl) > 0) {
+        $result = 1;
+    }
+    return $result;
+}
+// check if employee present on a particular date
+function checkUserstatus($uid, $date, $link) {
+    $result = 0;
+    $date = date("m-d-Y", strtotime($date));
+    $qry = "select * from attendance where user_id = '$uid' AND timing like '%$date%' ";
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    if (mysqli_num_rows($resl) > 0) {
+        $result = 1;
+    }
+    return $result;
 }

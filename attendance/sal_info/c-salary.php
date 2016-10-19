@@ -21,7 +21,6 @@ class Salary extends DATABASE {
     public static $Sunday = 'Sunday';
     public static $Saturday = 'Saturday';
     public static $Admin = 'Admin';
-    
 
 // key for token generate do not change. 
     const JWT_SECRET_KEY = 'HR_APP';
@@ -36,7 +35,7 @@ class Salary extends DATABASE {
             self::$SLACK_client_secret = $p['client_secret'];
             self::$SLACK_token = $p['token'];
         }
-     
+
         //self::getSlackChannelIds();
         //die;
     }
@@ -242,11 +241,11 @@ class Salary extends DATABASE {
             'Loan' => $data['loan'],
             'EPF' => $data['epf']
         );
-       // In Salary structure type = 1 for earnings 
+        // In Salary structure type = 1 for earnings 
         // type= 2 for deductions
         $type = 1;
         foreach ($ins2 as $key => $val) {
-         // change value of type on and after array key TDS    
+            // change value of type on and after array key TDS    
             if ($key == 'TDS') {
                 $type = 2;
             }
@@ -1978,6 +1977,43 @@ class Salary extends DATABASE {
             $result = $row2['bonus'];
         }
         return $result;
+    }
+
+    // cancel applied leave 
+    public static function cancelAppliedLeave($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $userid = $data['user_id'];
+        $leave_start_date = date('Y-m-d', strtotime($data['date']));
+        $current_date = date("Y-m-d");
+        if (strtotime($current_date) < strtotime($leave_start_date)) {
+            $q = "SELECT * FROM leaves WHERE user_Id= $userid  AND from_date= '$leave_start_date' AND (status = 'Approved' OR status = 'Pending')";
+           
+            $runQuery = self::DBrunQuery($q);
+            $row2 = self::DBfetchRow($runQuery);
+            $no_of_rows = self::DBnumRows($runQuery);
+            if ($no_of_rows > 0) {
+                $q2 = "UPDATE leaves SET status = 'Cancelled Request' WHERE id=" . $row2['id'];
+                $runQuery2 = self::DBrunQuery($q2);
+                $r_error = 0;
+                $r_message = "Your applied leave for " . $data['date'] . " has been cancelled";
+                $r_data['message'] = $r_message;
+            } else {
+                $r_error = 1;
+                $r_message = "No Leave applied on " . $data['date'] . " or it has been cancelled already";
+                $r_data['message'] = $r_message;
+            }
+        } else {
+            $r_error = 1;
+            $r_message = "You cannot cancel leave of " . $data['date'] . " . Contact HR for cancellation";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
     }
 
 }
