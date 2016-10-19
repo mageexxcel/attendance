@@ -76,7 +76,6 @@ if (isset($_POST['submit'])) {
 
     $message = $userInfo_name . ". document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
 
-    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_userChannelid, $message); // send salck message to employee channel
     $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr", $message); // send salck message to hr channel
 
     header("Location: $return");
