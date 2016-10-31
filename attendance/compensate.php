@@ -275,7 +275,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         }
 
   // calculate employee pending time and send slack notification
-        
+       print_r($arr2); 
         foreach ($arr2 as $key => $value) {
             $pending = $value['ptime'];
             $compensate = $value['ctime'];
