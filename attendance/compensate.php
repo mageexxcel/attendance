@@ -245,6 +245,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                         }
                         if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
                             $hd = getUserHalfDay($user_id, $cdate, $link);
+                           
                             if ($hd != 0) {
                                 
                             } else {
@@ -267,11 +268,13 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                             }
                         }
                     }
+                     echo $cdate."----".$working_hour."<br>";
                 }
                 $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
                 $vv['userid'] = $f['user_id'];
             }
             $arr2[$kk] = $vv;
+            echo "+++++++++++++++++++++++++ <br>";
         }
 
   // calculate employee pending time and send slack notification
