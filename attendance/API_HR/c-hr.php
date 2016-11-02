@@ -1925,6 +1925,21 @@ class HR extends DATABASE {
 
         return $newRows;
     }
+    
+     public static function getUserInfofromSlack($userid) {
+         $arr = array();
+        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where user_profile.slack_id = '$userid' ";
+  
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+       
+        foreach($row as $val){
+          $arr['id'] = $row['user_Id'];  
+          $arr['role'] = $row['type'];  
+        }
+        return $arr;
+    }
+    
 
 }
 
