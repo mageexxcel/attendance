@@ -12,6 +12,7 @@ class HR extends DATABASE {
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
+    private static $SLACK_msgtoken = '';
 
     const JWT_SECRET_KEY = 'HR_APP';
     const EMPLOYEE_FIRST_PASSWORD = "java@123";
@@ -26,6 +27,7 @@ class HR extends DATABASE {
             self::$SLACK_client_secret = $p['client_secret'];
             self::$SLACK_token = $p['token'];
         }
+        
 
         //self::getSlackChannelIds();
         //die;
@@ -179,7 +181,7 @@ class HR extends DATABASE {
                 }
             }
         }
-
+        
         return $newRows;
     }
 
@@ -1064,7 +1066,7 @@ class HR extends DATABASE {
 
         $html = self::getHtml($url);
         if ($html === false) {
-            
+           echo $html; 
         } else {
             $fresult = json_decode($html, true);
             if (is_array($fresult) && isset($fresult['ok'])) {

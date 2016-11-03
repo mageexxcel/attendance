@@ -1569,18 +1569,33 @@ class Salary extends DATABASE {
             $sl = self::getSlackUserInfo($emailid);
             if (sizeof($sl) > 0) {
                 $slack_image = $sl['profile']['image_72'];
+                 $slack_id = $sl['id'];
             }
             $h = self::getHoldingDetail($userid);
             if (sizeof($h) > 0) {
                 $holding = end($h);
             }
             $val['slack_image'] = $slack_image;
+            $val['user_slack_id'] = $slack_id;
             $val['salary_detail'] = $salary_detail;
             $val['previous_increment'] = $previous_increment;
             $val['next_increment_date'] = $next_increment_date;
             $val['no_of_days_join'] = $interval->y . " years, " . $interval->m . " months, " . $interval->d . " days ";
             $val['holdin_amt_detail'] = $holding;
             $row2[] = $val;
+            $q = "SELECT * FROM user_profile where user_Id = $userid ";
+         
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+             $no_of_rows = self::DBnumRows($runQuery);
+         
+             if($no_of_rows > 0 ){
+                 if($row['slack_id'] == ""){
+                    $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
+                 echo $q2;
+                    $runQuery2 = self::DBrunQuery($q2); 
+                 }
+             }
         }
         $return = array();
         $r_error = 0;
