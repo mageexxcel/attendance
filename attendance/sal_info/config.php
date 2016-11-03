@@ -14,4 +14,6 @@ $get_all_slack_user_list_url = "https://slack.com/api/users.list?client_id=";
 //google drive file url.
 $google_drive_url = "https://drive.google.com/file/d/";
 
+$get_slack_group_list = "https://slack.com/api/groups.list?token=";
+
 
