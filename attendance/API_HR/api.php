@@ -92,13 +92,10 @@ if ($action == 'login') {
 } else if ($action == "get_enable_user") {
     $res = HR::getEnabledUsersListWithoutPass();
 } else if ($action == 'update_user_day_summary') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
@@ -116,13 +113,10 @@ if ($action == 'login') {
     $month = $PARAMS['month'];
     $res = HR::getWorkingHoursSummary($year, $month);
 } else if ($action == 'update_day_working_hours') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
@@ -154,22 +148,17 @@ if ($action == 'login') {
         $res['data']['message'] = "userid not found";
     }
 } else if ($action == 'get_all_leaves') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+
     $res = HR::getAllLeaves();
 } else if ($action == 'change_leave_status') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
@@ -204,13 +193,10 @@ if ($action == 'login') {
     $userid = $PARAMS['userid'];
     $res = HR::geManagedUserWorkingHours($userid);
 } else if ($action == 'add_user_working_hours') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
@@ -227,13 +213,10 @@ if ($action == 'login') {
     $month = $PARAMS['month'];
     $res = HR::getAllUsersPendingLeavesSummary($year, $month);
 } else if ($action == 'save_google_payslip_drive_access_token') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
@@ -243,13 +226,11 @@ if ($action == 'login') {
         $res = HR::updateGooglepaySlipDriveAccessToken($google_access_token);
     }
 } else if ($action == 'add_new_employee') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
@@ -258,13 +239,10 @@ if ($action == 'login') {
         $res = HR::addNewEmployee($PARAMS);
     }
 } else if ($action == 'change_employee_status') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
@@ -273,13 +251,10 @@ if ($action == 'login') {
         $res = HR::changeEmployeeStatus($PARAMS);
     }
 } else if ($action == 'show_disabled_users') {
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
@@ -288,13 +263,10 @@ if ($action == 'login') {
         $res = HR::getDisabledUsersList();
     }
 } else if ($action == 'update_new_password') {  // only employee can update his password
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+
 
     //check for employee so that he can only update his password
     if (strtolower($loggedUserInfo['role']) != 'employee') {
@@ -303,14 +275,14 @@ if ($action == 'login') {
     } else {
         $res = HR::updatePassoword($PARAMS);
     }
-} else if ($action == 'get_user_role_from_slack_id') {  // only employee can update his password
+} else if ($action == 'get_user_role_from_slack_id') {  // get user role using slack id
     if ($slack_id == "") {
         $res['error'] = 1;
         $res['data']['message'] = "Please provide user slack id!!";
     } else {
         $res = HR::getUserInfofromSlack($slack_id);
     }
-} else if ($action == 'get_all_not_approved_leave_of_user') {  // only employee can update his password
+} else if ($action == 'get_all_not_approved_leave_of_user') {  // get all not approved leave of user access by admin and hr
     if ($slack_id == "") {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -318,8 +290,8 @@ if ($action == 'login') {
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
     }
-    
-    //check for employee so that he can only update his password
+
+    //check for admin and hr so that they can only access it 
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to access this!!";
@@ -327,8 +299,7 @@ if ($action == 'login') {
         $userid = $PARAMS['user_id'];
         $res = HR::getAllNotApprovedleaveUser($userid);
     }
-}
-else if ($action == 'approve_decline_leave_of_user') {  // only employee can update his password
+} else if ($action == 'approve_decline_leave_of_user') {  // change status of user leaves
     if ($slack_id == "") {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
