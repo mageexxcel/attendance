@@ -1930,7 +1930,7 @@ class HR extends DATABASE {
     
      public static function getUserInfofromSlack($userid) {
          $arr = array();
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where user_profile.slack_id = '$userid' ";
+        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where user_profile.slack_id2 = '$userid' ";
   
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
@@ -1941,6 +1941,49 @@ class HR extends DATABASE {
         }
         return $arr;
     }
+    
+     public static function getAllNotApprovedleaveUser($userid) {
+         $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        
+        $q = "SELECT * FROM leaves Where user_Id = $userid AND status = 'Pending'";
+       
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows > 0 ) {
+            $r_error = 0;
+            $r_data = $rows;
+        } else {
+
+            $r_error = 0;
+            $r_message = "No Pending leave for this user";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+      public static function ApproveDeclineUserLeave($id,$newstatus) {
+         $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        
+        $q = "UPDATE leaves set status='$newstatus' WHERE id = $id ";
+        self::DBrunQuery($q);
+        $r_error = 0;
+        $r_message = "Leave status  updated Successfully!!";
+        $return = array();
+
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+    
     
 
 }
