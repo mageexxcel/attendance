@@ -336,7 +336,7 @@ else if ($action == 'approve_decline_leave_of_user') {  // only employee can upd
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
     }
-    echo $loggedUserInfo['role'];
+
     //check for employee so that he can only update his password
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;

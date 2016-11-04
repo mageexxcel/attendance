@@ -1930,7 +1930,7 @@ class HR extends DATABASE {
     
      public static function getUserInfofromSlack($userid) {
          $arr = array();
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where user_profile.slack_id2 = '$userid' ";
+        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where user_profile.slack_id = '$userid' ";
   
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
