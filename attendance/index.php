@@ -529,7 +529,7 @@ function _beautyDaySummary($dayRaw) {
         <div class="container">
             <br><br>
             <div class="row">
-                <h3>Time Table hi</h3><br>
+                <h3>Time Table</h3><br>
                 <div class="col-md-6">
 
                     <form class="form-inline" action="#" method="POST">
