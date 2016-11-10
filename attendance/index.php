@@ -53,10 +53,19 @@ if (isset($_FILES['image'])) {
             $i++;
         }
     }
+    
+    $check_date = get_time_array($de, $link);
+    if(sizeof($check_date) == 0 ){
+        echo "Please Upload updated attendance sheet";
+        $sendmessage = false;
+    }
+    
+    
 }
 $time_table2 = array();
 //$de = "08-09-2016";
 $time_table2 = get_time_array($de, $link);
+
 $time_table = array();
 $query2 = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' ";
 $w = mysqli_query($link, $query2) or die(mysqli_error($link));
