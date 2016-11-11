@@ -441,10 +441,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         //--end applied leave slack message to hr ------------------ 
        
 //----update profile pic mad phone no. slack message-----   
-        echo "<pre>";
-        print_r($fresult['members']);
-        
-        foreach ($fresult['members'] as $vol) {
+       foreach ($fresult['members'] as $vol) {
             $update_msg = "";
             $ph_no = "";
             $image = "";

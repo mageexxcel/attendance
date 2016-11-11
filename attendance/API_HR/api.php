@@ -288,4 +288,3 @@ if ($action == 'login') {
 }
 echo json_encode($res);
 ?>
-Contact GitHub 
