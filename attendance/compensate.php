@@ -125,7 +125,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             if (sizeof($aa) > 0) {
                 foreach ($aa as $av) {
                     if ($one_week == $av['date']) {
-                        $msg = $av['name'] . " has completed completed 1 week. Create her HR login and Fingerprint  \n";
+                        $msg = $av['name'] . " has completed completed 1 week. Create HR login and Fingerprint  \n";
                         $newmes = $newmes . " " . $msg;
                     }
                 }
@@ -441,23 +441,22 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         //--end applied leave slack message to hr ------------------ 
        
 //----update profile pic mad phone no. slack message-----   
-        foreach ($fresult['members'] as $vol) {
+       foreach ($fresult['members'] as $vol) {
             $update_msg = "";
             $ph_no = "";
             $image = "";
             if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
 //          $fr[] = $vol; 
+                echo $vol['name']."<br>";
                 $f = $vol['id'];
                 $update_msg = "Hi " . $vol['name'] . "\n You have not added your \n";
                 if ($vol['profile']['phone'] == "") {
-                    $phno = " phone number ";
+                    $ph_no = " phone number ";
                 }
                 if (!array_key_exists("image_original", $vol['profile'])) {
-                    if (strpos($vol['profile']['image_512'], 'secure') !== false) {
-                        
-                    } else {
+                   
                         $image = "profile picture";
-                    }
+                   
                 }
                 if (!empty($ph_no) || !empty($image)) {
                     if (!empty($ph_no)) {
