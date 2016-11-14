@@ -132,7 +132,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             }
             if ($newmes != "") {
                 echo $newmes;
-                send_slack_message($c_id = hr_system, $token, $newmes); // send slack message to hr channel
+               send_slack_message($c_id = hr_system, $token, $newmes); // send slack message to hr channel
             }
 
             if ($newmes == "") {
@@ -533,25 +533,39 @@ function getData($data, $link) {
 
 //------Get leave detail of employee of current month.
 function getLeaveNotification($data, $link, $date = false) {
-    if ($date == false) {
-        $date = date("Y-m");
+   $year = date("Y"); 
+    $month = date("m");
+    if($date != false){
+    $m = explode('-', $date);
+    $year = $m['0'];
+    $month = $m['1'];
     }
-    $result = array();
-    $qry = "select * from leaves where user_Id=" . $data . " AND from_date like '%$date%' AND status != 'Rejected'";
-    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
-    while ($row = mysqli_fetch_assoc($resl)) {
-        if (sizeof($row) > 0) {
-            $from = $row['from_date'];
-            $to = $row['to_date'];
-            $datediff = strtotime($to) - strtotime($from);
-            $no = floor($datediff / (60 * 60 * 24));
-            $f = $from;
-            for ($i = 0; $i <= $no; $i++) {
-                $result[] = date("m-d-Y", strtotime($f . '+' . $i . ' day'));
+    $list = array();
+        $qry = "SELECT * FROM leaves Where user_Id = $data ";
+       $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+         $rows = array();
+          while($row = mysqli_fetch_assoc($resl)){ 
+                $rows[]=$row;  
+            }  
+     
+        foreach ($rows as $pp) {
+            $pp_start = $pp['from_date'];
+            $pp_end = $pp['to_date'];
+            $datesBetween = getDatesBetweenTwoDates($pp_start, $pp_end);
+
+            foreach ($datesBetween as $d) {
+                $h_month = date('m', strtotime($d));
+                $h_year = date('Y', strtotime($d));
+
+                if ($h_year == $year && $h_month == $month) {
+                    $h_full_date = date("m-d-Y", strtotime($d));
+                    $list[] = $h_full_date;
+                }
             }
         }
-    }
-    return $result;
+        ksort($list);
+
+        return $list;
 }
 
 // ----------Run curl url------
@@ -904,3 +918,17 @@ function checkUserstatus($uid, $date, $link) {
     }
     return $result;
 }
+
+function getDatesBetweenTwoDates($startDate, $endDate) {
+        $return = array($startDate);
+        $start = $startDate;
+        $i = 1;
+        if (strtotime($startDate) < strtotime($endDate)) {
+            while (strtotime($start) < strtotime($endDate)) {
+                $start = date('Y-m-d', strtotime($startDate . '+' . $i . ' days'));
+                $return[] = $start;
+                $i++;
+            }
+        }
+        return $return;
+    }
