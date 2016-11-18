@@ -17,14 +17,11 @@
 include_once __DIR__ . '/../vendor/autoload.php';
 include_once "templates/base.php";
 include_once __DIR__ . '/../../../../../connection.php';
-
 /* * ***********************************************
  * Ensure you've downloaded your oauth credentials
  * ********************************************** */
-
 if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
     if (isset($_GET['token']) && $_GET['token'] != "") {
-
         $token = $_GET['token'];
         $q = "select * from login_tokens where token='$token' ";
         $runquery = mysqli_query($link, $q) or die(mysqli_error($link));
@@ -45,8 +42,6 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
             }
         }
     }
-
-
     if (!$oauth_credentials = getOAuthCredentialsFile()) {
         echo missingOAuth2CredentialsWarning();
         return;
@@ -72,9 +67,7 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
      * function. We store the resultant access token
      * bundle in the session, and redirect to ourself.
      * ********************************************** */
-
     if (isset($_GET['code'])) {
-
         $q = "SELECT * FROM config WHERE type = 'google_payslip_drive_token'";
         $runquery = mysqli_query($link, $q) or die(mysqli_error($link));
         $row = array();
@@ -85,10 +78,6 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
             $q2 = "DELETE FROM config WHERE type = 'google_payslip_drive_token'";
             $runquery2 = mysqli_query($link, $q2) or die(mysqli_error($link));
         }
-
-
-
-
         $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
         $client->setAccessToken($token);
         $email = "";
@@ -101,10 +90,7 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
         // store in the session also
         $_SESSION['upload_token'] = $token;
         $refresh_token = $token['refresh_token'];
-
         $query = "INSERT INTO config (type, value, email_id) VALUES ('google_payslip_drive_token', '$refresh_token', '$email' )";
-
-
         mysqli_query($link, $query) or die(mysqli_error($link));
         echo "Refresh token of $email saved to database. Please redirect to homepage";
     }
@@ -133,4 +119,3 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
 } else {
     echo "Token is not present. Please provide token in url";
 }
-

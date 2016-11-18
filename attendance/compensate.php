@@ -332,7 +332,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                         $msg = $msg . "Incase of issues, contact HR ";
                    //     send_slack_message($c_id, $token, $msg); // send slack notification to employee
                     //    send_slack_message($c_id = hr_system, $token, $msg); // send slack notification to hr channel 
-                     //   echo $msg;
+                        echo $msg;
                         echo "<br>";
                     }
                 }
