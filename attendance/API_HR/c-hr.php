@@ -1067,7 +1067,7 @@ class HR extends DATABASE {
 
             $message .= "Reason - $reason";
 
-            //  $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+              $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
         }
 
         $r_error = 0;
