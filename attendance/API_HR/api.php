@@ -404,6 +404,18 @@ if ($action == 'login') {
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
+}elseif ($action == 'get_user_current_status') { // action to cancel employee applied leaves
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+
+        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+            $res['data']['message'] = 'You are not authorise for this operation';
+        } else {
+            $res = HR::getAllUserCurrentStatus();
+         }
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
 }
 
 
