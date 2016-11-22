@@ -1008,10 +1008,8 @@ class HR extends DATABASE {
                 if (empty($row2['exit_time'])) {
                     $outTime = date("h:i A", strtotime($outTime) - ($extra_time * 60));
                 }
-               
-            }
-            else{
-                $outTime = date("h:i A", strtotime($outTime) - ($extra_time * 60)); 
+            } else {
+                $outTime = date("h:i A", strtotime($outTime) - ($extra_time * 60));
             }
         }
 
@@ -1067,7 +1065,7 @@ class HR extends DATABASE {
 
             $message .= "Reason - $reason";
 
-              $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
         }
 
         $r_error = 0;
@@ -2088,8 +2086,8 @@ class HR extends DATABASE {
 
         return $return;
     }
-    
-     // cancel applied leave 
+
+    // cancel applied leave 
     public static function cancelAppliedLeave($data) {
         $r_error = 1;
         $r_message = "";
@@ -2097,18 +2095,18 @@ class HR extends DATABASE {
         $userid = $data['user_id'];
         $leave_start_date = date('Y-m-d', strtotime($data['date']));
         $current_date = date("Y-m-d");
-        
+
         if ((strtotime($current_date) < strtotime($leave_start_date)) || isset($data['role'])) {
             $q = "SELECT * FROM leaves WHERE user_Id= $userid  AND from_date= '$leave_start_date' AND (status = 'Approved' OR status = 'Pending')";
 
             $runQuery = self::DBrunQuery($q);
             $row2 = self::DBfetchRows($runQuery);
             $no_of_rows = self::DBnumRows($runQuery);
-            
+
             if ($no_of_rows > 0) {
-                foreach($row2 as $val ){
-                  $q2 = "UPDATE leaves SET status = 'Cancelled Request' WHERE id=" . $val['id'];
-                $runQuery2 = self::DBrunQuery($q2);  
+                foreach ($row2 as $val) {
+                    $q2 = "UPDATE leaves SET status = 'Cancelled Request' WHERE id=" . $val['id'];
+                    $runQuery2 = self::DBrunQuery($q2);
                 }
                 $r_error = 0;
                 $r_message = "Your applied leave for " . $data['date'] . " has been cancelled";
@@ -2128,8 +2126,43 @@ class HR extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-    
-    
+
+    // get users current status
+    public static function getAllUserCurrentStatus() {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $date = date("Y-m-d");
+       // $date = "2016-08-08";
+
+        $enabledUsersList = self::getEnabledUsersList();
+
+        foreach ($enabledUsersList as $val) {
+            $k = "";
+            $n = $val['name'];
+            $k = self::getUsersLeaves($val['user_Id']);
+            foreach ($k as $v) {
+//&& ($v['status'] == 'Approved' || $v['status'] == 'Pending')
+                if (strtotime($v['to_date']) >= strtotime($date)) {
+
+                    $r_data[$n][] = $v;
+                }
+            }
+        }
+        $return = array();
+        if (sizeof($r_data) == 0) {
+            $r_message = "No data to show";
+            $r_error = 0;
+            $return['error'] = $r_error;
+            $return['data'] = $r_message;
+        } else {
+            $r_error = 0;
+            $return['error'] = $r_error;
+            $return['data'] = $r_data;
+        }
+
+        return $return;
+    }
 
 }
 
