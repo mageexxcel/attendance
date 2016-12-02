@@ -2031,7 +2031,8 @@ class HR extends DATABASE {
         $user_month_attendance = self::getUserMonthAttendaceComplete($userid, $year, $month);
 
         $user_month_attendance = $user_month_attendance['data'];
-
+        
+       
         //---final leaves and missing punching days 
         $raw = $user_month_attendance['attendance'];
         $finalAttendance = array();
@@ -2045,13 +2046,14 @@ class HR extends DATABASE {
                 $finalAttendance[] = $pp;
             }
         }
+       
 
         //---final leaves and missing punching days 
 
         if (sizeof($finalAttendance) > 0) {
 
             $u_data = array();
-//            $u_data['name'] = $u['name'];
+            $u_data['name'] = $user_month_attendance['userName'];
 //            $u_data['profileImage'] = '';
 //            $u_data['jobtitle'] = $u['jobtitle'];
             $u_data['userid'] = $userid;
@@ -2062,7 +2064,7 @@ class HR extends DATABASE {
             $u_data['nextMonth'] = $user_month_attendance['nextMonth'];
             $u_data['previousMonth'] = $user_month_attendance['previousMonth'];
             $u_data['attendance'] = $finalAttendance;
-            $usersAttendance[] = $u_data;
+            $usersAttendance = $u_data;
         }
 
         //----------
