@@ -338,7 +338,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $mm = "";
          // -- notificaiton for previous month pending time upto current month 7th date   
             if (strtotime($current_date) <= strtotime(date("Y-m-07"))) {  
-                $mm = $mm . getPrevMonthLeave($uid, $p_month, $link);
+              //  $mm = $mm . getPrevMonthLeave($uid, $p_month, $link);
             }
          // -- end
           
