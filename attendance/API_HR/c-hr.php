@@ -361,7 +361,23 @@ class HR extends DATABASE {
                 }
             }
         }
-        return $list;
+     //exclude working weekend from month weekends   
+        $list2 = self::getWorkingHoursOfMonth($year, $month);
+       
+         $pop = array();
+//         foreach($list as $r => $s){
+//             foreach($list2 as $r2 => $s2){
+//                 if($r2 != $r ){
+//                     
+//                    $pop[$r]=$s;
+//                    
+//                    }
+//                  
+//             }
+//         }
+         $pop = array_diff_key($list, $list2);
+
+        return $pop;
     }
 
     public static function getNonworkingdayAsWorking($year, $month) {
@@ -1544,6 +1560,9 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $r_data['message'] = '';
         $return['data'] = $r_data;
+        
+
+        
 
         return $return;
     }

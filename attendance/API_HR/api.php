@@ -10,8 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
     exit(0);
 }
-//echo '<pre>';
+
 require_once 'c-hr.php';
+
 
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
