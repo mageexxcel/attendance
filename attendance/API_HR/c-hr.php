@@ -20,14 +20,15 @@ class HR extends DATABASE {
     //-------------------------------------
     function __construct() {
         $q = "SELECT * from admin";
+
         $runQuery = self::DBrunQuery($q);
+
         $rows = self::DBfetchRows($runQuery);
         foreach ($rows as $p) {
             self::$SLACK_client_id = $p['client_id'];
             self::$SLACK_client_secret = $p['client_secret'];
             self::$SLACK_token = $p['token'];
         }
-
 
         //self::getSlackChannelIds();
         //die;
@@ -53,7 +54,10 @@ class HR extends DATABASE {
     }
 
     public static function validateToken($token) {
-        $token = mysql_real_escape_string($token);
+        $db = self::getInstance();
+       $mysqli = $db->getConnection();
+
+        $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
@@ -82,6 +86,7 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
         $q = "select * from users where username='$username' AND password='$password' AND status='Enabled' ";
+
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
 

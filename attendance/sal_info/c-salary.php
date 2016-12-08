@@ -41,10 +41,18 @@ class Salary extends DATABASE {
 
     //check user token in database table and its time difference
     public static function validateToken($token) {
-        $token = mysql_real_escape_string($token);
+          $db = self::getInstance();
+       $mysqli = $db->getConnection();         
+
+        $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
+
+
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+
+
+
         if (sizeof($rows) > 0) {
             //start -- check for token expiry
             $tokenInfo = JWT::decode($token, self::JWT_SECRET_KEY);
@@ -70,7 +78,10 @@ class Salary extends DATABASE {
 
     // get user id  on basis of access token
     public static function getIdUsingToken($token) {
-        $token = mysql_real_escape_string($token);
+         $db = self::getInstance();
+       $mysqli = $db->getConnection();         
+
+        $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRow($runQuery);
