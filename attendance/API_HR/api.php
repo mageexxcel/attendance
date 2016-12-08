@@ -1,7 +1,10 @@
 <?php
-
 error_reporting(0);
 ini_set('display_errors', 0);
+
+
+require_once 'c-hr.php';
+
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
@@ -11,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-require_once 'c-hr.php';
+
 
 
 $request_body = file_get_contents('php://input');
@@ -19,6 +22,8 @@ $PARAMS = json_decode($request_body, true);
 if (isset($_GET['userslack_id'])) {
     $PARAMS = $_GET;
 }
+
+
 
 $action = false;
 $slack_id = "";
@@ -29,7 +34,7 @@ if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
 
-$token = $PARAMS['token'];
+//$token = $PARAMS['token'];
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
     $token = $PARAMS['token'];
