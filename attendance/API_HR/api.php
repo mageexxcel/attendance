@@ -34,7 +34,7 @@ if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
 
-//$token = $PARAMS['token'];
+$token = $PARAMS['token'];
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
     $token = $PARAMS['token'];
