@@ -20,7 +20,7 @@ if (isset($_FILES['image'])) {
             echo "File Not uploaded";
             die;
         }
-        $sendmessage = true;
+        $sendmessage = 1;
         $attendance = array();
         $query = "SELECT * FROM attendance";
         $row = mysqli_query($link, $query) or die();
@@ -57,7 +57,7 @@ if (isset($_FILES['image'])) {
     $check_date = get_time_array($de, $link);
     if(sizeof($check_date) == 0 ){
         echo "Please Upload updated attendance sheet";
-        $sendmessage = false;
+        $sendmessage = 0;
     }
     
     
@@ -80,7 +80,8 @@ while ($s = mysqli_fetch_assoc($w)) {
     }
 }
 //$sendmessage = "Hello";
-if (isset($sendmessage)) {
+if (isset($sendmessage) && $sendmessage == 1 ) {
+    
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
     while ($qs = mysqli_fetch_assoc($qw)) {
