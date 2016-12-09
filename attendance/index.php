@@ -80,8 +80,7 @@ while ($s = mysqli_fetch_assoc($w)) {
     }
 }
 //$sendmessage = "Hello";
-if (isset($sendmessage) && $sendmessage == 1 ) {
-    
+if (isset($sendmessage) && $sendmessage == 1) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
     while ($qs = mysqli_fetch_assoc($qw)) {
@@ -480,6 +479,14 @@ function saveUserMonthPunching($userid, $email, $link, $cyear = false, $cmonth =
         if (mysqli_num_rows($q1) <= 0) {
             $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$userid', '$email', '$a', '$b','$pdate')";
             mysqli_query($link, $ins3) or die(mysqli_error($link));
+        }
+        else {
+            while ($r = mysqli_fetch_assoc($q1)) {
+                        $id = $r['id'];
+                    }
+             $ins3 = "UPDATE hr_data SET user_id='$userid', email='$email', entry_time='$a', exit_time='$b', date='$pdate' WHERE id = $id";
+            mysqli_query($link, $ins3) or die(mysqli_error($link));
+      
         }
     }
     return $list;
