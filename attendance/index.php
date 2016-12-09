@@ -79,7 +79,7 @@ while ($s = mysqli_fetch_assoc($w)) {
         $time_table[$sid]['timing'][] = "";
     }
 }
-//$sendmessage = "Hello";
+
 if (isset($sendmessage) && $sendmessage == 1) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
