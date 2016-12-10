@@ -837,6 +837,8 @@ class Salary extends DATABASE {
     // function to create pdf file from html text 
     public static function createPDf($html, $invoice_no, $path = false) {
         //dom pdf library file
+        
+        
         require_once "dompdf-master/dompdf_config.inc.php";
         $pname = $invoice_no . ".pdf";
         $theme_root = "invoice/" . $pname;
@@ -861,6 +863,10 @@ class Salary extends DATABASE {
 //employee payslip----------------------------------------
     // create employee payslip and save pdf to google drive
     public static function createUserPayslip($data) {
+        
+        $db = self::getInstance();
+       $mysqli = $db->getConnection();  
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -877,7 +883,7 @@ class Salary extends DATABASE {
             'unpaid_leaves' => $data['unpaid_leaves'],
             'final_leave_balance' => $data['final_leave_balance'],
             'misc_deduction_2' => $data['misc_deduction_2'],
-            'bonus' => $data['bonus'],
+          //  'bonus' => $data['bonus'],
             'payslip_url' => ""
         );
         // check refresh token of google drive 
@@ -894,17 +900,20 @@ class Salary extends DATABASE {
             $html = ob_start();
             //get payslip template
             require_once 'template_payslip.php';
+            
             $html = ob_get_clean();
             $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
+            
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
             //if current month payslip already present in database
-            if (mysql_num_rows($runQuery) > 0) {
+            if (mysqli_num_rows($runQuery) > 0) {
                 $payslip_no = $row['id'];
                 $file_id = $row['payslip_file_id'];
                 $payslip_name = $month_name;
                 //create pdf file of payslip template    
                 $suc = self::createPDf($html, $payslip_name, $path = "payslip");
+                
                 $whereFieldVal = $row['id'];
                 $whereField = 'id';
                 foreach ($row as $key => $val) {
@@ -912,14 +921,20 @@ class Salary extends DATABASE {
                         if ($data[$key] != $row[$key]) {
                             $arr = array();
                             $arr[$key] = $data[$key];
+                       
+                            
                             $res = self::DBupdateBySingleWhere('payslips', $whereField, $whereFieldVal, $arr);
                         }
                     }
                 }
+                
                 // upload created payslip pdf file in google drive
                 $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid, $file_id);
-                $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
-                mysql_query($query);
+                
+                
+                
+                $query = "UPDATE payslips SET payslip_url= '" . mysqli_real_escape_string($mysqli, $google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
+                self::DBrunQuery($query);
                 // if send mail option is true
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
                     self::sendPayslipMsgEmployee($payslip_no);
@@ -929,19 +944,22 @@ class Salary extends DATABASE {
                 $r_data['message'] = $r_message;
             } else { // if current month payslip is not present in database
                 $res = self::DBinsertQuery('payslips', $ins);
+               
                 if ($res == false) {
                     $r_error = 1;
                     $r_message = "Error occured while inserting data";
                     $r_data['message'] = $r_message;
                 } else {
-                    $payslip_no = mysql_insert_id();
+                    $payslip_no = mysqli_insert_id($mysqli);
                     $payslip_name = $month_name;
                     //create pdf of payslip template
                     $suc = self::createPDf($html, $payslip_name, $path = "payslip");
+                    
+                    
                     // upload created payslip pdf file in google drive
                     $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid);
-                    $query = "UPDATE payslips SET payslip_url= '" . mysql_real_escape_string($google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
-                    mysql_query($query);
+                    $query = "UPDATE payslips SET payslip_url= '" . mysqli_real_escape_string($mysqli, $google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
+                    self::DBrunQuery($query);
                     // if send mail option is true
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
                         // send slack notification message 
@@ -1359,6 +1377,9 @@ class Salary extends DATABASE {
         include "config.php";
         //include google drive api file to upload file in google drive 
         include "google-api/drive_file/upload.php";
+        
+        
+        
         if ($file_id != false) {
             try {
                 $service->files->delete($file_id);
@@ -1427,6 +1448,8 @@ class Salary extends DATABASE {
         );
         $url['url'] = $google_drive_url . $result2->id . "/preview";
         $url['file_id'] = $result2->id;
+        
+        
 // change uploaded file permission in google drive
         $permission = new Google_Service_Drive_Permission();
         $permission->setRole('writer');

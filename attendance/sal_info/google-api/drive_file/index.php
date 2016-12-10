@@ -50,7 +50,7 @@ if (isset($_GET['token']) || (isset($_GET['code']) && $_GET['code'] !="")) {
      * The redirect URI is to the current page, e.g:
      * http://localhost:8080/simple-file-upload.php
      * ********************************************** */
-    $redirect_uri = 'http://excellencemagentoblog.com/hr/attendance/sal_info/google-api/drive_file/';
+    $redirect_uri = 'https://hr.excellencetechnologies.in/attendance/sal_info/google-api/drive_file/';
 //    $redirect_uri = 'http://localhost/hr/attendance_backup/attendance/sal_info/google-api/drive_file/';
     $client = new Google_Client();
     $client->setAuthConfig($oauth_credentials);
