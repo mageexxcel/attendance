@@ -20,10 +20,10 @@ $res = array(
 //validate a token
 $token = $PARAMS['token'];
 $validateToken = Salary::validateToken($token);
-//if ($validateToken == false) {
-  //  header("HTTP/1.1 401 Unauthorized");
-   // exit;
-//}
+if ($validateToken == false) {
+    header("HTTP/1.1 401 Unauthorized");
+    exit;
+}
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 // action to get employee profile detail

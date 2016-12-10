@@ -883,7 +883,7 @@ class Salary extends DATABASE {
             'unpaid_leaves' => $data['unpaid_leaves'],
             'final_leave_balance' => $data['final_leave_balance'],
             'misc_deduction_2' => $data['misc_deduction_2'],
-          //  'bonus' => $data['bonus'],
+            'bonus' => $data['bonus'],
             'payslip_url' => ""
         );
         // check refresh token of google drive 
