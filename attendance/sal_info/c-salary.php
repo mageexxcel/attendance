@@ -850,7 +850,7 @@ class Salary extends DATABASE {
         $dompdf = new DOMPDF();
         $dompdf->load_html($html);
         $dompdf->render();
-        //$dompdf->stream("test.pdf");
+      //  $dompdf->stream("test.pdf");
         $output = $dompdf->output();
         try {
             file_put_contents($theme_root, $output);
@@ -902,6 +902,7 @@ class Salary extends DATABASE {
             require_once 'template_payslip.php';
             
             $html = ob_get_clean();
+            
             $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
             
             $runQuery = self::DBrunQuery($q);
