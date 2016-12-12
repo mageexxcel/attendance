@@ -181,6 +181,7 @@ if ($action == 'get_client_detail') {
 // action to create an employee salary slip pdf
 if ($action == 'create_employee_salary_slip') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
             $res = Salary::createUserPayslip($PARAMS);
         } else {
