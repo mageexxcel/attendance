@@ -41,8 +41,8 @@ class Salary extends DATABASE {
 
     //check user token in database table and its time difference
     public static function validateToken($token) {
-          $db = self::getInstance();
-       $mysqli = $db->getConnection();         
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
 
         $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
@@ -78,8 +78,8 @@ class Salary extends DATABASE {
 
     // get user id  on basis of access token
     public static function getIdUsingToken($token) {
-         $db = self::getInstance();
-       $mysqli = $db->getConnection();         
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
 
         $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
@@ -134,19 +134,16 @@ class Salary extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         if ($date != false) {
-           $arr = array();
-            foreach($row as $val) {
-               if(strtotime($date) >= strtotime($val['applicable_from'])){
-                   $arr[] = $val;
-               }
+            $arr = array();
+            foreach ($row as $val) {
+                if (strtotime($date) >= strtotime($val['applicable_from'])) {
+                    $arr[] = $val;
+                }
             }
             return $arr;
+        } else {
+            return $row;
         }
-        else{
-          return $row;  
-        }
-
-        
     }
 
     //get all payslips info of a employee
@@ -837,8 +834,8 @@ class Salary extends DATABASE {
     // function to create pdf file from html text 
     public static function createPDf($html, $invoice_no, $path = false) {
         //dom pdf library file
-        
-        
+
+
         require_once "dompdf-master/dompdf_config.inc.php";
         $pname = $invoice_no . ".pdf";
         $theme_root = "invoice/" . $pname;
@@ -850,7 +847,7 @@ class Salary extends DATABASE {
         $dompdf = new DOMPDF();
         $dompdf->load_html($html);
         $dompdf->render();
-      //  $dompdf->stream("test.pdf");
+        //  $dompdf->stream("test.pdf");
         $output = $dompdf->output();
         try {
             file_put_contents($theme_root, $output);
@@ -863,10 +860,10 @@ class Salary extends DATABASE {
 //employee payslip----------------------------------------
     // create employee payslip and save pdf to google drive
     public static function createUserPayslip($data) {
-        
+
         $db = self::getInstance();
-       $mysqli = $db->getConnection();  
-        
+        $mysqli = $db->getConnection();
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -900,11 +897,11 @@ class Salary extends DATABASE {
             $html = ob_start();
             //get payslip template
             require_once 'template_payslip.php';
-            
+
             $html = ob_get_clean();
-            
+
             $q = "SELECT * FROM payslips where user_Id =" . $data['user_id'] . " AND month ='" . $data['month'] . "' AND year ='" . $data['year'] . "'";
-            
+
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
             //if current month payslip already present in database
@@ -914,7 +911,7 @@ class Salary extends DATABASE {
                 $payslip_name = $month_name;
                 //create pdf file of payslip template    
                 $suc = self::createPDf($html, $payslip_name, $path = "payslip");
-                
+
                 $whereFieldVal = $row['id'];
                 $whereField = 'id';
                 foreach ($row as $key => $val) {
@@ -922,18 +919,18 @@ class Salary extends DATABASE {
                         if ($data[$key] != $row[$key]) {
                             $arr = array();
                             $arr[$key] = $data[$key];
-                       
-                            
+
+
                             $res = self::DBupdateBySingleWhere('payslips', $whereField, $whereFieldVal, $arr);
                         }
                     }
                 }
-                
+
                 // upload created payslip pdf file in google drive
                 $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid, $file_id);
-                
-                
-                
+
+
+
                 $query = "UPDATE payslips SET payslip_url= '" . mysqli_real_escape_string($mysqli, $google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "', status = 0 WHERE id = $payslip_no";
                 self::DBrunQuery($query);
                 // if send mail option is true
@@ -945,7 +942,7 @@ class Salary extends DATABASE {
                 $r_data['message'] = $r_message;
             } else { // if current month payslip is not present in database
                 $res = self::DBinsertQuery('payslips', $ins);
-               
+
                 if ($res == false) {
                     $r_error = 1;
                     $r_message = "Error occured while inserting data";
@@ -955,8 +952,8 @@ class Salary extends DATABASE {
                     $payslip_name = $month_name;
                     //create pdf of payslip template
                     $suc = self::createPDf($html, $payslip_name, $path = "payslip");
-                    
-                    
+
+
                     // upload created payslip pdf file in google drive
                     $google_drive_file_url = self::saveFileToGoogleDrive($payslip_name, $userInfo_name, $userid);
                     $query = "UPDATE payslips SET payslip_url= '" . mysqli_real_escape_string($mysqli, $google_drive_file_url['url']) . "' , payslip_file_id = '" . $google_drive_file_url['file_id'] . "' WHERE id = $payslip_no";
@@ -1378,9 +1375,9 @@ class Salary extends DATABASE {
         include "config.php";
         //include google drive api file to upload file in google drive 
         include "google-api/drive_file/upload.php";
-        
-        
-        
+
+
+
         if ($file_id != false) {
             try {
                 $service->files->delete($file_id);
@@ -1449,8 +1446,8 @@ class Salary extends DATABASE {
         );
         $url['url'] = $google_drive_url . $result2->id . "/preview";
         $url['file_id'] = $result2->id;
-        
-        
+
+
 // change uploaded file permission in google drive
         $permission = new Google_Service_Drive_Permission();
         $permission->setRole('writer');
@@ -1810,6 +1807,7 @@ class Salary extends DATABASE {
 
 // create an email template
     public function createEmailTemplate($data) {
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -1903,33 +1901,15 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $userid = $data['user_id'];
-        $array = array();
-        $row = self::getUserDetail($userid);
-        if (sizeof($row) > 0) {
-            $array['name'] = $row['name'];
-            $array['work_email'] = $row['email'];
-        }
-        $q = "SELECT * FROM email_templates WHERE id=" . $data['template_id'];
-        $runQuery = self::DBrunQuery($q);
-        $row2 = self::DBfetchRow($runQuery);
-        $body = $row2['body'];
-        $subject = "";
-        foreach ($data as $key => $val) {
-            if (strpos($row2['subject'], $key) !== false) {
-                $subject = $val;
-            }
-            if (strpos($row2['body'], $key)) {
-                $body = str_replace($key, $val, $body);
+        if (!empty($data['email'])) {
+
+            foreach ($data['email'] as $var) {
+
+                $row3 = self::sendEmail($var);
+                $r_error = 0;
+                $r_message = $row3;
             }
         }
-        $body = str_replace('\\', '', $body);
-        $array['subject'] = $subject;
-        $array['body'] = $body;
-        $row3 = self::sendEmail($array);
-        $r_error = 0;
-        $r_message = $row3;
-        $r_data['message'] = $r_message;
         if ($row3 != "Message sent") {
             $r_error = 1;
             $r_message = $row3;
@@ -1943,35 +1923,70 @@ class Salary extends DATABASE {
 
     // function to send email
     public static function sendEmail($data) {
-        $work_email = $data['work_email'];
-        $name = $data['name'];
-        $subject = $data['subject'];
-        $body = $data['body'];
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        
         include "phpmailer/PHPMailerAutoload.php";
-        $mail = new PHPMailer;
-        $mail->isSMTP();
-        $mail->SMTPDebug = 0;
-        $mail->Debugoutput = 'html';
-        $mail->Host = 'smtp.gmail.com';
-        $mail->Port = 587;
-        $mail->SMTPSecure = 'tls';
-        $mail->SMTPAuth = true;
-        $mail->Username = "exceltes@gmail.com"; //sender email address 
-        $mail->Password = "java@123"; // sender email password
-        $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
-        $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
-        $mail->addAddress($work_email, $name); // name and address to whome mail is to send
-        $mail->Subject = $subject; // subject of email message 
-        $mail->msgHTML($body); // main message 
-        $mail->AltBody = 'This is a plain-text message body';
+
+
+        if (!empty($data['email'])) {
+
+            foreach ($data['email'] as $var) {
+
+                $work_email = $var['email_id'];
+
+                $name = $var['name'];
+                $subject = $var['subject'];
+                $body = $var['body'];
+
+                $mail = new PHPMailer;
+                $mail->isSMTP();
+                $mail->SMTPDebug = 0;
+                $mail->Debugoutput = 'html';
+                $mail->Host = 'smtp.gmail.com';
+                $mail->Port = 587;
+                $mail->SMTPSecure = 'tls';
+                $mail->SMTPAuth = true;
+                $mail->Username = "exceltes@gmail.com"; //sender email address 
+                $mail->Password = "java@123"; // sender email password
+                $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
+                $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
+                $mail->addAddress($work_email, $name); // name and address to whome mail is to send
+                $mail->Subject = $subject; // subject of email message 
+                $mail->msgHTML($body); // main message 
+                $mail->AltBody = 'This is a plain-text message body';
 //Attach an image file
 //$mail->addAttachment('images/phpmailer_mini.png');
 //send the message, check for errors
-        if (!$mail->send()) {
-            return $mail->ErrorInfo;
-        } else {
-            return "Message sent";
+                if (!$mail->send()) {
+                   $row3 = $mail->ErrorInfo;
+                    
+                } else {
+                    $row3 = "Message sent";
+                }
+            
+            }
         }
+        
+        if ($row3 != "Message sent") {
+            
+            $r_error = 1;
+            $r_message = $row3;
+            $r_data['message'] = $r_message;
+        }
+        else{
+            $r_error = 0;
+            $r_message = "Message Sent";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+        
+
     }
 
     // get employee misc deduction amount of particular month and year 

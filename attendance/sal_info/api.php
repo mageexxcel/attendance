@@ -23,7 +23,7 @@ $validateToken = Salary::validateToken($token);
 if ($validateToken == false) {
     header("HTTP/1.1 401 Unauthorized");
     exit;
-}
+ }
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 // action to get employee profile detail
@@ -368,11 +368,27 @@ if ($action == 'get_email_template_byId') {
 // action to send employee  email
 if ($action == 'send_employee_email') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = Salary::sendEmployeeEmail($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
+//        
+//        $arr = array();
+//        $arr['email_id'] = "meraj.etech@excellencetechnologies.in";
+//        $arr['name'] = "";
+//        $arr['subject'] = "Test Mail";
+//        $arr['body'] = "This is a test email body";
+//        
+//        $arr2 = array();
+//        $arr2['email_id'] = "ashuwatt@gmail.com";
+//        $arr2['name'] = "";
+//        $arr2['subject'] = " second Test Mail";
+//        $arr2['body'] = "This is a second test email body";
+//        
+//        $PARAMS['email']=array();
+//        
+//        $PARAMS['email'][]= $arr;
+//        $PARAMS['email'][]= $arr2;
+//        
+//      
+            $res = Salary::sendEmail($PARAMS);
+       
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
