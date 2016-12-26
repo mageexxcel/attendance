@@ -114,7 +114,7 @@ class Database {
                 
                 $updateFieldString = '';
                 foreach( $updateData as $field => $fieldVal ){
-                    $fieldVal = strtolower( mysqli_real_escape_string($mysqli, $fieldVal) );
+                    $fieldVal =  mysqli_real_escape_string($mysqli, $fieldVal) ;
                     if( $updateFieldString == '' ){
                         $updateFieldString = $field."='$fieldVal'";
                     }else{
