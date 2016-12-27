@@ -368,6 +368,23 @@ if ($action == 'get_email_template_byId') {
 // action to send employee  email
 if ($action == 'send_employee_email') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+        
+//        $arr2 = array('ashuwatt@gmail.com','Meraj22');
+//        $arr2_1 = array('mohammad3meraj@yahoo.com','Meraj22_1');
+//        $arr3 = array('exceltes@gmail.com','Meraj111');
+//        
+//        
+//        $arr = array();
+//        $arr['name']= "Meraj";
+//        $arr['email_id'] = "meraj.etech@excellencetechnologies.in";
+//        $arr['subject']= "This is a text";
+//        $arr['body']= "This is a test meail for the testing perpose";
+//        
+//        $arr['cc_detail'][] = $arr2;    
+//        $arr['cc_detail'][] = $arr2_1; 
+//        $arr['bcc_detail'][] = $arr3;  
+//    
+//          $PARAMS['email'][] = $arr;
 
             $res = Salary::sendEmail($PARAMS);
        
@@ -392,14 +409,7 @@ if ($action == 'cancel_applied_leave') {
 if ($action == 'create_pdf') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
         
-        
-        
-       $temp = $PARAMS['template'];
-       $fname = $PARAMS['file_name'];
-       
-       
-        
-        $res = Salary::createPDf($temp, $fname);
+        $res = Salary::createEmailTempPdf($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }

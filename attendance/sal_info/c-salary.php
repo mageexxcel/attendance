@@ -831,9 +831,30 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    public static function createEmailTempPdf($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $html = $data['template'];
+        $file_name = $data['file_name'];
+        $path = "template_pdf";
+
+        $suc = self::createPDf($html, $file_name, $path);
+        $r_error = 0;
+        $r_data['message'] = $suc;
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
     // function to create pdf file from html text 
     public static function createPDf($html, $invoice_no, $path = false) {
         //dom pdf library file
+
 
 
         require_once "dompdf-master/dompdf_config.inc.php";
@@ -1807,7 +1828,7 @@ class Salary extends DATABASE {
 
 // create an email template
     public function createEmailTemplate($data) {
-        
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -1923,11 +1944,11 @@ class Salary extends DATABASE {
 
     // function to send email
     public static function sendEmail($data) {
-
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
+
         include "phpmailer/PHPMailerAutoload.php";
 
 
@@ -1940,7 +1961,10 @@ class Salary extends DATABASE {
                 $name = $var['name'];
                 $subject = $var['subject'];
                 $body = $var['body'];
-
+                
+                $cc = $var['cc_detail'];
+                $bcc = $var['bcc_detail'];
+               
                 $mail = new PHPMailer;
                 $mail->isSMTP();
                 $mail->SMTPDebug = 0;
@@ -1954,6 +1978,18 @@ class Salary extends DATABASE {
                 $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
                 $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
                 $mail->addAddress($work_email, $name); // name and address to whome mail is to send
+                if(sizeof($cc) > 0){
+                    foreach($cc as $d){
+                      $mail->addCC($d[0],$d[1]);   
+                    }
+                   
+               }
+                if(sizeof($bcc)>0){
+                    foreach($bcc as $d2){
+                       $mail->addBCC($d2[0],$d2[1]);   
+                    }
+                  
+                }
                 $mail->Subject = $subject; // subject of email message 
                 $mail->msgHTML($body); // main message 
                 $mail->AltBody = 'This is a plain-text message body';
@@ -1961,22 +1997,19 @@ class Salary extends DATABASE {
 //$mail->addAttachment('images/phpmailer_mini.png');
 //send the message, check for errors
                 if (!$mail->send()) {
-                   $row3 = $mail->ErrorInfo;
-                    
+                    $row3 = $mail->ErrorInfo;
                 } else {
                     $row3 = "Message sent";
                 }
-            
             }
         }
-        
+
         if ($row3 != "Message sent") {
-            
+
             $r_error = 1;
             $r_message = $row3;
             $r_data['message'] = $r_message;
-        }
-        else{
+        } else {
             $r_error = 0;
             $r_message = "Message Sent";
             $r_data['message'] = $r_message;
@@ -1985,8 +2018,6 @@ class Salary extends DATABASE {
         $return['error'] = $r_error;
         $return['data'] = $r_data;
         return $return;
-        
-
     }
 
     // get employee misc deduction amount of particular month and year 
