@@ -956,6 +956,7 @@ class Salary extends DATABASE {
                 self::DBrunQuery($query);
                 // if send mail option is true
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
+
                     self::sendPayslipMsgEmployee($payslip_no);
                 }
                 $r_error = 0;
@@ -1485,13 +1486,17 @@ class Salary extends DATABASE {
 
 // send payslip slack notification message to employee 
     public static function sendPayslipMsgEmployee($payslip_id) {
+          
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $q = "SELECT * FROM payslips where id =" . $payslip_id;
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-        if (mysql_num_rows($runQuery) > 0) {
+        if (mysqli_num_rows($runQuery) > 0) {
             $google_drive_file_url = $row['payslip_url'];
             $date = $row['year'] . "-" . $row['month'] . "-01";
             $month_name = date('F', strtotime($date));
@@ -1507,9 +1512,9 @@ class Salary extends DATABASE {
                 }
             }
             $message = "Hi " . $userInfo_name . ". \n Your salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
+         //   $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
-            mysql_query($query);
+            self::DBrunQuery($query);
             $r_error = 0;
             $r_message = "Slack Message send to employee";
             $r_data['message'] = $r_message;
@@ -1521,6 +1526,7 @@ class Salary extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+ 
         return $return;
     }
 
@@ -1747,6 +1753,7 @@ class Salary extends DATABASE {
         $ins = array(
             'name' => $data['name'],
             'value' => $data['value'],
+            'variable_type'=> $data['variable_type']
         );
         $q1 = "select * from template_variables where name ='" . $data['name'] . "'";
         $runQuery1 = self::DBrunQuery($q1);
@@ -1776,6 +1783,7 @@ class Salary extends DATABASE {
         $ins = array(
             'name' => $data['name'],
             'value' => $data['value'],
+            'variable_type'=> $data['variable_type']
         );
         $id = $data['id'];
         $q = "select * from template_variables where id = $id ";
@@ -1838,7 +1846,6 @@ class Salary extends DATABASE {
             'body' => $data['body'],
         );
         $q1 = "select * from email_templates where name ='" . $data['name'] . "'";
-        echo $q1;
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
@@ -1944,7 +1951,7 @@ class Salary extends DATABASE {
 
     // function to send email
     public static function sendEmail($data) {
-        
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -1961,10 +1968,11 @@ class Salary extends DATABASE {
                 $name = $var['name'];
                 $subject = $var['subject'];
                 $body = $var['body'];
-                
+
                 $cc = $var['cc_detail'];
                 $bcc = $var['bcc_detail'];
-               
+                $file_upload = $var['upload_file'];
+
                 $mail = new PHPMailer;
                 $mail->isSMTP();
                 $mail->SMTPDebug = 0;
@@ -1978,23 +1986,25 @@ class Salary extends DATABASE {
                 $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
                 $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
                 $mail->addAddress($work_email, $name); // name and address to whome mail is to send
-                if(sizeof($cc) > 0){
-                    foreach($cc as $d){
-                      $mail->addCC($d[0],$d[1]);   
+                if (sizeof($cc) > 0) {
+                    foreach ($cc as $d) {
+                        $mail->addCC($d[0], $d[1]);
                     }
-                   
-               }
-                if(sizeof($bcc)>0){
-                    foreach($bcc as $d2){
-                       $mail->addBCC($d2[0],$d2[1]);   
+                }
+                if (sizeof($bcc) > 0) {
+                    foreach ($bcc as $d2) {
+                        $mail->addBCC($d2[0], $d2[1]);
                     }
-                  
                 }
                 $mail->Subject = $subject; // subject of email message 
                 $mail->msgHTML($body); // main message 
                 $mail->AltBody = 'This is a plain-text message body';
-//Attach an image file
-//$mail->addAttachment('images/phpmailer_mini.png');
+                //Attach an image file
+                if (sizeof($file_upload) > 0) {
+                    foreach ($file_upload as $d3) {
+                        $mail->addAttachment($d3);
+                    }
+                }
 //send the message, check for errors
                 if (!$mail->send()) {
                     $row3 = $mail->ErrorInfo;

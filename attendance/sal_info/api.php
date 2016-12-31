@@ -368,7 +368,7 @@ if ($action == 'get_email_template_byId') {
 // action to send employee  email
 if ($action == 'send_employee_email') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-  
+
             $res = Salary::sendEmail($PARAMS);
        
     } else {
