@@ -836,9 +836,20 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-
-        $html = $data['template'];
-        $file_name = $data['file_name'];
+$html = ob_start();
+        require_once 'templatehead.php';
+        $html = ob_get_clean();
+        $q = 'Select * from template_variables';
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        
+        
+        foreach($row as $s ){
+            $html = str_replace($s['name'], $s['value'], $html);
+        }
+        
+        $html = str_replace("#page_content", $data['template'], $html);
+       $file_name = $data['file_name'];
         $path = "template_pdf";
 
         $suc = self::createPDf($html, $file_name, $path);
@@ -856,7 +867,6 @@ class Salary extends DATABASE {
         //dom pdf library file
 
 
-
         require_once "dompdf-master/dompdf_config.inc.php";
         $pname = $invoice_no . ".pdf";
         $theme_root = "invoice/" . $pname;
@@ -868,7 +878,7 @@ class Salary extends DATABASE {
         $dompdf = new DOMPDF();
         $dompdf->load_html($html);
         $dompdf->render();
-        //  $dompdf->stream("test.pdf");
+      //    $dompdf->stream("test.pdf");
         $output = $dompdf->output();
         try {
             file_put_contents($theme_root, $output);
@@ -1333,6 +1343,23 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    //update document read status   
+    public static function UpdateDocumentDetail($userid, $doc_id) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $q2 = "UPDATE user_document_detail SET read_status = '1' WHERE id = $doc_id ";
+        self::DBrunQuery($q2);
+        $message = "Document read status changed";
+        $r_error = 0;
+        $r_data['message'] = $message;
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
 // Delete document of an employee.
     public static function deleteUserDocument($id) {
         $r_error = 1;
@@ -1486,7 +1513,7 @@ class Salary extends DATABASE {
 
 // send payslip slack notification message to employee 
     public static function sendPayslipMsgEmployee($payslip_id) {
-          
+
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
@@ -1512,7 +1539,7 @@ class Salary extends DATABASE {
                 }
             }
             $message = "Hi " . $userInfo_name . ". \n Your salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
-         //   $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
+            //   $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             self::DBrunQuery($query);
             $r_error = 0;
@@ -1526,7 +1553,7 @@ class Salary extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
- 
+
         return $return;
     }
 
@@ -1676,7 +1703,8 @@ class Salary extends DATABASE {
         $r_data = array();
         $a = self::getAllUserDetail();
         $row2 = array();
-        foreach ($a as $val) {
+        $allSlackUsers = self::getSlackUsersList();
+       foreach ($a as $val) {
             $userid = $val['user_Id'];
             $sal = self::getUserlatestSalary($userid);
             $salary_detail = "";
@@ -1699,7 +1727,15 @@ class Salary extends DATABASE {
             $date1 = new DateTime($your_date);
             $date2 = new DateTime($now);
             $interval = $date1->diff($date2);
-            $sl = self::getSlackUserInfo($emailid);
+            
+            foreach ($allSlackUsers as $s) {
+                if ($s['profile']['email'] == $emailid) {
+                    $sl = $s;
+                    break;
+                }
+            }
+            
+           // $sl = self::getSlackUserInfo($emailid);
             if (sizeof($sl) > 0) {
                 $slack_image = $sl['profile']['image_72'];
                 $slack_id = $sl['id'];
@@ -1725,7 +1761,6 @@ class Salary extends DATABASE {
             if ($no_of_rows > 0) {
                 if ($row['slack_id'] == "") {
                     $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
-                    echo $q2;
                     $runQuery2 = self::DBrunQuery($q2);
                 }
             }
@@ -1753,7 +1788,7 @@ class Salary extends DATABASE {
         $ins = array(
             'name' => $data['name'],
             'value' => $data['value'],
-            'variable_type'=> $data['variable_type']
+            'variable_type' => $data['variable_type']
         );
         $q1 = "select * from template_variables where name ='" . $data['name'] . "'";
         $runQuery1 = self::DBrunQuery($q1);
@@ -1783,7 +1818,7 @@ class Salary extends DATABASE {
         $ins = array(
             'name' => $data['name'],
             'value' => $data['value'],
-            'variable_type'=> $data['variable_type']
+            'variable_type' => $data['variable_type']
         );
         $id = $data['id'];
         $q = "select * from template_variables where id = $id ";
@@ -2091,6 +2126,69 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
+    
+    public static function savePolicyDocument($data){
+        
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'type' => $data['type'],
+            'value' => $data['value']
+            
+        );
+        $q1 = "select * from config where type ='" . $data['type'] . "'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+            $res = self::DBinsertQuery('config', $ins);
+            $r_error = 0;
+            $r_message = "Variable Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } else {
+            $value = $data['value'];
+            $q = "UPDATE config set value='$value' WHERE type ='" . $data['type'] . "'";
+            self::DBrunQuery($q);
+            
+            $r_error = 0;
+            $r_message = "Variable updated successfully";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+    public static function getPolicyDocument($data){
+        
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        
+        $q1 = "select * from config where type ='policy_document'";
+        $runQuery1 = self::DBrunQuery($q1);
+        
+        $row1 = self::DBfetchRow($runQuery1);
+        
+        $no_of_rows = self::DBnumRows($runQuery1);
+        
+        if ($no_of_rows != 0) {
+            $r_data = $row1['value'];
+             $r_error = 0;
+            
+        } else {
+            $r_error = 1;
+            $r_message = "Variable not found";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
 
 }
 
