@@ -2,6 +2,8 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
+
+
 // constants define
 define("admin", "admin");
 define("hr", "hr");
@@ -23,7 +25,7 @@ $validateToken = Salary::validateToken($token);
 if ($validateToken == false) {
     header("HTTP/1.1 401 Unauthorized");
     exit;
-}
+  }
 $user_id = Salary::getIdUsingToken($token);
 $userinfo = Salary::getUserDetail($user_id);
 // action to get employee profile detail
@@ -304,6 +306,7 @@ if ($action == 'get_template_variable') {
 // action to create a template varible
 if ($action == 'create_template_variable') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+        
         $res = Salary::createTemplateVariable($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
@@ -368,11 +371,9 @@ if ($action == 'get_email_template_byId') {
 // action to send employee  email
 if ($action == 'send_employee_email') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = Salary::sendEmployeeEmail($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
+
+            $res = Salary::sendEmail($PARAMS);
+       
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
@@ -389,5 +390,72 @@ if ($action == 'cancel_applied_leave') {
         }
     }
 }
+
+// action to create a template varible
+if ($action == 'create_pdf') {
+    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+
+
+         $res = Salary::createEmailTempPdf($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+// action to create a template varible
+if ($action == 'update_read_document') {
+    $doc_id = $PARAMS['document_id'];
+    if ($user_id != "") {
+        $res = Salary::UpdateDocumentDetail($user_id, $doc_id);
+        
+    } else {
+        $res['data']['message'] = 'Please  give the user id';
+    }
+}
+
+// action to save policy document
+if ($action == 'save_policy_document') {
+     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+         
+         $ar = array();
+         $ar['name']= "name1";
+         $ar['link']= "http://www.link1.com";
+         
+         $ar1 = array();
+         $ar1['name']= "name1";
+         $ar1['link']= "http://www.link1.com";
+         
+         $ar2 = array();
+         $ar2['name']= "name1";
+         $ar2['link']= "http://www.link1.com";
+         
+         
+         $array = array();
+         $array[] = $ar;
+         $array[] = $ar1;
+         $array[] = $ar2;
+         
+         $s = json_encode($array);
+         
+         $PARAMS['type'] = "policy_document";
+         $PARAMS['value'] = $s;
+         
+           $res = Salary::savePolicyDocument($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+// action to get policy document.
+if ($action == 'get_policy_document') {
+     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+           $res = Salary::getPolicyDocument();
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+
+
 echo json_encode($res);
 ?>
