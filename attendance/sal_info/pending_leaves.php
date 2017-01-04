@@ -15,24 +15,25 @@ foreach ($arr as $k => $v) {
     $sep = getmonthLeave($userid, '2016', '09');
     $oct = getmonthLeave($userid, '2016', '10');
     $nov = getmonthLeave($userid, '2016', '11');
+    $dec = getmonthLeave($userid, '2016', '12');
  
     print_r($ss);
 
     $july = $ss['final_leave_balance'];
     $total = $july + $aug + $sep + $oct + $nov;
-    echo "july=" . $july . "  Aug= " . $aug . "  Sept=" . $sep . "  Oct=" . $oct ." Nov=" . $nov  ;
+    echo "july=" . $july . "  Aug= " . $aug . "  Sept=" . $sep . "  Oct=" . $oct ." Nov=" . $nov ." Dec=" . $dec  ;
     echo "<br>";
     echo "final balance leave:" . $total;
     echo "<hr>";
 
-    $q = "select * from payslips where user_Id = $userid AND year='2016' AND month = '09'";
-    $runQuery = Salary::DBrunQuery($q);
-    $row = Salary::DBfetchRow($runQuery);
-    $no = Salary::DBnumRows($runQuery);
-    if ($no > 0) {
-        $q2 = "UPDATE payslips SET final_leave_balance = $total where id =" . $row['id'];
-        $runQuery2 = Salary::DBrunQuery($q2);
-    }
+    //$q = "select * from payslips where user_Id = $userid AND year='2016' AND month = '09'";
+    //$runQuery = Salary::DBrunQuery($q);
+    //$row = Salary::DBfetchRow($runQuery);
+    //$no = Salary::DBnumRows($runQuery);
+   // if ($no > 0) {
+  //      $q2 = "UPDATE payslips SET final_leave_balance = $total where id =" . $row['id'];
+   //     $runQuery2 = Salary::DBrunQuery($q2);
+  //  }
 }
 
 function getleaves($userid) {
