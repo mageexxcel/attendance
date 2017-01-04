@@ -31,7 +31,7 @@ foreach ($res as $val) {
     }
 
 // profile update check
-    if ($val['updated_on'] == "" || $nofmonth > 3) {
+    if ($val['updated_on'] == "") {
         if ($message != "") {
             $message = $message . "\n Your Profile details are not Updated. Please update it on your hr profile asap\n ";
         } else {

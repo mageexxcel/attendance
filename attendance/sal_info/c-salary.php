@@ -836,20 +836,20 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-$html = ob_start();
+        $html = ob_start();
         require_once 'templatehead.php';
         $html = ob_get_clean();
         $q = 'Select * from template_variables';
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
-        
-        
-        foreach($row as $s ){
+
+
+        foreach ($row as $s) {
             $html = str_replace($s['name'], $s['value'], $html);
         }
-        
+
         $html = str_replace("#page_content", $data['template'], $html);
-       $file_name = $data['file_name'];
+        $file_name = $data['file_name'];
         $path = "payslip";
 
         $suc = self::createPDf($html, $file_name, $path);
@@ -878,7 +878,7 @@ $html = ob_start();
         $dompdf = new DOMPDF();
         $dompdf->load_html($html);
         $dompdf->render();
-      //    $dompdf->stream("test.pdf");
+        //    $dompdf->stream("test.pdf");
         $output = $dompdf->output();
         try {
             file_put_contents($theme_root, $output);
@@ -1704,7 +1704,7 @@ $html = ob_start();
         $a = self::getAllUserDetail();
         $row2 = array();
         $allSlackUsers = self::getSlackUsersList();
-       foreach ($a as $val) {
+        foreach ($a as $val) {
             $userid = $val['user_Id'];
             $sal = self::getUserlatestSalary($userid);
             $salary_detail = "";
@@ -1727,15 +1727,15 @@ $html = ob_start();
             $date1 = new DateTime($your_date);
             $date2 = new DateTime($now);
             $interval = $date1->diff($date2);
-            
+
             foreach ($allSlackUsers as $s) {
                 if ($s['profile']['email'] == $emailid) {
                     $sl = $s;
                     break;
                 }
             }
-            
-           // $sl = self::getSlackUserInfo($emailid);
+
+            // $sl = self::getSlackUserInfo($emailid);
             if (sizeof($sl) > 0) {
                 $slack_image = $sl['profile']['image_72'];
                 $slack_id = $sl['id'];
@@ -2033,7 +2033,7 @@ $html = ob_start();
                 }
                 $mail->Subject = $subject; // subject of email message 
                 $mail->msgHTML($body); // main message 
-               // $mail->AltBody = 'This is a plain-text message body';
+                // $mail->AltBody = 'This is a plain-text message body';
                 //Attach an image file
                 if (sizeof($file_upload) > 0) {
                     foreach ($file_upload as $d3) {
@@ -2126,16 +2126,15 @@ $html = ob_start();
         $return['data'] = $r_data;
         return $return;
     }
-    
-    public static function savePolicyDocument($data){
-        
+
+    public static function savePolicyDocument($data) {
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $ins = array(
             'type' => $data['type'],
             'value' => $data['value']
-            
         );
         $q1 = "select * from config where type ='" . $data['type'] . "'";
         $runQuery1 = self::DBrunQuery($q1);
@@ -2150,7 +2149,7 @@ $html = ob_start();
             $value = $data['value'];
             $q = "UPDATE config set value='$value' WHERE type ='" . $data['type'] . "'";
             self::DBrunQuery($q);
-            
+
             $r_error = 0;
             $r_message = "Variable updated successfully";
             $r_data['message'] = $r_message;
@@ -2160,24 +2159,20 @@ $html = ob_start();
         $return['data'] = $r_data;
         return $return;
     }
-    
-    public static function getPolicyDocument($data){
-        
+
+    public static function getPolicyDocument($data) {
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
+
         $q1 = "select * from config where type ='policy_document'";
         $runQuery1 = self::DBrunQuery($q1);
-        
         $row1 = self::DBfetchRow($runQuery1);
-        
         $no_of_rows = self::DBnumRows($runQuery1);
-        
         if ($no_of_rows != 0) {
-            $r_data = $row1['value'];
-             $r_error = 0;
-            
+            $r_data = json_decode($row1['value'], true);
+            $r_error = 0;
         } else {
             $r_error = 1;
             $r_message = "Variable not found";
@@ -2188,7 +2183,71 @@ $html = ob_start();
         $return['data'] = $r_data;
         return $return;
     }
-    
+
+    public static function getUserPolicyDocument($userid) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q1 = "SELECT * FROM user_profile where user_Id = $userid";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+
+        $ar0 = json_decode($row1['policy_document'], true);
+     
+        $q2 = "SELECT * FROM config where type ='policy_document'";
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRow($runQuery2);
+
+        $ar1 = json_decode($row2['value'], true);
+        $arr = array();
+        
+        foreach ($ar1 as $v2) {
+         
+           print_r($v2);
+        }
+
+
+        echo "<pre>";
+
+        print_r($row1);
+        echo "<hr>";
+
+        print_r($row2);
+        echo "<hr>";
+
+        print_r($arr);
+
+        die;
+
+
+        $r_error = 0;
+        $r_message = "Profile cuccessfully updated";
+        $r_data['message'] = $r_message;
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function updateUserPolicyDocument($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q1 = "UPDATE user_profile SET policy_document = '" . $data['policy_document'] . "' where user_Id =" . $data['user_id'];
+        self::DBrunQuery($q1);
+
+        $r_error = 0;
+        $r_message = "Profile successfully updated";
+        $r_data['message'] = $r_message;
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
 
 }
 
