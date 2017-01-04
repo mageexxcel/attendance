@@ -1,4 +1,4 @@
-/* 
+/*
 
 */
 html {
@@ -5730,3 +5730,130 @@ textarea.md-input {
 .fade-in-down.ng-leave {
   -webkit-animation: fadeOutDown 0.5s;
   animation: fadeOutDown 0.5s; }
+
+  .tempalate-btn{
+    font-size: 18px;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 2px;
+    transition: border .25s, background .25s ;
+  }
+    .tempalate-btn.delete{
+      color: crimson;
+      border: 1px solid rgba(218, 10, 77, 0);
+      background: rgba(255, 56, 93, 0);
+    }
+    .tempalate-btn.delete:hover{
+      border: 1px solid rgba(218, 10, 77, 0.44);
+      background: rgba(255, 56, 93, 0.20);
+    }
+    .tempalate-btn.edit{
+      color: green;
+      border: 1px solid rgba(0, 128, 0, 0);
+      background: rgba(0, 128, 0, 0);
+    }
+    .tempalate-btn.edit:hover{
+      border: 1px solid rgba(0, 128, 0, 0.45);
+      background: rgba(0, 128, 0, 0.14);
+    }
+    .tempalate-btn.forward-mail{
+      border: 1px solid rgba(0, 0, 0, 0);
+      background: rgba(0, 0, 0, 0);
+    }
+    .tempalate-btn.forward-mail:hover{
+      border: 1px solid rgba(0, 0, 0, 0.33);
+      background: rgba(0, 0, 0, 0.12);
+    }
+    .selectUser{
+      width: 30%;
+      margin-left: 70%;
+      margin-top: 17px;
+      max-height: 253px;
+      overflow: scroll;
+    }
+    .list-unstyled li {
+      padding-left: 15px;
+    }
+    .list-unstyled li:hover {
+      background: #ffcccc;
+    }
+    .dropdown-backdrop-custom {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 990;
+    background-color: rgba(255, 255, 255, 0);
+  }
+  .selected-recipient{
+    padding-bottom: 5px;
+    border-bottom: 1px solid gainsboro;
+  }
+
+  .selected-recipient .to{
+    width:100%;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .filter-tags{
+    height: auto;
+  }
+  .filter-tags .filter-label, .filter-tags-clear .filter-label {
+    margin-right: 5px;
+    font-size: 100%;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 5px; }
+    .filter-tags .filter-label .filter-remove, .filter-tags-clear .filter-label .filter-remove {
+      color: #fff;
+      margin-right: 5px;
+      cursor: pointer; }
+  .filter-tags .filter-label .clear-all{
+    background: #747474;
+  }
+  .filter-tags .filter-clear, .filter-tags-clear .filter-clear {
+    cursor: pointer; }
+
+    .paper{
+      padding:20px;
+      overflow:hidden;
+      height:100%;
+      border: 1px solid gainsboro;
+      border-radius: 16px !important;
+      /*border-top-right-radius: 0px !important;
+      border-bottom-left-radius: 0px !important;*/
+    }
+    .paper:hover{
+      box-shadow: rgba(0, 0, 0, 0.156863) 0px 3px 10px, rgba(0, 0, 0, 0.227451) 0px 3px 10px;
+    }
+    .menuOptions{
+      display:none;
+      right:30px;
+      top:30px;
+      z-index: 1000;
+      position:absolute;
+      box-shadow: #ccc 0px 0px 30px;
+      background:#FFFFFF;
+    }
+    .menuOptions span{
+      width: 100%;
+      display: block;
+      padding: 5px 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .menuOptions span:hover{
+      background: #cecece;
+    }
+    .select-variable{
+      display: block;
+      padding: 10px 0px;
+      font-style: italic;
+      cursor: pointer;
+    }
+
+
