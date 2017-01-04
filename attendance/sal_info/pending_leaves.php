@@ -20,10 +20,13 @@ foreach ($arr as $k => $v) {
     print_r($ss);
 
     $july = $ss['final_leave_balance'];
-    $total = $july + $aug + $sep + $oct + $nov;
+    $total1 = $july + $aug + $sep + $oct + $nov;
+    $total = $july + $aug + $sep + $oct + $nov + $dec;
     echo "july=" . $july . "  Aug= " . $aug . "  Sept=" . $sep . "  Oct=" . $oct ." Nov=" . $nov ." Dec=" . $dec  ;
     echo "<br>";
-    echo "final balance leave:" . $total;
+    echo "final balance leave till nov payslip:" . $total1;
+    echo "<br>";
+    echo "final balance leave till dec payslip:" . $total;
     echo "<hr>";
 
     //$q = "select * from payslips where user_Id = $userid AND year='2016' AND month = '09'";
