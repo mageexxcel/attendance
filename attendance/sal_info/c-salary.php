@@ -2033,7 +2033,7 @@ $html = ob_start();
                 }
                 $mail->Subject = $subject; // subject of email message 
                 $mail->msgHTML($body); // main message 
-                $mail->AltBody = 'This is a plain-text message body';
+               // $mail->AltBody = 'This is a plain-text message body';
                 //Attach an image file
                 if (sizeof($file_upload) > 0) {
                     foreach ($file_upload as $d3) {
