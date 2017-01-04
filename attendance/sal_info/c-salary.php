@@ -850,7 +850,7 @@ $html = ob_start();
         
         $html = str_replace("#page_content", $data['template'], $html);
        $file_name = $data['file_name'];
-        $path = "template_pdf";
+        $path = "payslip";
 
         $suc = self::createPDf($html, $file_name, $path);
         $r_error = 0;
