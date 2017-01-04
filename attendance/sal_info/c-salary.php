@@ -2012,14 +2012,14 @@ $html = ob_start();
                 $mail->isSMTP();
                 $mail->SMTPDebug = 0;
                 $mail->Debugoutput = 'html';
-                $mail->Host = 'smtp.gmail.com';
+                $mail->Host = 'smtp.sendgrid.net';
                 $mail->Port = 587;
                 $mail->SMTPSecure = 'tls';
                 $mail->SMTPAuth = true;
-                $mail->Username = "exceltes@gmail.com"; //sender email address 
-                $mail->Password = "java@123"; // sender email password
-                $mail->setFrom('exceltes@gmail.com', 'Excellence'); // name and email address from which email is send
-                $mail->addReplyTo('replyto@example.com', 'no-reply'); // reply email address with name 
+                $mail->Username = "apikey"; //sender email address 
+                $mail->Password = "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"; // sender email password
+                $mail->setFrom('hr@excellencetechnologies.in', 'Excellence Technologies'); // name and email address from which email is send
+                $mail->addReplyTo('hr@excellencetechnologies.in', 'Excellence Technologies'); // reply email address with name 
                 $mail->addAddress($work_email, $name); // name and address to whome mail is to send
                 if (sizeof($cc) > 0) {
                     foreach ($cc as $d) {
