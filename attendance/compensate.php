@@ -156,6 +156,9 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $wmail = $qs['work_email'];
             $previous_month_time = getUserPreviousMonthTime($qs['id'], $p_month, $link); //  get user previous month pending time.
             $ptime = 0;
+            
+            echo $qs['id']."---".$qs['work_email'].$previous_month_time."<br>";
+            
             if ($previous_month_time > 0) {
                 $ptime = date('H:i', mktime(0, 540 + $previous_month_time));
                 $reason = reason; 
