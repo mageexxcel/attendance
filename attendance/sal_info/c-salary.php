@@ -891,7 +891,7 @@ class Salary extends DATABASE {
 //employee payslip----------------------------------------
     // create employee payslip and save pdf to google drive
     public static function createUserPayslip($data) {
-        
+
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
@@ -914,9 +914,9 @@ class Salary extends DATABASE {
             'bonus' => $data['bonus'],
             'payslip_url' => ""
         );
-        
-        
-        
+
+
+
         // check refresh token of google drive 
         $check_google_drive_connection = self::getrefreshToken();
         if (!is_array($check_google_drive_connection) && sizeof($check_google_drive_connection) > 0) {
@@ -970,14 +970,14 @@ class Salary extends DATABASE {
                 // if send mail option is true
                 if ($data['send_email'] == 1 || $data['send_email'] == '1') {
 
-                 //  self::sendPayslipMsgEmployee($payslip_no, $arr);
+                    self::sendPayslipMsgEmployee($payslip_no);
                 }
-                
-                 if ($data['send_slack_msg'] == 1 || $data['send_slack_msg'] == '1') {
-                        // send slack notification message 
-                        self::sendPayslipMsgEmployee($payslip_no, $data);
-                  }
-                
+
+                if ($data['send_slack_msg'] == 1 || $data['send_slack_msg'] == '1') {
+                    // send slack notification message 
+                    self::sendPayslipMsgEmployee($payslip_no, $data);
+                }
+
                 $r_error = 0;
                 $r_message = "Salary slip updated successfully";
                 $r_data['message'] = $r_message;
@@ -1002,14 +1002,14 @@ class Salary extends DATABASE {
                     // if send mail option is true
                     if ($data['send_email'] == 1 || $data['send_email'] == '1') {
                         // send slack notification message 
-                     //   self::sendPayslipMsgEmployee($payslip_no,$arr);
+                        self::sendPayslipMsgEmployee($payslip_no);
                     }
-                    
+
                     if ($data['send_slack_msg'] == 1 || $data['send_slack_msg'] == '1') {
                         // send slack notification message 
-                        self::sendPayslipMsgEmployee($payslip_no,$data);
+                        self::sendPayslipMsgEmployee($payslip_no, $data);
                     }
-                    
+
                     $r_error = 0;
                     $r_message = "Salary slip generated successfully";
                     $r_data['message'] = $r_message;
@@ -1021,7 +1021,7 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-   
+
 // get employee particular month and year  salary details 
     public function getUserManagePayslip($userid, $year, $month) {
         $r_error = 1;
@@ -1527,9 +1527,8 @@ class Salary extends DATABASE {
     }
 
 // send payslip slack notification message to employee 
-    public static function sendPayslipMsgEmployee($payslip_id, $arr) {
-        
-        
+    public static function sendPayslipMsgEmployee($payslip_id, $arr = false) {
+
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
@@ -1554,26 +1553,32 @@ class Salary extends DATABASE {
                     $slack_userChannelid = $v['id'];
                 }
             }
-            $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Details: \n";
-            $message.= "Total Working Days = ".$arr['total_working_days']."\n";
-            $message.= "Days Present = ".$arr['days_present']."\n";
-            $message.= "Paid Leave Taken = ".$arr['paid_leaves']."\n";
-            $message.= "Leave Without Pay = ".$arr['unpaid_leaves']."\n";
-            $message.= "Total leave taken = ".$arr['total_leave_taken']."\n";
-            $message.= "Allocated Leave = ".$arr['allocated_leaves']."\n";
-            $message.= "Previous month leave  balance = ".$arr['leave_balance']."\n";
-            $message.= "Final leave balance = ".$arr['final_leave_balance']."\n";
-            $message.= "Arrears = ".$arr['arrear']."\n";
-            $message.= "Misc Deduction = ".$arr['misc_deduction']."\n";
-            $message.= "Bonus = ".$arr['bonus']."\n";
-            $message.= "Total earning = ".$arr['total_deduction']."\n";
-            $message.= "Total deduction = ".$arr['total_earning']."\n";
-            $message.= "Net Salary = ".$arr['net_salary']."\n";
+            if ($arr != 0) {
+                $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Details: \n";
+                $message.= "Total Working Days = " . $arr['total_working_days'] . "\n";
+                $message.= "Days Present = " . $arr['days_present'] . "\n";
+                $message.= "Paid Leave Taken = " . $arr['paid_leaves'] . "\n";
+                $message.= "Leave Without Pay = " . $arr['unpaid_leaves'] . "\n";
+                $message.= "Total leave taken = " . $arr['total_leave_taken'] . "\n";
+                $message.= "Allocated Leave = " . $arr['allocated_leaves'] . "\n";
+                $message.= "Previous month leave  balance = " . $arr['leave_balance'] . "\n";
+                $message.= "Final leave balance = " . $arr['final_leave_balance'] . "\n";
+                $message.= "Arrears = " . $arr['arrear'] . "\n";
+                $message.= "Misc Deduction = " . $arr['misc_deduction'] . "\n";
+                $message.= "Bonus = " . $arr['bonus'] . "\n";
+                $message.= "Total earning = " . $arr['total_deduction'] . "\n";
+                $message.= "Total deduction = " . $arr['total_earning'] . "\n";
+                $message.= "Net Salary = " . $arr['net_salary'] . "\n";
+            }
+            if ($arr == 0) {
+                $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
+            }
+
             //Please visit below link \n $google_drive_file_url
-            
-            
-            
-               $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
+
+
+
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             self::DBrunQuery($query);
             $r_error = 0;
@@ -2242,20 +2247,19 @@ class Salary extends DATABASE {
             }
         }
         if (!empty($ar0)) {
-           foreach($ar1 as $v3){
-               if(in_array($v3['name'],$ar0)){
-                   $v3['read'] = 1;
-                   $arr[] = $v3;
-               }
-               else {
-                   $v3['read'] = 0;
-                   $arr[] = $v3;
-               }
-           }
+            foreach ($ar1 as $v3) {
+                if (in_array($v3['name'], $ar0)) {
+                    $v3['read'] = 1;
+                    $arr[] = $v3;
+                } else {
+                    $v3['read'] = 0;
+                    $arr[] = $v3;
+                }
+            }
         }
 
         $r_error = 0;
-       
+
         $r_data = $arr;
 
         $return = array();
