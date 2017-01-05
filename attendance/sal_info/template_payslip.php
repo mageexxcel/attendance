@@ -38,7 +38,7 @@
             <tr>
                 <td width="370px;"><p>Excellence Technologies</p>
                     <span class="span_bold">Salary Statement For the Month of <?php echo $month_name . ",&nbsp;" . $data['year']; ?></span></td>
-                <td align="right"><img src="logo.png"></td>
+                <td align="right"><img src="Excelogo-black.jpg" style="width:200px; height:52px;"></td>
             </tr>
             <tr>
                 <td colspan="2" align="center"><hr></td>
