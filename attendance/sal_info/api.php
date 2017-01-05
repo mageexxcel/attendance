@@ -28,6 +28,7 @@ if ($validateToken == false) {
   exit;
  }
 $user_id = Salary::getIdUsingToken($token);
+	
 $userinfo = Salary::getUserDetail($user_id);
 // action to get employee profile detail
 if ($action == 'get_user_profile_detail') {
@@ -416,29 +417,6 @@ if ($action == 'update_read_document') {
 if ($action == 'save_policy_document') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
 
-        $ar = array();
-        $ar['name'] = "name1";
-        $ar['link'] = "http://www.link1.com";
-
-        $ar1 = array();
-        $ar1['name'] = "name1";
-        $ar1['link'] = "http://www.link1.com";
-
-        $ar2 = array();
-        $ar2['name'] = "name1";
-        $ar2['link'] = "http://www.link1.com";
-
-
-        $array = array();
-        $array[] = $ar;
-        $array[] = $ar1;
-        $array[] = $ar2;
-
-        $s = json_encode($array);
-
-        $PARAMS['type'] = "policy_document";
-        $PARAMS['value'] = $s;
-
         $res = Salary::savePolicyDocument($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
@@ -447,19 +425,17 @@ if ($action == 'save_policy_document') {
 
 // action to get policy document.
 if ($action == 'get_policy_document') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+    
         $res = Salary::getPolicyDocument();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
+    
 }
 
 // action to get user policy document.
 if ($action == 'get_user_policy_document') {
-    $res = Salary::getUserPolicyDocument($userid);
+
+
+    $res = Salary::getUserPolicyDocument($user_id);
 }
-
-
 
 
 echo json_encode($res);

@@ -216,12 +216,21 @@
                 </td>
             </tr>
             <tr>
+                <?php if($data['loyalty_bonus'] != ""){ ?>
+                   <td>
+                    Loyalty Bonus
+                </td>
+                <td>
+<?php echo $data['loyalty_bonus'] ?>
+                </td>
+            <?php   } else { ?>
                 <td>
                     Special Allowance
                 </td>
                 <td>
 <?php echo $data['special_allowance'] ?>
                 </td>
+            <?php } ?>   
                 <td>
                     TDS
                 </td>
