@@ -3,8 +3,6 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
-
-
 // constants define
 define("admin", "admin");
 define("hr", "hr");
@@ -436,6 +434,47 @@ if ($action == 'get_user_policy_document') {
 
     $res = Salary::getUserPolicyDocument($user_id);
 }
+// action to update user policy document.
+if ($action == 'update_user_policy_document') {
+
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::updateUserPolicyDocument($PARAMS);
+}
+
+// action to add or update team list
+if ($action == 'add_team_list') {
+    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+
+        $PARAMS['type']="team_list";
+        
+        $arr = array("ReactJs,AngularJs,React Native,Ionic,PHP,MAGENTO1,MAGENTO2,Testing,HR");
+        
+        $PARAMS['value'] = json_encode($arr);
+        
+        $res = Salary::saveTeamList($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+if ($action == 'get_team_list') {
+    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+
+        $res = Salary::getTeamList($PARAMS);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
+// action to get all employee details on basis of team
+if ($action == 'get_team_users_detail') {
+    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
+        $team = $PARAMS['team'];
+        $res = Salary::getAllUserInfo($team);
+    } else {
+        $res['data']['message'] = 'You are not authorise person for this operation ';
+    }
+}
+
 
 
 echo json_encode($res);
