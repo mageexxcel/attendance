@@ -457,12 +457,9 @@ if ($action == 'add_team_list') {
     }
 }
 if ($action == 'get_team_list') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        $res = Salary::getTeamList($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
+   
+    $res = Salary::getTeamList();
+  
 }
 
 // action to get all employee details on basis of team

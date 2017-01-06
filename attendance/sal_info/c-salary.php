@@ -233,6 +233,10 @@ class Salary extends DATABASE {
 
     //Update employee salary details with slack notification message send to employee 
     public static function updateSalary($data) {
+      
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        
         $token = $data['token'];
         $update_by = self::getUserName($token);
         if ($update_by == false) {
@@ -248,7 +252,8 @@ class Salary extends DATABASE {
             'applicable_till' => date("Y-m-d", strtotime($data['applicable_till']))
         );
         self::DBinsertQuery('salary', $ins);
-        $salary_id = mysqli_insert_id();
+        $salary_id = mysqli_insert_id($mysqli);
+        
         $ins2 = array(
             'Special_Allowance' => $data['special_allowance'],
             'Medical_Allowance' => $data['medical_allowance'],
@@ -2338,10 +2343,7 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $ins = array(
-            'type' => $data['type'],
-            'value' => $data['value']
-        );
+        
         $q1 = "select * from config where type ='team_list'";
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
