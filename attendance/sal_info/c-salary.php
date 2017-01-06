@@ -108,8 +108,14 @@ class Salary extends DATABASE {
     }
 
     // get all employee detail
-    public function getAllUserDetail() {
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
+    public function getAllUserDetail($data = false) {
+        
+        if($data == ""){
+             $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
+        }
+        if($data != ""){
+           $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND user_profile.team = '$data'";
+        }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         $row2 = array();
@@ -242,7 +248,7 @@ class Salary extends DATABASE {
             'applicable_till' => date("Y-m-d", strtotime($data['applicable_till']))
         );
         self::DBinsertQuery('salary', $ins);
-        $salary_id = mysql_insert_id();
+        $salary_id = mysqli_insert_id();
         $ins2 = array(
             'Special_Allowance' => $data['special_allowance'],
             'Medical_Allowance' => $data['medical_allowance'],
@@ -1736,11 +1742,16 @@ class Salary extends DATABASE {
     }
 
     // get all employee info with salary detail and holding details
-    public static function getAllUserInfo() {
+    public static function getAllUserInfo($data = false) {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $a = self::getAllUserDetail();
+        if($data == ""){
+             $a = self::getAllUserDetail();  
+        }
+        if($data != ""){
+          $a = self::getAllUserDetail($data);  
+        }
         $row2 = array();
         $allSlackUsers = self::getSlackUsersList();
         foreach ($a as $val) {
@@ -2274,7 +2285,7 @@ class Salary extends DATABASE {
         $r_message = "";
         $r_data = array();
         $q1 = "UPDATE user_profile SET policy_document = '" . $data['policy_document'] . "' where user_Id =" . $data['user_id'];
-        echo $q1;
+    
         self::DBrunQuery($q1);
 
         $r_error = 0;
@@ -2286,6 +2297,71 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
+    
+     public static function saveTeamList($data) {
+
+            
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'type' => $data['type'],
+            'value' => $data['value']
+        );
+        $q1 = "select * from config where type ='" . $data['type'] . "'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+            $res = self::DBinsertQuery('config', $ins);
+            $r_error = 0;
+            $r_message = "Variable Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } else {
+            $value = $data['value'];
+            $q = "UPDATE config set value='$value' WHERE type ='" . $data['type'] . "'";
+            self::DBrunQuery($q);
+
+            $r_error = 0;
+            $r_message = "Variable updated successfully";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+    public static function getTeamList() {
+
+            
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'type' => $data['type'],
+            'value' => $data['value']
+        );
+        $q1 = "select * from config where type ='team_list'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+            $r_error = 1;
+            $r_message = "Team list not found";
+            $r_data['message'] = $r_message;
+        } else {
+            
+            $r_error = 0;
+           $r_data = json_decode($row1['value'],true);
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+    
+    
 
 }
 
