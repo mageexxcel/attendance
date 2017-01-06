@@ -109,12 +109,12 @@ class Salary extends DATABASE {
 
     // get all employee detail
     public function getAllUserDetail($data = false) {
-        
-        if($data == ""){
-             $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
+
+        if ($data == "") {
+            $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
         }
-        if($data != ""){
-           $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND user_profile.team = '$data'";
+        if ($data != "") {
+            $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND user_profile.team = '$data'";
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -233,10 +233,10 @@ class Salary extends DATABASE {
 
     //Update employee salary details with slack notification message send to employee 
     public static function updateSalary($data) {
-      
+
         $db = self::getInstance();
         $mysqli = $db->getConnection();
-        
+
         $token = $data['token'];
         $update_by = self::getUserName($token);
         if ($update_by == false) {
@@ -253,7 +253,7 @@ class Salary extends DATABASE {
         );
         self::DBinsertQuery('salary', $ins);
         $salary_id = mysqli_insert_id($mysqli);
-        
+
         $ins2 = array(
             'Special_Allowance' => $data['special_allowance'],
             'Medical_Allowance' => $data['medical_allowance'],
@@ -1045,13 +1045,13 @@ class Salary extends DATABASE {
         $res1 = self::getSalaryInfo($userid, "first_to_last", $date);
         //get employee profile detail.   
         $res0 = self::getUserprofileDetail($userid);
-// get latest salary id
+        // get latest salary id
         $latest_sal_id = sizeof($res1) - 1;
         $user_salaryinfo = $res1[$latest_sal_id];
         //get total working days of month
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
         //get employee month attendance
-        $user_salaryinfo['days_present'] = self::getUserMonthPunching($userid, $year, $month);
+        $user_salaryinfo['days_present'] = sizeof(self::getUserMonthPunching($userid, $year, $month));
         //get employee month salary details
         $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
         //get misc deduction of salary month form payslips table. 
@@ -1165,6 +1165,7 @@ class Salary extends DATABASE {
         $check_google_drive_connection = self::getrefreshToken();
         $r_error = 0;
         $r_data['user_data_for_payslip'] = $user_salaryinfo;
+        $r_data['employee_pending_leave'] = self::getTotalWorkingDayslist($userid, $year, $month);
         $r_data['user_payslip_history'] = $res;
         $r_data['google_drive_emailid'] = "";
         $r_data['employee_actual_salary'] = $actual_salary_detail;
@@ -1174,6 +1175,7 @@ class Salary extends DATABASE {
         }
         //get employee all previous payslip.
         $r_data['all_users_latest_payslip'] = self::getAllUserPayslip($userid, $year, $month);
+
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
@@ -1243,6 +1245,32 @@ class Salary extends DATABASE {
                 }
             }
         }
+        //exclude working weekend from month weekends   
+        $list2 = self::getWorkingHoursOfMonth($year, $month);
+
+        $pop = array();
+
+        $pop = array_diff_key($list, $list2);
+        return $pop;
+    }
+
+    // get month working hours times
+    public static function getWorkingHoursOfMonth($year, $month) {
+        $q = "SELECT * FROM working_hours";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $list = array();
+        foreach ($rows as $pp) {
+            $h_date = $pp['date'];
+            $h_month = date('m', strtotime($h_date));
+            $h_year = date('Y', strtotime($h_date));
+            if ($h_year == $year && $h_month == $month) {
+                $h_full_date = date("Y-m-d", strtotime($h_date));
+                $h_date = date("d", strtotime($h_date));
+                $pp['date'] = $h_date;
+                $list[$h_date] = $pp;
+            }
+        }
         return $list;
     }
 
@@ -1294,7 +1322,7 @@ class Salary extends DATABASE {
             $daySummary = self::_beautyDaySummary($pp); // get summery of the date
             $list[$pp_key] = $daySummary;
         }
-        return sizeof($list);
+        return ($list);
     }
 
 // get employee present date summery
@@ -1610,7 +1638,7 @@ class Salary extends DATABASE {
     // get employee particular month and year leaves 
     public static function getUserMonthLeaves($userid, $year, $month) {
         $list = array();
-        $q = "SELECT * FROM leaves Where user_Id = $userid";
+        $q = "SELECT * FROM leaves Where user_Id = $userid  AND (status = 'Approved' || status = 'Pending')";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         foreach ($rows as $pp) {
@@ -1751,11 +1779,11 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        if($data == ""){
-             $a = self::getAllUserDetail();  
+        if ($data == "") {
+            $a = self::getAllUserDetail();
         }
-        if($data != ""){
-          $a = self::getAllUserDetail($data);  
+        if ($data != "") {
+            $a = self::getAllUserDetail($data);
         }
         $row2 = array();
         $allSlackUsers = self::getSlackUsersList();
@@ -2290,7 +2318,7 @@ class Salary extends DATABASE {
         $r_message = "";
         $r_data = array();
         $q1 = "UPDATE user_profile SET policy_document = '" . $data['policy_document'] . "' where user_Id =" . $data['user_id'];
-    
+
         self::DBrunQuery($q1);
 
         $r_error = 0;
@@ -2302,10 +2330,10 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-    
-     public static function saveTeamList($data) {
 
-            
+    public static function saveTeamList($data) {
+
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2336,14 +2364,14 @@ class Salary extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-    
+
     public static function getTeamList() {
 
-            
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
+
         $q1 = "select * from config where type ='team_list'";
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
@@ -2353,17 +2381,75 @@ class Salary extends DATABASE {
             $r_message = "Team list not found";
             $r_data['message'] = $r_message;
         } else {
-            
+
             $r_error = 0;
-           $r_data = json_decode($row1['value'],true);
+            
+            $r_data = json_decode($row1['value'], true);
+            
+            
         }
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
         return $return;
     }
-    
-    
+
+    public static function getTotalWorkingDayslist($userid, $year, $month) {
+
+        $list = array();
+        for ($d = 1; $d <= 31; $d++) {
+            $time = mktime(12, 0, 0, $month, $d, $year);
+            if (date('m', $time) == $month)
+                $list[] = date('m-d-Y', $time);
+        }
+        foreach ($list as $getd) {
+            $de = 0;
+            $de = self::checkDatePresent($getd);
+            if ($de != 0) {
+                $set[] = $getd;
+            }
+        }
+        $po = self::getUserMonthPunching($userid, $year, $month);
+        $c = self::getUserMonthLeaves($userid, $year, $month);
+        $arr = array();
+        foreach ($set as $v) {
+            $op = explode("-", $v);
+            if (!array_key_exists($op[1], $po)) {
+                $arr[] = $v;
+            }
+        }
+        if (empty($c)) {
+            $return = $arr;
+        }
+        if (!empty($c)) {
+            $arr2 = array();
+            foreach ($arr as $v3) {
+                $p = explode("-", $v3);
+                if (!array_key_exists($p[1], $c)) {
+                    $arr2[] = $v3;
+                }
+            }
+            $return = $arr2;
+        }
+        return $return;
+    }
+
+    public static function checkDatePresent($data) {
+
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        $result = 0;
+        $q1 = "select * from attendance where timing like '%$data%'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRows($runQuery1);
+
+        if (mysqli_num_rows($runQuery1) >= 1) {
+            $result = 1;
+            return $result;
+        } else {
+            return $result;
+        }
+    }
 
 }
 

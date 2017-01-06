@@ -444,14 +444,7 @@ if ($action == 'update_user_policy_document') {
 // action to add or update team list
 if ($action == 'add_team_list') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        $PARAMS['type']="team_list";
-        
-        $arr = array("ReactJs,AngularJs,React Native,Ionic,PHP,MAGENTO1,MAGENTO2,Testing,HR");
-        
-        $PARAMS['value'] = json_encode($arr);
-        
-        $res = Salary::saveTeamList($PARAMS);
+       $res = Salary::saveTeamList($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
