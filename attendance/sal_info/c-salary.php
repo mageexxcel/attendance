@@ -1051,8 +1051,10 @@ class Salary extends DATABASE {
         //get total working days of month
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
         //get employee month attendance
-        $user_salaryinfo['days_present'] = sizeof(self::getUserMonthPunching($userid, $year, $month));
-        //get employee month salary details
+        $dayp = self::getUserMonthPunching($userid, $year, $month);
+        
+        $user_salaryinfo['days_present'] = sizeof($dayp);
+         //get employee month salary details
         $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
         //get misc deduction of salary month form payslips table. 
         $misc_deduction = self::getUserMiscDeduction($userid, $year, $month);
@@ -1104,11 +1106,13 @@ class Salary extends DATABASE {
         }
         //get employee month leave info
         $c = self::getUserMonthLeaves($userid, $year, $month);
+        
+        
         $current_month_leave = 0;
         // get employee total no. of leave taken in month
         if (sizeof($c) > 0) {
             foreach ($c as $v) {
-                if ($v['status'] == "Approved" || $v['status'] == "approved") {
+                if ($v['status'] == "Approved" || $v['status'] == "approved" || $v['status'] == "Pending" || $v['status'] == "pending") {
                     if ($v['no_of_days'] < 1) {
                         $current_month_leave = $current_month_leave + $v['no_of_days'];
                     } else {
@@ -1117,6 +1121,7 @@ class Salary extends DATABASE {
                 }
             }
         }
+        
         // get final leave balance of employee
         $leaves = $balance_leave - $current_month_leave + $user_salaryinfo['leaves_allocated'];
         if ($leaves >= 0) {
@@ -1150,7 +1155,7 @@ class Salary extends DATABASE {
         $user_salaryinfo['total_deduction'] = round($total_deduction, 2);
         $user_salaryinfo['net_salary'] = round($net_salary, 2);
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
-        $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
+       // $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
         $user_salaryinfo['paid_leaves'] = $paid_leave;
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;
@@ -1179,6 +1184,7 @@ class Salary extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+        
         return $return;
     }
 
@@ -1190,19 +1196,39 @@ class Salary extends DATABASE {
             if (date('m', $time) == $month)
                 $list[] = date('m-d-Y', $time);
         }
-        $no_of_holidays = self::getHolidaysOfMonth($year, $month);
-        $weekends_of_month = self::getWeekendsOfMonth($year, $month);
-        if (sizeof($weekends_of_month) > 0) {
-            $arru = $weekends_of_month;
-        }
-        if (sizeof($no_of_holidays) > 0) {
-            foreach ($no_of_holidays as $k => $p) {
-                if (!array_key_exists($k, $arru)) {
-                    $arru[$k] = $p;
-                }
+ //Added by meraj       
+        foreach ($list as $getd) {
+            $de = 0;
+            $de = self::checkDatePresent($getd);
+            if ($de != 0) {
+                $set[] = $getd;
             }
         }
-        $total_no_of_workdays = sizeof($list) - sizeof($arru);
+//        
+//        echo "<pre>";
+//        print_r($set);
+// end
+//              
+//        $no_of_holidays = self::getHolidaysOfMonth($year, $month);
+//        $weekends_of_month = self::getWeekendsOfMonth($year, $month);
+//        if (sizeof($weekends_of_month) > 0) {
+//            $arru = $weekends_of_month;
+//        }
+//        if (sizeof($no_of_holidays) > 0) {
+//            foreach ($no_of_holidays as $k => $p) {
+//                if (!array_key_exists($k, $arru)) {
+//                    $arru[$k] = $p;
+//                }
+//            }
+//        }
+//        
+//        echo "<pre>";
+//        print_r($list);
+//        print_r($arru);
+//        die;
+        
+       // $total_no_of_workdays = sizeof($list) - sizeof($arru);
+        $total_no_of_workdays = sizeof($set);
         return $total_no_of_workdays;
     }
 
@@ -1322,6 +1348,7 @@ class Salary extends DATABASE {
             $daySummary = self::_beautyDaySummary($pp); // get summery of the date
             $list[$pp_key] = $daySummary;
         }
+        
         return ($list);
     }
 
@@ -2409,7 +2436,8 @@ class Salary extends DATABASE {
                 $set[] = $getd;
             }
         }
-        $po = self::getUserMonthPunching($userid, $year, $month);
+       $po = self::getUserMonthPunching($userid, $year, $month);
+        
         $c = self::getUserMonthLeaves($userid, $year, $month);
         $arr = array();
         foreach ($set as $v) {
