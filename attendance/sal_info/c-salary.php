@@ -2255,7 +2255,7 @@ class Salary extends DATABASE {
             $r_error = 0;
             $r_message = "Variable Successfully Inserted";
             $r_data['message'] = $r_message;
-        } else {
+        } if ($no_of_rows != 0) {
             $value = $data['value'];
             $q = "UPDATE config set value='$value' WHERE type ='" . $data['type'] . "'";
             self::DBrunQuery($q);
@@ -2264,6 +2264,27 @@ class Salary extends DATABASE {
             $r_message = "Variable updated successfully";
             $r_data['message'] = $r_message;
         }
+        
+        $q2 = "select * from config where type ='policy_document_update'";
+        
+        $ins2 = array(
+            'type' => "policy_document_update",
+            'value' => date("Y-m-d")
+        );
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRow($runQuery2);
+        $no_of_row = self::DBnumRows($runQuery2);
+        if ($no_of_row == 0) {
+            $res = self::DBinsertQuery('config', $ins2);
+           
+        } if ($no_of_row != 0) {
+            $value = date("Y-m-d");
+            $q = "UPDATE config set value='$value' WHERE type ='policy_document_update'";
+            self::DBrunQuery($q);
+
+        }
+        
+        
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
