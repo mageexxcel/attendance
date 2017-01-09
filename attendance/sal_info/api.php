@@ -3,6 +3,8 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
+//$q = "DELETE from config where type='team_list'";
+//$r = Database::DBrunQuery($q);
 // constants define
 define("admin", "admin");
 define("hr", "hr");
@@ -444,9 +446,9 @@ if ($action == 'update_user_policy_document') {
 // action to add or update team list
 if ($action == 'add_team_list') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        
-        $PARAMS['value'] = json_encode($PARAMS['value']);
-        
+
+       $PARAMS['value'] = json_encode($PARAMS['value']);
+
        $res = Salary::saveTeamList($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
