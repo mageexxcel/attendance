@@ -405,13 +405,21 @@ class Salary extends DATABASE {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            if (sizeof($msg > 0)) {
-                $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
-                foreach ($msg as $key => $valu) {
-                    $message = $message . "$key = " . $valu . "\n";
+
+            if ($data['send_slack_msg'] == "") {
+
+                if (sizeof($msg > 0)) {
+                    $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
+                    foreach ($msg as $key => $valu) {
+                        if ($key != "holding_comments") {
+                            $message = $message . "$key = " . $valu . "\n";
+                        }
+                    }
+                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
                 }
-                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
             }
+
+
             $r_error = 0;
             $r_message = "Successfully Updated into table";
             $r_data['message'] = $r_message;
@@ -1052,9 +1060,9 @@ class Salary extends DATABASE {
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
         //get employee month attendance
         $dayp = self::getUserMonthPunching($userid, $year, $month);
-        
+
         $user_salaryinfo['days_present'] = sizeof($dayp);
-         //get employee month salary details
+        //get employee month salary details
         $actual_salary_detail = $salary_detail = self::getSalaryDetail($user_salaryinfo['id']);
         //get misc deduction of salary month form payslips table. 
         $misc_deduction = self::getUserMiscDeduction($userid, $year, $month);
@@ -1106,8 +1114,8 @@ class Salary extends DATABASE {
         }
         //get employee month leave info
         $c = self::getUserMonthLeaves($userid, $year, $month);
-        
-        
+
+
         $current_month_leave = 0;
         // get employee total no. of leave taken in month
         if (sizeof($c) > 0) {
@@ -1121,7 +1129,7 @@ class Salary extends DATABASE {
                 }
             }
         }
-        
+
         // get final leave balance of employee
         $leaves = $balance_leave - $current_month_leave + $user_salaryinfo['leaves_allocated'];
         if ($leaves >= 0) {
@@ -1155,7 +1163,7 @@ class Salary extends DATABASE {
         $user_salaryinfo['total_deduction'] = round($total_deduction, 2);
         $user_salaryinfo['net_salary'] = round($net_salary, 2);
         $user_salaryinfo['total_working_days'] = self::getTotalWorkingDays($year, $month);
-       // $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
+        // $user_salaryinfo['days_present'] = $user_salaryinfo['total_working_days'] - $current_month_leave;
         $user_salaryinfo['paid_leaves'] = $paid_leave;
         $user_salaryinfo['unpaid_leaves'] = $unpaid_leave;
         $user_salaryinfo['total_leave_taken'] = $current_month_leave;
@@ -1184,7 +1192,7 @@ class Salary extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
-        
+
         return $return;
     }
 
@@ -1196,7 +1204,7 @@ class Salary extends DATABASE {
             if (date('m', $time) == $month)
                 $list[] = date('m-d-Y', $time);
         }
- //Added by meraj       
+        //Added by meraj       
         foreach ($list as $getd) {
             $de = 0;
             $de = self::checkDatePresent($getd);
@@ -1226,8 +1234,7 @@ class Salary extends DATABASE {
 //        print_r($list);
 //        print_r($arru);
 //        die;
-        
-       // $total_no_of_workdays = sizeof($list) - sizeof($arru);
+        // $total_no_of_workdays = sizeof($list) - sizeof($arru);
         $total_no_of_workdays = sizeof($set);
         return $total_no_of_workdays;
     }
@@ -1348,7 +1355,7 @@ class Salary extends DATABASE {
             $daySummary = self::_beautyDaySummary($pp); // get summery of the date
             $list[$pp_key] = $daySummary;
         }
-        
+
         return ($list);
     }
 
@@ -1827,10 +1834,12 @@ class Salary extends DATABASE {
                 $previous_increment = abs($sal[0]['total_salary'] - $sal[1]['total_salary']);
                 $salary_detail = $sal[0]['total_salary'];
                 $next_increment_date = $sal[0]['applicable_till'];
+                $start_increment_date = $sal[0]['applicable_from'];
             }
             if (sizeof($sal) >= 1 && sizeof($sal) < 2) {
                 $salary_detail = $sal[0]['total_salary'];
                 $next_increment_date = $sal[0]['applicable_till'];
+                $start_increment_date = $sal[0]['applicable_from'];
             }
             $now = date("Y-m-d"); // or your date as well
             $your_date = $val['dateofjoining'];
@@ -1859,6 +1868,7 @@ class Salary extends DATABASE {
             $val['salary_detail'] = $salary_detail;
             $val['previous_increment'] = $previous_increment;
             $val['next_increment_date'] = $next_increment_date;
+            $val['start_increment_date'] = $start_increment_date;
             $val['no_of_days_join'] = $interval->y . " years, " . $interval->m . " months, " . $interval->d . " days ";
             $val['holdin_amt_detail'] = $holding;
             $row2[] = $val;
@@ -2264,9 +2274,9 @@ class Salary extends DATABASE {
             $r_message = "Variable updated successfully";
             $r_data['message'] = $r_message;
         }
-        
+
         $q2 = "select * from config where type ='policy_document_update'";
-        
+
         $ins2 = array(
             'type' => "policy_document_update",
             'value' => date("Y-m-d")
@@ -2276,15 +2286,13 @@ class Salary extends DATABASE {
         $no_of_row = self::DBnumRows($runQuery2);
         if ($no_of_row == 0) {
             $res = self::DBinsertQuery('config', $ins2);
-           
         } if ($no_of_row != 0) {
             $value = date("Y-m-d");
             $q = "UPDATE config set value='$value' WHERE type ='policy_document_update'";
             self::DBrunQuery($q);
-
         }
-        
-        
+
+
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
@@ -2431,10 +2439,8 @@ class Salary extends DATABASE {
         } else {
 
             $r_error = 0;
-            
+
             $r_data = json_decode($row1['value'], true);
-            
-            
         }
         $return = array();
         $return['error'] = $r_error;
@@ -2457,8 +2463,8 @@ class Salary extends DATABASE {
                 $set[] = $getd;
             }
         }
-       $po = self::getUserMonthPunching($userid, $year, $month);
-        
+        $po = self::getUserMonthPunching($userid, $year, $month);
+
         $c = self::getUserMonthLeaves($userid, $year, $month);
         $arr = array();
         foreach ($set as $v) {
