@@ -7,11 +7,11 @@ ini_set('display_errors', 0);
 require_once ("c-salary.php");
 $res = Salary::getAllUserDetail();
 $array = array();
-echo "<pre>";
+
 $cmonth = date("Y-m-d");
 foreach ($res as $val) {
     $joining_date = $val['dateofjoining'];
-
+    $user_id = $val['user_Id'];
     $endDate = strtotime($cmonth);
     $startDate = strtotime($joining_date);
     $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
@@ -19,6 +19,20 @@ foreach ($res as $val) {
     $username = $slackinfo['real_name'];
     $slack_channel_id = $slackinfo['slack_channel_id'];
     $message = "";
+    
+   $po =  Salary::getUserPolicyDocument($user_id);
+   $m1 = "";
+   
+   foreach($po['data'] as $val){
+       
+           if($val['read'] == 0){
+               $m1.= "File name = ".$val['name']. " Link = ".$val['value']."\n";
+           }
+       
+   }
+   
+   
+    
  // bank detail check   
     if ($val['user_bank_detail'] == "" && $numberOfMonths > 2) {
 
@@ -38,12 +52,22 @@ foreach ($res as $val) {
             $message = "Hey $username !!  \n Your Profile details are not Updated. Please update it on your hr profile asap\n ";
         }
     }
-  
+    
     if ($message != "") {
          echo $message;
     echo "<br>";
           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message );  // send slack notification to employee
     }
+    
+    if ($m1 != "") {
+        $message2 = "Hey $username !!  \nYou have not read some policy document in HR System. Login into your HR System to view document\n";
+        echo $message2;
+        echo "<br>";
+  
+           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message2 );  // send slack notification to employee
+      
+    }
+    
 }
 
 
