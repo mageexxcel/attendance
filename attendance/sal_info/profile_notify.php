@@ -9,6 +9,14 @@ $res = Salary::getAllUserDetail();
 $array = array();
 
 $cmonth = date("Y-m-d");
+
+$q2 = "select * from config where type ='policy_document_update'";
+    $runQuery2 = Database::DBrunQuery($q2);
+    $row2 = Database::DBfetchRow($runQuery2);
+    
+$upload_date = $row2['value']; 
+
+
 foreach ($res as $val) {
     $joining_date = $val['dateofjoining'];
     $user_id = $val['user_Id'];
@@ -59,12 +67,15 @@ foreach ($res as $val) {
           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message );  // send slack notification to employee
     }
     
-    if ($m1 != "") {
+    
+    
+    $datediff = strtotime($cmonth) - strtotime($upload_date);
+    $datediff = floor($datediff / (60 * 60 * 24));
+    if ($m1 != "" && $datediff >= 7 ) {
         $message2 = "Hey $username !!  \nYou have not read some policy document in HR System. Login into your HR System to view document\n";
         echo $message2;
         echo "<br>";
-  
-           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message2 );  // send slack notification to employee
+             $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message2 );  // send slack notification to employee
       
     }
     
