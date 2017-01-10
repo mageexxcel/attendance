@@ -16,7 +16,6 @@ $q2 = "select * from config where type ='policy_document_update'";
     
 $upload_date = $row2['value']; 
 
-
 foreach ($res as $val) {
     $joining_date = $val['dateofjoining'];
     $user_id = $val['user_Id'];
@@ -31,15 +30,13 @@ foreach ($res as $val) {
    $po =  Salary::getUserPolicyDocument($user_id);
    $m1 = "";
    
-   foreach($po['data'] as $val){
+   foreach($po['data'] as $val2){
        
-           if($val['read'] == 0){
-               $m1.= "File name = ".$val['name']. " Link = ".$val['value']."\n";
+           if($val2['read'] == 0){
+               $m1.= "File name = ".$val2['name']. " Link = ".$val2['value']."\n";
            }
        
    }
-   
-   
     
  // bank detail check   
     if ($val['user_bank_detail'] == "" && $numberOfMonths > 2) {
