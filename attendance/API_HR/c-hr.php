@@ -13,6 +13,7 @@ class HR extends DATABASE {
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
     private static $SLACK_msgtoken = '';
+     public static $isAdmin = '';
 
     const JWT_SECRET_KEY = 'HR_APP';
     const EMPLOYEE_FIRST_PASSWORD = "java@123";
@@ -32,6 +33,10 @@ class HR extends DATABASE {
 
         //self::getSlackChannelIds();
         //die;
+    }
+    //set isAdmin value
+    public static function setAdmin($data) {
+        self::$isAdmin = $data;
     }
 
     //--start login------------------------------------------------------------
@@ -55,7 +60,7 @@ class HR extends DATABASE {
 
     public static function validateToken($token) {
         $db = self::getInstance();
-       $mysqli = $db->getConnection();
+        $mysqli = $db->getConnection();
 
         $token = mysqli_real_escape_string($mysqli, $token);
         $q = "select * from login_tokens where token='$token' ";
@@ -168,6 +173,9 @@ class HR extends DATABASE {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
                 
             } else {
+                if(empty(self::$isAdmin)){
+                  unset($pp['holding_comments']);
+                 }
                 $pp['slack_profile'] = array();
                 $newRows[] = $pp;
             }
@@ -366,12 +374,12 @@ class HR extends DATABASE {
                 }
             }
         }
-     //exclude working weekend from month weekends   
+        //exclude working weekend from month weekends   
         $list2 = self::getWorkingHoursOfMonth($year, $month);
-       
-         $pop = array();
 
-         $pop = array_diff_key($list, $list2);
+        $pop = array();
+
+        $pop = array_diff_key($list, $list2);
 
         return $pop;
     }
@@ -1234,17 +1242,17 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason) {
+    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status) {
         //date format = Y-m-d
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
-        $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on  ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date' )";
+        $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status' )";
 
         $r_error = 0;
         $r_message = "";
 
         try {
-            self::DBrunQuery($q);
+          //  self::DBrunQuery($q);
             $success = true;
             $r_message = "Leave applied.";
         } catch (Exception $e) {
@@ -1257,9 +1265,18 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-
-            $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-            $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+            
+            if ($day_status == "2") {
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+            }
+            elseif ($day_status == "1") {
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+            } else {
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+            }
 
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
             $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
@@ -1310,7 +1327,7 @@ class HR extends DATABASE {
         $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where users.status = 'Enabled' order by leaves.id DESC ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-
+        
         $pendingLeaves = array();
 
         if (sizeof($rows) > 0) {
@@ -1556,9 +1573,9 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $r_data['message'] = '';
         $return['data'] = $r_data;
-        
 
-        
+
+
 
         return $return;
     }
@@ -2046,8 +2063,8 @@ class HR extends DATABASE {
         $user_month_attendance = self::getUserMonthAttendaceComplete($userid, $year, $month);
 
         $user_month_attendance = $user_month_attendance['data'];
-        
-       
+
+
         //---final leaves and missing punching days 
         $raw = $user_month_attendance['attendance'];
         $finalAttendance = array();
@@ -2061,7 +2078,7 @@ class HR extends DATABASE {
                 $finalAttendance[] = $pp;
             }
         }
-       
+
 
         //---final leaves and missing punching days 
 
@@ -2150,7 +2167,7 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
         $date = date("Y-m-d");
-       // $date = "2016-08-08";
+        // $date = "2016-08-08";
 
         $enabledUsersList = self::getEnabledUsersList();
 

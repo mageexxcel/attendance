@@ -21,6 +21,7 @@ class Salary extends DATABASE {
     public static $Sunday = 'Sunday';
     public static $Saturday = 'Saturday';
     public static $Admin = 'Admin';
+    public static $isAdmin = '';
 
 // key for token generate do not change. 
     const JWT_SECRET_KEY = 'HR_APP';
@@ -38,7 +39,11 @@ class Salary extends DATABASE {
         //self::getSlackChannelIds();
         //die;
     }
-
+    public static function setAdmin($data) {
+        self::$isAdmin = $data;
+    }
+    
+    
     //check user token in database table and its time difference
     public static function validateToken($token) {
         $db = self::getInstance();
@@ -123,9 +128,15 @@ class Salary extends DATABASE {
             if ($val['username'] != strtolower(self::$Admin)) {
                 $userid = $val['user_Id'];
                 $val['user_bank_detail'] = self::getUserBankDetail($userid); // user bank details.
+                
+                if(empty(self::$isAdmin)){
+                  unset($val['holding_comments']);
+                 }
+                
                 $row2[] = $val;
             }
         }
+        
         return $row2;
     }
 
@@ -216,6 +227,9 @@ class Salary extends DATABASE {
             if ($pp['username'] == self::$Admin || $pp['username'] == strtolower(self::$Admin)) {
                 
             } else {
+                if(empty(self::$isAdmin)){
+                  unset($pp['holding_comments']);
+                 }
                 $newRows[] = $pp;
             }
         }
@@ -369,6 +383,9 @@ class Salary extends DATABASE {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
+        if(empty(self::$isAdmin)){
+                  unset($row['holding_comments']);
+                 }
         //slack info of user
         $userSlackInfo = self::getSlackUserInfo($row['work_email']);
         $row['slack_profile'] = $userSlackInfo;
@@ -537,6 +554,9 @@ class Salary extends DATABASE {
         $q = "SELECT users.status,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
+        if(empty(self::$isAdmin)){
+                  unset($row['holding_comments']);
+                 }
         $arr = "";
         $arr = $row;
         return $arr;
@@ -870,7 +890,8 @@ class Salary extends DATABASE {
         $html = str_replace("#page_content", $data['template'], $html);
         $file_name = $data['file_name'];
         $path = "payslip";
-
+        $testfile = 'payslip/' . $file_name;
+        unlink($testfile);
         $suc = self::createPDf($html, $file_name, $path);
         $r_error = 0;
         $r_data['message'] = $suc;

@@ -30,6 +30,12 @@ if ($validateToken == false) {
 $user_id = Salary::getIdUsingToken($token);
 	
 $userinfo = Salary::getUserDetail($user_id);
+
+ if ($userinfo['type'] == admin ){
+      $data = "admin";
+      Salary::setAdmin($data); 
+  }
+
 // action to get employee profile detail
 if ($action == 'get_user_profile_detail') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {

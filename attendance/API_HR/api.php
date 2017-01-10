@@ -23,8 +23,6 @@ if (isset($_GET['userslack_id'])) {
     $PARAMS = $_GET;
 }
 
-
-
 $action = false;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
@@ -50,6 +48,12 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
             $mins = $time_diff / 60;
             if ($mins > 60) { //if 60 mins more
                 $validateToken = false;
+            }
+            else{
+                if (strtolower($tokenInfo['role']) == 'admin') {
+                     $data = "admin";
+                     HR::setAdmin($data); 
+                }
             }
         } else {
             $validateToken = false;
@@ -149,7 +153,11 @@ if ($action == 'login') {
         $to_date = $PARAMS['to_date'];
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason);
+        $day_status = $PARAMS['day_status'];
+        
+       
+        
+        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
     } else {
         $res['error'] = 1;
         $res['data']['message'] = "userid not found";
@@ -167,7 +175,9 @@ if ($action == 'login') {
         $to_date = $PARAMS['to_date'];
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason);
+        $day_status = $PARAMS['day_status'];
+        
+        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
     }
 } else if ($action == 'get_all_leaves') {
 
