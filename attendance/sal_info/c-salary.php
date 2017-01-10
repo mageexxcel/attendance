@@ -428,11 +428,11 @@ class Salary extends DATABASE {
                 if (sizeof($msg > 0)) {
                     $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
                     foreach ($msg as $key => $valu) {
-                        if ($key != "holding_comments" && $valu !="") {
+                        if ($key != "holding_comments" && $key != "termination_date" ) {
                             $message = $message . "$key = " . $valu . "\n";
                         }
                     }
-                    
+                   
                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
                 }
             }
