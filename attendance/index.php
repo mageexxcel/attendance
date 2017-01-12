@@ -46,21 +46,21 @@ if (isset($_FILES['image'])) {
                 if (in_array($datetime, $attendance)) {
                     
                 } else {
-                    $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
-                    mysqli_query($link, $q2) or die(mysqli_error($link));
+                    if (strpos($datetime, '01-08-2017') === false) {
+                        $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
+                        mysqli_query($link, $q2) or die(mysqli_error($link));
+                    }
                 }
             }
             $i++;
         }
     }
-    
+
     $check_date = get_time_array($de, $link);
-    if(sizeof($check_date) == 0 ){
+    if (sizeof($check_date) == 0) {
         echo "Please Upload updated attendance sheet";
         $sendmessage = 0;
     }
-    
-    
 }
 $time_table2 = array();
 //$de = "08-09-2016";
@@ -187,7 +187,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
         $hr1 = "hrfile1";
               send_slack_message($c_id = 'hr_system', $token, $string1, $hr1, $day);
     }
-       send_slack_message($c_id = 'hr_system', $token, $string2, $hr2);
+      send_slack_message($c_id = 'hr_system', $token, $string2, $hr2);
     if ($string3 != "") {
         $hr3 = "hrfile3";
              send_slack_message($c_id = 'hr_system', $token, $string3, $hr3, $day);
@@ -282,7 +282,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     }
                     if ($d1 == 0) {
                         $msg = $msg . "You have not entered time Today ";
-                             send_slack_message($c_id, $token, $msg);
+                        send_slack_message($c_id, $token, $msg);
                     }
                     if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
                         $s = getLateComingInfo($e, $link);
@@ -291,10 +291,10 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         }
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                           send_slack_message($c_id, $token, $msg, $hr6);
+                              send_slack_message($c_id, $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
                         $msg = $msg . "Today's Entry Time " . $d1;
-                           send_slack_message($c_id, $token, $msg);
+                            send_slack_message($c_id, $token, $msg);
                     }
                     // echo $msg;
                     //echo "<hr>";
@@ -479,14 +479,12 @@ function saveUserMonthPunching($userid, $email, $link, $cyear = false, $cmonth =
         if (mysqli_num_rows($q1) <= 0) {
             $ins3 = "INSERT INTO hr_data (user_id, email, entry_time, exit_time, date) VALUES ('$userid', '$email', '$a', '$b','$pdate')";
             mysqli_query($link, $ins3) or die(mysqli_error($link));
-        }
-        else {
+        } else {
             while ($r = mysqli_fetch_assoc($q1)) {
-                        $id = $r['id'];
-                    }
-             $ins3 = "UPDATE hr_data SET user_id='$userid', email='$email', entry_time='$a', exit_time='$b', date='$pdate' WHERE id = $id";
+                $id = $r['id'];
+            }
+            $ins3 = "UPDATE hr_data SET user_id='$userid', email='$email', entry_time='$a', exit_time='$b', date='$pdate' WHERE id = $id";
             mysqli_query($link, $ins3) or die(mysqli_error($link));
-      
         }
     }
     return $list;
