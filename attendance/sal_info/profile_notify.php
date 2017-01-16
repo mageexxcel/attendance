@@ -72,7 +72,7 @@ foreach ($res as $val) {
         $message2 = "Hey $username !!  \nYou have not read some policy document in HR System. Login into your HR System to view document\n";
         echo $message2;
         echo "<br>";
-             $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message2 );  // send slack notification to employee
+           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message2 );  // send slack notification to employee
       
     }
     
