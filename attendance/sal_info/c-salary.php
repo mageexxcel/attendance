@@ -346,7 +346,7 @@ class Salary extends DATABASE {
             $message = $message . "Holding end date = " . $data['holding_end_date'] . "\n";
             $message = $message . "Reason = " . $data['reason'] . "\n";
             $slack_userChannelid = "hr_system";
-            // $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             return "Successfully Inserted into table";
         }
     }
