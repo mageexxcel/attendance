@@ -1252,7 +1252,7 @@ class HR extends DATABASE {
         $r_message = "";
 
         try {
-          //  self::DBrunQuery($q);
+            self::DBrunQuery($q);
             $success = true;
             $r_message = "Leave applied.";
         } catch (Exception $e) {

@@ -14,9 +14,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-
-
-
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 if (isset($_GET['userslack_id'])) {
