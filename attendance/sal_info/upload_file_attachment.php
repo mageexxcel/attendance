@@ -6,6 +6,12 @@ $r_error = 1;
 $r_message = "";
 $r_data = array();
 
+echo "<pre>";
+print_r($_POST);
+print_r($_FILES);
+die;
+
+
 if ($_FILES) {
      $token = $_POST['token'];
       $validateToken = Salary::validateToken($token);
