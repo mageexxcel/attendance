@@ -1851,15 +1851,21 @@ class Salary extends DATABASE {
             $next_increment_date = "";
             $slack_image = "";
             $holding = "";
+            
+            $latest_sal_id = $sal[0]['id'];
+            $q = "SELECT * FROM salary_details WHERE `salary_id`= $latest_sal_id AND `key` = 'Misc_Deductions'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            $row['value'];
             $emailid = $val['work_email'];
             if (sizeof($sal) >= 2) {
                 $previous_increment = abs($sal[0]['total_salary'] - $sal[1]['total_salary']);
-                $salary_detail = $sal[0]['total_salary'];
+                $salary_detail = $sal[0]['total_salary'] + $row['value'];
                 $next_increment_date = $sal[0]['applicable_till'];
                 $start_increment_date = $sal[0]['applicable_from'];
             }
             if (sizeof($sal) >= 1 && sizeof($sal) < 2) {
-                $salary_detail = $sal[0]['total_salary'];
+                $salary_detail = $sal[0]['total_salary'] + $row['value'];
                 $next_increment_date = $sal[0]['applicable_till'];
                 $start_increment_date = $sal[0]['applicable_from'];
             }
