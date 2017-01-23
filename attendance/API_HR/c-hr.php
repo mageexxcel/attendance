@@ -2210,7 +2210,7 @@ class HR extends DATABASE {
             'lunch_start' => $date,
         );
 
-        if (isset($data['lunch_start'])) {
+        if ($data['lunch'] == "lunch_start") {
             $q1 = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run1 = self::DBrunQuery($q1);
             $row1 = self::DBfetchRow($run1);
@@ -2223,7 +2223,7 @@ class HR extends DATABASE {
             }
             $r_error = 0;
             $r_message = "Lunch start detail saved";
-        } else {
+        } elseif($data['lunch']== "lunch_end") {
             $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run = self::DBrunQuery($q);
             $row = self::DBfetchRow($run);
@@ -2250,7 +2250,7 @@ class HR extends DATABASE {
     }
 
     public static function getlunchBreakDetail($userid, $month) {
-
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2259,8 +2259,16 @@ class HR extends DATABASE {
         try {
             $run = self::DBrunQuery($q);
             $rows = self::DBfetchRows($run);
+            $arr = array();
+            foreach($rows as $val){
+                $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
+                $diff =  floor($diff / 60);
+                $val['total_time'] = $diff;
+                $arr[] = $val;
+            }
+            
             $r_error = 0;
-            $r_data = $rows;
+            $r_data = $arr;
         } catch (Exception $e) {
             $r_error = 1;
             $r_message = "Some error occured";
