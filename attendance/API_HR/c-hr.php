@@ -2199,30 +2199,78 @@ class HR extends DATABASE {
     }
 
     public static function lunchBreak($data) {
-
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $date = date("Y-m-d H:i:s");
+        $d = date("Y-m-d");
+        $userid = $data['user_id'];
+        $ins = array(
+            'user_Id' => $userid,
+            'lunch_start' => $date,
+        );
 
-        if(isset($data['lunch_out'])) {
-          
-        } else {
+        if (isset($data['lunch_start'])) {
+            $q1 = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
+            $run1 = self::DBrunQuery($q1);
+            $row1 = self::DBfetchRow($run1);
             
+            if (empty($row1)) {
+                self::DBinsertQuery('lunch_break', $ins);
+            } else {
+                $q3 = "UPDATE lunch_break SET lunch_start = '$date' where id =" . $row1['id'];
+                $run3 = self::DBrunQuery($q3);
+            }
+            $r_error = 0;
+            $r_message = "Lunch start detail saved";
+        } else {
+            $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
+            $run = self::DBrunQuery($q);
+            $row = self::DBfetchRow($run);
+            if (empty($row)) {
+                $r_error = 0;
+                $r_message = "Please start your lunch time first";
+            } else {
+                try {
+                    $q2 = "UPDATE lunch_break SET lunch_end = '$date' where id =" . $row['id'];
+                    $run2 = self::DBrunQuery($q2);
+                    $r_error = 0;
+                    $r_message = "Lunch end detail saved";
+                } catch (Exception $e) {
+                    $r_error = 1;
+                    $r_message = "Some error occured. Try again";
+                }
+            }
         }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+        return $return;
     }
-    
-    public static function getlunchBreakDetail($data) {
+
+    public static function getlunchBreakDetail($userid, $month) {
 
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        $date = date("Y-m-d H:i:s");
-
-        $q = "SELECT * FROM lunch_break where id =".$data['user_id'];
-        $run = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($run);
         
+        $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$month%' ";
+        try {
+            $run = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($run);
+            $r_error = 0;
+            $r_data = $rows;
+        } catch (Exception $e) {
+            $r_error = 1;
+            $r_message = "Some error occured";
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        $return['data'] = $r_data;
+        return $return;
     }
 
 }
