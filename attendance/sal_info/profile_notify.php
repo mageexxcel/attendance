@@ -13,6 +13,8 @@ $current_day = date('l');
 $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 
+$cmonth = date("Y-m-d");
+
 $q2 = "select * from config where type ='policy_document_update'";
     $runQuery2 = Database::DBrunQuery($q2);
     $row2 = Database::DBfetchRow($runQuery2);
