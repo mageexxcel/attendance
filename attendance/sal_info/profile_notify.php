@@ -4,9 +4,14 @@ Cron file to notify about profile update and bank detail update if empty.
  */
 error_reporting(0);
 ini_set('display_errors', 0);
+define("weekoff", "Sunday");
 require_once ("c-salary.php");
 $res = Salary::getAllUserDetail();
 $array = array();
+$cmonth_name = date("F Y");
+$current_day = date('l');
+$second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
+$fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 
 $cmonth = date("Y-m-d");
 
@@ -58,7 +63,7 @@ foreach ($res as $val) {
         }
     }
     
-    if ($message != "") {
+    if ($message != "" && $current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat) {
          echo $message;
     echo "<br>";
           $slackMessageStatus = Salary::sendSlackMessageToUser( $slack_channel_id, $message );  // send slack notification to employee
@@ -68,7 +73,7 @@ foreach ($res as $val) {
     
     $datediff = strtotime($cmonth) - strtotime($upload_date);
     $datediff = floor($datediff / (60 * 60 * 24));
-    if ($m1 != "" && $datediff >= 7 ) {
+    if ($m1 != "" && $datediff >= 7 && $current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat) {
         $message2 = "Hey $username !!  \nYou have not read some policy document in HR System. Login into your HR System to view document\n";
         echo $message2;
         echo "<br>";

@@ -13,7 +13,7 @@ class HR extends DATABASE {
     private static $SLACK_client_secret = '';
     private static $SLACK_token = '';
     private static $SLACK_msgtoken = '';
-     public static $isAdmin = '';
+    public static $isAdmin = '';
 
     const JWT_SECRET_KEY = 'HR_APP';
     const EMPLOYEE_FIRST_PASSWORD = "java@123";
@@ -34,6 +34,7 @@ class HR extends DATABASE {
         //self::getSlackChannelIds();
         //die;
     }
+
     //set isAdmin value
     public static function setAdmin($data) {
         self::$isAdmin = $data;
@@ -173,9 +174,9 @@ class HR extends DATABASE {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
                 
             } else {
-                if(empty(self::$isAdmin)){
-                  unset($pp['holding_comments']);
-                 }
+                if (empty(self::$isAdmin)) {
+                    unset($pp['holding_comments']);
+                }
                 $pp['slack_profile'] = array();
                 $newRows[] = $pp;
             }
@@ -1265,12 +1266,11 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            
+
             if ($day_status == "2") {
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-            }
-            elseif ($day_status == "1") {
+            } elseif ($day_status == "1") {
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
             } else {
@@ -1327,7 +1327,7 @@ class HR extends DATABASE {
         $q = "SELECT users.*,leaves.* FROM leaves LEFT JOIN users ON users.id = leaves.user_Id where users.status = 'Enabled' order by leaves.id DESC ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-        
+
         $pendingLeaves = array();
 
         if (sizeof($rows) > 0) {
@@ -2196,6 +2196,33 @@ class HR extends DATABASE {
         }
 
         return $return;
+    }
+
+    public static function lunchBreak($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $date = date("Y-m-d H:i:s");
+
+        if(isset($data['lunch_out'])) {
+          
+        } else {
+            
+        }
+    }
+    
+    public static function getlunchBreakDetail($data) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $date = date("Y-m-d H:i:s");
+
+        $q = "SELECT * FROM lunch_break where id =".$data['user_id'];
+        $run = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($run);
+        
     }
 
 }

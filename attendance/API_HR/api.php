@@ -430,6 +430,30 @@ if ($action == 'login') {
         $res['data']['message'] = 'Please give user_slackid ';
     }
 }
+elseif($action="lunch_break"){
+     if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+         $PARAMS['user_id'] = $loggedUserInfo['id'];
+         $res = HR::lunchBreak($PARAMS);
+        
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
+    
+    
+}
+elseif($action="get_lunch_break_detail"){
+     if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+         $PARAMS['user_id'] = $loggedUserInfo['id'];
+         $res = HR::lunchBreakDetail($PARAMS);
+        
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
+    
+    
+}
 
 
 
