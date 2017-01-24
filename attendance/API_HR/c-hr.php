@@ -2217,12 +2217,13 @@ class HR extends DATABASE {
             
             if (empty($row1)) {
                 self::DBinsertQuery('lunch_break', $ins);
+                $r_error = 0;
+                $r_message = "Your lunch start time :".date("jS M H:i A",strtotime($date));
             } else {
-                $q3 = "UPDATE lunch_break SET lunch_start = '$date' where id =" . $row1['id'];
-                $run3 = self::DBrunQuery($q3);
+                $r_error = 1;
+                $r_message = "Lunch start date already Inserted i.e :".date("jS M H:i A",strtotime($row1['lunch_start']));
             }
-            $r_error = 0;
-            $r_message = "Lunch start detail saved";
+            
         } elseif($data['lunch']== "lunch_end") {
             $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run = self::DBrunQuery($q);
@@ -2234,8 +2235,11 @@ class HR extends DATABASE {
                 try {
                     $q2 = "UPDATE lunch_break SET lunch_end = '$date' where id =" . $row['id'];
                     $run2 = self::DBrunQuery($q2);
+                    $diff = abs(strtotime($date) - strtotime($row['lunch_start']));
+                    $diff =  floor($diff / 60);
                     $r_error = 0;
-                    $r_message = "Lunch end detail saved";
+                    $r_message = "Your lunch end time :".date("jS M H:i A",strtotime($date))."/n Total time = $diff min";
+                    
                 } catch (Exception $e) {
                     $r_error = 1;
                     $r_message = "Some error occured. Try again";
@@ -2279,6 +2283,51 @@ class HR extends DATABASE {
         $return['message'] = $r_message;
         $return['data'] = $r_data;
         return $return;
+    }
+    
+    public static function getAllUserLunchDetail($date){
+        
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+      
+        $q = "SELECT * FROM lunch_break where lunch_start like '%$date%'";
+        $r = self::DBrunQuery($q);
+        $run = self::DBfetchRows($r);
+        
+        $arr = array();
+        $arr[] = date("jS M Y",  strtotime($date)); 
+        foreach($run as $val){
+            
+            $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
+                $diff =  floor($diff / 60);
+            
+            $q2 = "select name from user_profile where user_Id=".$val['user_Id'];
+            $r2 = self::DBrunQuery($q2);
+            $row = self::DBfetchRow($r2);
+            $name = $row['name'];
+            $val['name'] = $name;
+            
+            $arr[]= $name .":". $diff ." min | ". date("h:i A",strtotime($val['lunch_start']))." - ".date("h:i A",strtotime($val['lunch_end']));
+         
+        }
+        
+        if(sizeof($arr) > 0){
+            $r_error = 0;
+            $r_data = $arr;
+        }
+        else{
+            $r_error = 1;
+            $r_message = "Some error occured";
+        }
+        
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        $return['data'] = $r_data;
+        return $return;
+        
+        
     }
 
 }

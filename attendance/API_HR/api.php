@@ -454,7 +454,6 @@ elseif($action == "get_lunch_break_detail"){
          else{
              $month = $PARAMS['month'];
          }
-         
          $res = HR::getlunchBreakDetail($userid,$month);
         
     } else {
@@ -462,6 +461,26 @@ elseif($action == "get_lunch_break_detail"){
     }
     
     
+}elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+
+        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+            $res['data']['message'] = 'You are not authorise for this operation';
+        } else {
+            
+            if(isset($PARAMS['date']) && $PARAMS['date'] !=""){
+                $date = $PARAMS['date'];
+            }
+            else{
+                $date = date("Y-m-d");
+            }
+           
+            $res = HR::getAllUserLunchDetail($date);
+         }
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
 }
 
 
