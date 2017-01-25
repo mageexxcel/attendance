@@ -39,11 +39,11 @@ class Salary extends DATABASE {
         //self::getSlackChannelIds();
         //die;
     }
+
     public static function setAdmin($data) {
         self::$isAdmin = $data;
     }
-    
-    
+
     //check user token in database table and its time difference
     public static function validateToken($token) {
         $db = self::getInstance();
@@ -128,15 +128,15 @@ class Salary extends DATABASE {
             if ($val['username'] != strtolower(self::$Admin)) {
                 $userid = $val['user_Id'];
                 $val['user_bank_detail'] = self::getUserBankDetail($userid); // user bank details.
-                
-                if(empty(self::$isAdmin)){
-                  unset($val['holding_comments']);
-                 }
-                
+
+                if (empty(self::$isAdmin)) {
+                    unset($val['holding_comments']);
+                }
+
                 $row2[] = $val;
             }
         }
-        
+
         return $row2;
     }
 
@@ -227,9 +227,9 @@ class Salary extends DATABASE {
             if ($pp['username'] == self::$Admin || $pp['username'] == strtolower(self::$Admin)) {
                 
             } else {
-                if(empty(self::$isAdmin)){
-                  unset($pp['holding_comments']);
-                 }
+                if (empty(self::$isAdmin)) {
+                    unset($pp['holding_comments']);
+                }
                 $newRows[] = $pp;
             }
         }
@@ -383,9 +383,9 @@ class Salary extends DATABASE {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-        if(empty(self::$isAdmin)){
-                  unset($row['holding_comments']);
-                 }
+        if (empty(self::$isAdmin)) {
+            unset($row['holding_comments']);
+        }
         //slack info of user
         $userSlackInfo = self::getSlackUserInfo($row['work_email']);
         $row['slack_profile'] = $userSlackInfo;
@@ -428,12 +428,12 @@ class Salary extends DATABASE {
                 if (sizeof($msg > 0)) {
                     $message = "Hey $userInfo_name !!  \n Your profile details are updated \n Details: \n ";
                     foreach ($msg as $key => $valu) {
-                        if ($key != "holding_comments" && $key != "termination_date" ) {
+                        if ($key != "holding_comments" && $key != "termination_date") {
                             $message = $message . "$key = " . $valu . "\n";
                         }
                     }
-                   
-                   $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
+
+                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
                 }
             }
 
@@ -555,9 +555,9 @@ class Salary extends DATABASE {
         $q = "SELECT users.status,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-        if(empty(self::$isAdmin)){
-                  unset($row['holding_comments']);
-                 }
+        if (empty(self::$isAdmin)) {
+            unset($row['holding_comments']);
+        }
         $arr = "";
         $arr = $row;
         return $arr;
@@ -1487,16 +1487,16 @@ class Salary extends DATABASE {
         if ($file_id != false) {
             try {
                 $service->files->delete($file_id);
-                $q = "DELETE FROM user_document_detail WHERE id = $id";
-                $runQuery = self::DBrunQuery($q);
-                $r_error = 0;
-                $r_message = "Document deleted successfully";
-                $r_data['message'] = $r_message;
             } catch (Exception $e) {
                 $r_error = 1;
                 $r_data['message'] = $e->getMessage();
             }
         }
+        $q = "DELETE FROM user_document_detail WHERE id = $id";
+        $runQuery = self::DBrunQuery($q);
+        $r_error = 0;
+        $r_message = "Document deleted successfully";
+        $r_data['message'] = $r_message;
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
@@ -1851,7 +1851,7 @@ class Salary extends DATABASE {
             $next_increment_date = "";
             $slack_image = "";
             $holding = "";
-            
+
             $latest_sal_id = $sal[0]['id'];
             $q = "SELECT * FROM salary_details WHERE `salary_id`= $latest_sal_id AND `key` = 'Misc_Deductions'";
             $runQuery = self::DBrunQuery($q);

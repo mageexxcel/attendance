@@ -6,6 +6,8 @@ and send slack notification on success to employee.
 
 error_reporting(0);
 ini_set('display_errors', 0);
+
+
 require_once ("c-salary.php");
 
 if (isset($_POST['submit'])) {
@@ -33,11 +35,10 @@ if (isset($_POST['submit'])) {
     }
     $whereField = 'id';
     $arr = array();
-
+$url = '';
     foreach ($_FILES as $k => $v) {
-        $url = '';
+        
         if ($v['name'] != "") {
-
 
             $file_name = $_FILES[$k]['name'];
             $file_size = $_FILES[$k]['size'];
@@ -68,11 +69,16 @@ if (isset($_POST['submit'])) {
         }
         $arr[$k] = "<iframe src='$url'></iframe>";
     }
-    
-    $qu = "INSERT INTO user_document_detail (user_Id, document_type, link_1) VALUES ($userid, '$doc_type', '')";
-   $run = Salary::DBrunQuery($qu);
-    $id = mysql_insert_id();
-    $res = Salary::DBupdateBySingleWhere('user_document_detail', $whereField, $id, $arr);
+
+       if($url !=""){
+
+     $db = Database::getInstance();
+        $mysqli = $db->getConnection();
+
+          $qu = "INSERT INTO user_document_detail (user_Id, document_type, link_1) VALUES ($userid, '$doc_type', '')";
+          $run = Salary::DBrunQuery($qu);
+          $id = mysqli_insert_id($mysqli);
+          $res = Salary::DBupdateBySingleWhere('user_document_detail', $whereField, $id, $arr);
 
     $message = $userInfo_name . ". document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
 
@@ -80,4 +86,12 @@ if (isset($_POST['submit'])) {
 
     header("Location: $return");
     exit;
+ 
+  }
+   if($url == ""){
+          echo "Some error occures while uploading file in google drive";
+                die;
+      } 
+ 
+  
 }

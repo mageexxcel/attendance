@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 if (isset($_GET['userslack_id'])) {
@@ -430,29 +431,56 @@ if ($action == 'login') {
         $res['data']['message'] = 'Please give user_slackid ';
     }
 }
-elseif($action="lunch_break"){
-     if ($slack_id != "") {
+elseif($action == "lunch_break"){
+    if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
          $PARAMS['user_id'] = $loggedUserInfo['id'];
          $res = HR::lunchBreak($PARAMS);
         
+         
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
     
     
 }
-elseif($action="get_lunch_break_detail"){
-     if ($slack_id != "") {
+elseif($action == "get_lunch_break_detail"){
+    if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-         $PARAMS['user_id'] = $loggedUserInfo['id'];
-         $res = HR::lunchBreakDetail($PARAMS);
+         $userid = $loggedUserInfo['id'];
+         if(!isset($PARAMS['month']) && $PARAMS['month'] ==""){
+             $month = date('Y-m');
+         }
+         else{
+             $month = $PARAMS['month'];
+         }
+         $res = HR::getlunchBreakDetail($userid,$month);
         
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
     
     
+}elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+
+        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+            $res['data']['message'] = 'You are not authorise for this operation';
+        } else {
+            
+            if(isset($PARAMS['date']) && $PARAMS['date'] !=""){
+                $date = $PARAMS['date'];
+            }
+            else{
+                $date = date("Y-m-d");
+            }
+           
+            $res = HR::getAllUserLunchDetail($date);
+         }
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
 }
 
 
