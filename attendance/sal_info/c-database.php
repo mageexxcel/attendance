@@ -105,6 +105,7 @@ class Database {
                     }
                 }
                 $insertQuery = $insertQuery."($fieldsString) VALUES ($fieldsValString)";
+                
                 if( self::DBrunQuery($insertQuery) ){
                     $return = true;
                 }
@@ -129,6 +130,8 @@ class Database {
                 }
                 
                 $updateQuery = $updateQuery."$updateFieldString WHERE $whereField='$whereFieldVal' ";
+                
+                
                 if( self::DBrunQuery($updateQuery) ){
                     $return = true;
                 }

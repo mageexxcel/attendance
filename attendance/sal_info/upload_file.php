@@ -6,8 +6,6 @@ and send slack notification on success to employee.
 
 error_reporting(0);
 ini_set('display_errors', 0);
-
-
 require_once ("c-salary.php");
 
 if (isset($_POST['submit'])) {
@@ -52,11 +50,10 @@ $url = '';
                 die;
             }
 //upload file to demo folder on server.
-            if (!move_uploaded_file($file_tmp, "demo/" . $file_name)) {
+            if (!move_uploaded_file($file_tmp, "payslip/" . $file_name)) {
                 echo "File Not uploaded";
                 die;
             }
-
 //save file to google drive
             $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
 
@@ -67,19 +64,34 @@ $url = '';
 
             $url = $save['url'];
         }
-        $arr[$k] = "<iframe src='$url'></iframe>";
+       $l =  "<iframe src='$url'></iframe>";
     }
 
+  
+    
+    
        if($url !=""){
 
      $db = Database::getInstance();
         $mysqli = $db->getConnection();
 
-          $qu = "INSERT INTO user_document_detail (user_Id, document_type, link_1) VALUES ($userid, '$doc_type', '')";
-          $run = Salary::DBrunQuery($qu);
-          $id = mysqli_insert_id($mysqli);
-          $res = Salary::DBupdateBySingleWhere('user_document_detail', $whereField, $id, $arr);
-
+         $ins = array(
+            'user_Id' => $userid,
+            'document_type' => $doc_type,
+            'link_1' => $l
+        );
+         
+         try{
+             $run = Salary::DBinsertQuery('user_document_detail', $ins); 
+         }
+         catch (Exception $e){
+            echo "error occured while inserting data";
+            die;
+         }
+         
+       
+        
+          
     $message = $userInfo_name . ". document $doc_type was uploaded on HR System. Please visit your document section or below link to view it \n $url";
 
     $slackMessageStatus = Salary::sendSlackMessageToUser($slack_usercid = "hr", $message); // send salck message to hr channel

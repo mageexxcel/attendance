@@ -1760,7 +1760,7 @@ class Salary extends DATABASE {
             //include url variables file.
             include "config.php";
 //'demo' folder from where file to be fetched.
-            $testfile = 'demo/' . $filename;
+            $testfile = 'payslip/' . $filename;
             if (!file_exists($testfile)) {
                 $fh = fopen($testfile, 'w');
                 fseek($fh, 1024 * 1024);

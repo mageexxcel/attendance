@@ -2238,7 +2238,7 @@ class HR extends DATABASE {
                     $diff = abs(strtotime($date) - strtotime($row['lunch_start']));
                     $diff =  floor($diff / 60);
                     $r_error = 0;
-                    $r_message = "Your lunch end time :".date("jS M h:i A",strtotime($date))."/n Total time = $diff min";
+                    $r_message = "Your lunch end time :".date("jS M h:i A",strtotime($date))." Total time = $diff min";
                     
                 } else {
                     $r_error = 1;
