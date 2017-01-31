@@ -2240,6 +2240,15 @@ class HR extends DATABASE {
                     $r_error = 0;
                     $r_message = "Your lunch end time :".date("jS M h:i A",strtotime($date))." Total time = $diff min";
                     
+                    if ($diff > 40){
+                        $userInfo = self::getUserInfo($userid);
+                        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+                        
+                        $msg = "Keep your lunch under 40 minutes, or time will be added in compensation";
+                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
+                    }
+                    
+                    
                 } else {
                     $r_error = 1;
                     $r_message = "Lunch end date already inserted i.e : ".date("jS M h:i A",strtotime($row['lunch_end']));
@@ -2267,6 +2276,8 @@ class HR extends DATABASE {
             foreach($rows as $val){
                 $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
                 $diff =  floor($diff / 60);
+                $val['lunch_start'] = date("jS M h:i A",strtotime($val['lunch_start']));
+                $val['lunch_end'] = date("jS M h:i A",strtotime($val['lunch_end']));
                 $val['total_time'] = $diff;
                 $arr[] = $val;
             }
@@ -2290,15 +2301,14 @@ class HR extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-      
+        $month = date("Y-m", strtotime($date));
+     
         $q = "SELECT * FROM lunch_break where lunch_start like '%$date%'";
         $r = self::DBrunQuery($q);
         $run = self::DBfetchRows($r);
         
-        
-        
         $arr = array();
-        $arr[] = date("jS M Y",  strtotime($date)); 
+       // $arr[] = date("jS M Y",  strtotime($date)); 
         foreach($run as $val){
             
             $q2 = "select name from user_profile where user_Id=".$val['user_Id'];
@@ -2307,19 +2317,18 @@ class HR extends DATABASE {
             $name = $row['name'];
             $val['name'] = $name;
             
-            if( $val['lunch_end'] !="" && $val['lunch_start'] !=""){
+            $average= self::lunchBreakAvg($val['user_Id'],$month);
+            
+             if( $val['lunch_end'] !="" && $val['lunch_start'] !=""){
                $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
                 $diff =  floor($diff / 60); 
-                $arr[]= $name .":". $diff ." min | ". date("h:i A",strtotime($val['lunch_start']))." - ".date("h:i A",strtotime($val['lunch_end']));
+                $arr[]= $name .":". $diff ." min | ". date("h:i A",strtotime($val['lunch_start']))." - ".date("h:i A",strtotime($val['lunch_end']))." | Average time ".$average." min";
             }
             else{
                $diff = "Lunch end time missing"; 
-               $arr[]= $name .":". $diff ." | ". $val['lunch_start']." - ".$val['lunch_end'];
+               $arr[]= $name .":". $diff ." | ". $val['lunch_start']." - ".$val['lunch_end']." | Average time ".$average." min";
             }
             
-            
-            
-         
         }
        
         if(sizeof($arr) > 0){
@@ -2339,6 +2348,29 @@ class HR extends DATABASE {
         
         
     }
+    
+    public static function lunchBreakAvg($user_id,$month){
+       
+        $q = "SELECT * FROM lunch_break where lunch_start like '%$month%' AND user_Id=$user_id";
+        $r = self::DBrunQuery($q);
+        $row = self::DBfetchRows($r);
+       
+        $arr = array();
+        
+        foreach($row as $val){
+           if( $val['lunch_end'] !="" && $val['lunch_start'] !=""){
+               $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
+                $diff =  floor($diff / 60); 
+                $arr[] = $diff;
+            }
+            
+        }
+        $average = abs(array_sum($arr)/sizeof($arr));
+        
+        return $average;
+        
+    }
+    
 
 }
 
