@@ -183,6 +183,7 @@ class HR extends DATABASE {
         }
         // slack users 
         $slackUsersList = self::getSlackUsersList();
+        
 
         if (sizeof($slackUsersList) > 0) {
             foreach ($newRows as $key => $pp) {
@@ -191,6 +192,7 @@ class HR extends DATABASE {
                 foreach ($slackUsersList as $sl) {
                     if ($sl['profile']['email'] == $pp_work_email) {
                         $newRows[$key]['slack_profile'] = $sl['profile'];
+                        $newRows[$key]['slack_channel_id'] = $sl['slack_channel_id'];
                         $slack_id = $sl['id'];
                         $q = "SELECT * FROM user_profile where user_Id = $userid ";
 
@@ -2199,6 +2201,9 @@ class HR extends DATABASE {
     }
 
     public static function lunchBreak($data) {
+        
+        
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2209,7 +2214,11 @@ class HR extends DATABASE {
             'user_Id' => $userid,
             'lunch_start' => $date,
         );
-
+                
+        $userInfo = self::getUserInfo($userid);
+        $name = $userInfo['name'];
+        
+        
         if ($data['lunch'] == "lunch_start") {
             $q1 = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run1 = self::DBrunQuery($q1);
@@ -2239,15 +2248,16 @@ class HR extends DATABASE {
                     $diff =  floor($diff / 60);
                     $r_error = 0;
                     $r_message = "Your lunch end time :".date("jS M h:i A",strtotime($date))." Total time = $diff min";
-                    
+                    $hr_msg = "$name !  lunch start time:".date("jS M h:i A",strtotime($row['lunch_start']))." lunch end time: ".date("jS M h:i A",strtotime($date))." \nTotal time = $diff min";
+                 
                     if ($diff > 40){
-                        $userInfo = self::getUserInfo($userid);
+                      
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
                         
-                        $msg = "Keep your lunch under 40 minutes, or time will be added in compensation";
+                        $msg = "Hi $name! Keep your lunch under 40 minutes, or time will be added in compensation";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
-                    
+                    $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
                     
                 } else {
                     $r_error = 1;
