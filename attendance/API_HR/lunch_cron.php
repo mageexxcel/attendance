@@ -12,6 +12,7 @@ define("weekoff", "Sunday");
 
 $res = HR::getEnabledUsersList();
 
+
 $array = array();
 $current_date = date("Y-m-d");
 //$current_date = "2017-01-12";
@@ -35,6 +36,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
 foreach ($res as $val) {
 $userid = $val['user_Id'];
+$name = $val['name'];
+$slack_channel_id = $val['slack_channel_id'];
     $status = lunch_status($userid, $prev_workdate);
 
     if ($status == 0) {
@@ -51,8 +54,15 @@ $userid = $val['user_Id'];
             
             try{
              $insert = "INSERT INTO lunch_break (user_Id, lunch_start, lunch_end, type) VALUES ($userid, '$lunch_start', '$lunch_end', 1)";    
-            echo $insert."<br>";
+            
              $run = Database::DBrunQuery($insert);  
+             
+             $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on ". date("jS M ",strtotime($prev_workdate)). ", so assumed 45min";
+             
+             HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+            // HR::sendSlackMessageToUser("hr", $hr_msg);
+             
+             
             }
            catch(Exception $e){
                
