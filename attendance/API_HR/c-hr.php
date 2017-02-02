@@ -183,7 +183,7 @@ class HR extends DATABASE {
         }
         // slack users 
         $slackUsersList = self::getSlackUsersList();
-        
+
 
         if (sizeof($slackUsersList) > 0) {
             foreach ($newRows as $key => $pp) {
@@ -2201,9 +2201,9 @@ class HR extends DATABASE {
     }
 
     public static function lunchBreak($data) {
-        
-        
-        
+
+
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2214,26 +2214,25 @@ class HR extends DATABASE {
             'user_Id' => $userid,
             'lunch_start' => $date,
         );
-                
+
         $userInfo = self::getUserInfo($userid);
         $name = $userInfo['name'];
-        
-        
+
+
         if ($data['lunch'] == "lunch_start") {
             $q1 = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run1 = self::DBrunQuery($q1);
             $row1 = self::DBfetchRow($run1);
-            
+
             if (empty($row1)) {
                 self::DBinsertQuery('lunch_break', $ins);
                 $r_error = 0;
-                $r_message = "Your lunch start time : ".date("jS M h:i A",strtotime($date));
+                $r_message = "Your lunch start time : " . date("jS M h:i A", strtotime($date));
             } else {
                 $r_error = 1;
-                $r_message = "Lunch start date already Inserted i.e : ".date("jS M h:i A",strtotime($row1['lunch_start']));
+                $r_message = "Lunch start date already Inserted i.e : " . date("jS M h:i A", strtotime($row1['lunch_start']));
             }
-            
-        } elseif($data['lunch']== "lunch_end") {
+        } elseif ($data['lunch'] == "lunch_end") {
             $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$d%'";
             $run = self::DBrunQuery($q);
             $row = self::DBfetchRow($run);
@@ -2241,27 +2240,26 @@ class HR extends DATABASE {
                 $r_error = 0;
                 $r_message = "Please start your lunch time first";
             } else {
-                if($row['lunch_end'] == "") {
+                if ($row['lunch_end'] == "") {
                     $q2 = "UPDATE lunch_break SET lunch_end = '$date' where id =" . $row['id'];
                     $run2 = self::DBrunQuery($q2);
                     $diff = abs(strtotime($date) - strtotime($row['lunch_start']));
-                    $diff =  floor($diff / 60);
+                    $diff = floor($diff / 60);
                     $r_error = 0;
-                    $r_message = "Your lunch end time :".date("jS M h:i A",strtotime($date))." Total time = $diff min";
-                    $hr_msg = "$name !  lunch start time:".date("jS M h:i A",strtotime($row['lunch_start']))." lunch end time: ".date("jS M h:i A",strtotime($date))." \nTotal time = $diff min";
-                 
-                    if ($diff > 40){
-                      
+                    $r_message = "Your lunch end time :" . date("jS M h:i A", strtotime($date)) . " Total time = $diff min";
+                    $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
+
+                    if ($diff > 40) {
+
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-                        
+
                         $msg = "Hi $name! Keep your lunch under 40 minutes, or time will be added in compensation";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
                     $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
-                    
                 } else {
                     $r_error = 1;
-                    $r_message = "Lunch end date already inserted i.e : ".date("jS M h:i A",strtotime($row['lunch_end']));
+                    $r_message = "Lunch end date already inserted i.e : " . date("jS M h:i A", strtotime($row['lunch_end']));
                 }
             }
         }
@@ -2273,25 +2271,25 @@ class HR extends DATABASE {
     }
 
     public static function getlunchBreakDetail($userid, $month) {
-        
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
+
         $q = "SELECT * FROM lunch_break where user_Id = $userid AND lunch_start like '%$month%' ";
         try {
             $run = self::DBrunQuery($q);
             $rows = self::DBfetchRows($run);
             $arr = array();
-            foreach($rows as $val){
+            foreach ($rows as $val) {
                 $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
-                $diff =  floor($diff / 60);
-                $val['lunch_start'] = date("jS M h:i A",strtotime($val['lunch_start']));
-                $val['lunch_end'] = date("jS M h:i A",strtotime($val['lunch_end']));
+                $diff = floor($diff / 60);
+                $val['lunch_start'] = date("jS M h:i A", strtotime($val['lunch_start']));
+                $val['lunch_end'] = date("jS M h:i A", strtotime($val['lunch_end']));
                 $val['total_time'] = $diff;
                 $arr[] = $val;
             }
-            
+
             $r_error = 0;
             $r_data = $arr;
         } catch (Exception $e) {
@@ -2305,82 +2303,98 @@ class HR extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-    
-    public static function getAllUserLunchDetail($date){
-        
+
+    public static function getAllUserLunchDetail($date) {
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $month = date("Y-m", strtotime($date));
-     
+
         $q = "SELECT * FROM lunch_break where lunch_start like '%$date%'";
         $r = self::DBrunQuery($q);
         $run = self::DBfetchRows($r);
-        
+
         $arr = array();
-       // $arr[] = date("jS M Y",  strtotime($date)); 
-        foreach($run as $val){
-            
-            $q2 = "select name from user_profile where user_Id=".$val['user_Id'];
-            $r2 = self::DBrunQuery($q2);
-            $row = self::DBfetchRow($r2);
-            $name = $row['name'];
-            $val['name'] = $name;
-            
-            $average= self::lunchBreakAvg($val['user_Id'],$month);
-            
-             if( $val['lunch_end'] !="" && $val['lunch_start'] !=""){
-               $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
-                $diff =  floor($diff / 60); 
-                $arr[]= $name .":". $diff ." min | ". date("h:i A",strtotime($val['lunch_start']))." - ".date("h:i A",strtotime($val['lunch_end']))." | Average time ".$average." min";
+       $arr[] = date("jS M Y",  strtotime($date)); 
+
+        if (sizeof($run) > 0) {
+            foreach ($run as $val) {
+
+                $q2 = "select name from user_profile where user_Id=" . $val['user_Id'];
+                $r2 = self::DBrunQuery($q2);
+                $row = self::DBfetchRow($r2);
+                $name = $row['name'];
+                $val['name'] = $name;
+
+                $average = self::lunchBreakAvg($val['user_Id'], $month);
+
+                if ($val['lunch_end'] != "" && $val['lunch_start'] != "") {
+                    $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
+                    $diff = floor($diff / 60);
+                    $arr[] = $name . ":" . $diff . " min | " . date("h:i A", strtotime($val['lunch_start'])) . " - " . date("h:i A", strtotime($val['lunch_end'])) . " | Average time " . $average . " min";
+                } else {
+                    $diff = "Lunch end time missing";
+                    $arr[] = $name . ":" . $diff . " | " . $val['lunch_start'] . " - " . $val['lunch_end'] . " | Average time " . $average . " min";
+                }
             }
-            else{
-               $diff = "Lunch end time missing"; 
-               $arr[]= $name .":". $diff ." | ". $val['lunch_start']." - ".$val['lunch_end']." | Average time ".$average." min";
+
+            if (sizeof($arr) > 0) {
+                $r_error = 0;
+                $r_data = $arr;
+            } else {
+                $r_error = 1;
+                $r_message = "Some error occured";
             }
-            
+        } else {
+           
+            $prev_date = self::getPreviousWorkDate($date);
+            $prev_workdate = date("Y-m-d", strtotime($prev_date));
+            return self::getAllUserLunchDetail($prev_workdate);
         }
-       
-        if(sizeof($arr) > 0){
-            $r_error = 0;
-            $r_data = $arr;
-        }
-        else{
-            $r_error = 1;
-            $r_message = "Some error occured";
-        }
-        
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
         $return['data'] = $r_data;
         return $return;
-        
-        
     }
-    
-    public static function lunchBreakAvg($user_id,$month){
-       
+
+    public static function lunchBreakAvg($user_id, $month) {
+
         $q = "SELECT * FROM lunch_break where lunch_start like '%$month%' AND user_Id=$user_id";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRows($r);
-       
+
         $arr = array();
-        
-        foreach($row as $val){
-           if( $val['lunch_end'] !="" && $val['lunch_start'] !=""){
-               $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
-                $diff =  floor($diff / 60); 
+
+        foreach ($row as $val) {
+            if ($val['lunch_end'] != "" && $val['lunch_start'] != "") {
+                $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
+                $diff = floor($diff / 60);
                 $arr[] = $diff;
             }
-            
         }
-        $average = abs(array_sum($arr)/sizeof($arr));
-        
+        $average = floor(array_sum($arr) / sizeof($arr));
+
         return $average;
-        
     }
-    
+
+    public static function getPreviousWorkDate($date) {
+        
+        $prev_date = date("m-d-Y", strtotime($date . '-1 day'));
+
+        $c = "select * from attendance where timing like '%$prev_date%'";
+        $r = self::DBrunQuery($c);
+        $row = self::DBfetchRows($r);
+
+        if (sizeof($row) > 0) {
+            $status = str_replace("-", "/", $prev_date);
+            return $status;
+        } else {
+            $date = date("Y-m-d", strtotime($date . '-1 day'));
+            return self::getPreviousWorkDate($date);
+        }
+    }
 
 }
 
