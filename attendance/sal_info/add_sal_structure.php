@@ -10,6 +10,7 @@ require_once ("c-salary.php");
 
 // constants define
 define("admin", "admin");
+define("hr", "hr");
 
 $result = array(
     'data' => array(),
@@ -148,7 +149,7 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
 
     $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
     $userinfo = Salary::getUserDetail($tuserid); // get user details
-    if ($userinfo['type'] != admin) {
+    if ($userinfo['type'] != admin && $userinfo['type'] != hr) {
         $result['error'][] = "You are not authorise to update salary information";
     }
     if (sizeof($result['error']) <= 0) {
