@@ -107,6 +107,7 @@ class Salary extends DATABASE {
             $arr['id'] = $val['user_Id'];
             $arr['name'] = $val['name'];
             $arr['email'] = $val['work_email'];
+            $arr['date_of_joining'] = $val['dateofjoining'];
             $arr['type'] = strtolower($val['type']);
         }
         return $arr;

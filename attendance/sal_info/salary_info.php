@@ -24,13 +24,14 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
     }
 
 
-    $result['data']['salary_details'] = array();
+    
     $tuserid = Salary::getIdUsingToken($_GET['token']);
-    $userinfo = Salary::getUserDetail($tuserid);
-    if (sizeof($userinfo) <= 0) {
+    $loginuserinfo = Salary::getUserDetail($tuserid);
+    
+    if (sizeof($loginuserinfo) <= 0) {
         $result['error'][] = 'The given user id member not found';
     } else {
-        if ($userinfo['type'] == "admin") {
+        if ($loginuserinfo['type'] == "admin" || $loginuserinfo['type'] == "hr") {
             if (isset($_GET['user_id']) && $_GET['user_id'] != "") {
                 $userid = $_GET['user_id'];
                 $userinfo = Salary::getUserDetail($userid);
@@ -42,6 +43,7 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                     $res = Salary::getSalaryInfo($userid);
                     $res4 = Salary::getUserPayslipInfo($userid);
                     $i = 0;
+                    $result['data']['salary_details'] = array();
                     foreach ($res as $val) {
                         $res2 = Salary::getSalaryDetail($val['id']);
                         $res2['test'] = $val;
@@ -51,13 +53,27 @@ if (isset($_GET['token']) && $_GET['token'] != "") {
                     }
                     $result['data']['holding_details'] = $res3;
                     $result['data']['payslip_history'] = $res4;
+                    
+                    $joining_date = $result['data']['date_of_joining'];
+                    $current_date = date("Y-m-d");
+                    $endDate = strtotime($current_date);
+                    $startDate = strtotime($joining_date);
+                    
+                    $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
+                    
+                    if($loginuserinfo['type'] == "hr" &&  $numberOfMonths > 8 ){
+                        
+                        $result['data'] = array();
+                        $result['data']['message'] = "You are not authorise to view this user data";
+                     }
+                     
                 }
             } else {
                 $result['error'][] = 'The given user id number';
             }
         } else {
 
-            $result['data'] = $userinfo;
+            $result['data'] = $loginuserinfo;
             $res = Salary::getSalaryInfo($tuserid);
             $res3 = Salary::getHoldingDetail($tuserid);
             $res4 = Salary::getUserPayslipInfo($tuserid);
