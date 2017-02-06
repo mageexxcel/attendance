@@ -1662,8 +1662,8 @@ class Salary extends DATABASE {
                 $message.= "Arrears = " . $arr['arrear'] . "\n";
                 $message.= "Misc Deduction = " . $arr['misc_deduction'] . "\n";
                 $message.= "Bonus = " . $arr['bonus'] . "\n";
-                $message.= "Total earning = " . $arr['total_deduction'] . "\n";
-                $message.= "Total deduction = " . $arr['total_earning'] . "\n";
+                $message.= "Total earning = " . $arr['total_earning'] . "\n";
+                $message.= "Total deduction = " . $arr['total_deduction'] . "\n";
                 $message.= "Net Salary = " . $arr['net_salary'] . "\n";
             }
             if ($arr == 0) {
