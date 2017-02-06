@@ -1776,6 +1776,9 @@ class HR extends DATABASE {
         if (isset($PARAMS['workemail']) && $PARAMS['workemail'] != '') {
             $f_workemail = trim($PARAMS['workemail']);
         }
+         if (isset($PARAMS['training_month']) && $PARAMS['training_month'] != '') {
+            $f_training_month = trim($PARAMS['training_month']);
+        }
 
 
 
@@ -1813,8 +1816,9 @@ class HR extends DATABASE {
                     $r_message = "Errosr occurs while inserting user";
                 } else {
                     //user is inserted
-                    $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email ) VALUES 
-                        ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail' ) ";
+                    $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES 
+                        ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
+                    
                     self::DBrunQuery($q1);
                     $r_error = 0;
                     $r_message = "Employee added Successfully !!";
