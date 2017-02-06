@@ -2139,7 +2139,13 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-
+        
+        $q = "select * from config where type='email_detail'";
+        $r = self::DBrunQuery($q);
+        $row = self::DBfetchRow($r);
+        
+        $detail = json_decode($row['value'], true);
+            
         include "phpmailer/PHPMailerAutoload.php";
 
 
@@ -2161,12 +2167,12 @@ class Salary extends DATABASE {
                 $mail->isSMTP();
                 $mail->SMTPDebug = 0;
                 $mail->Debugoutput = 'html';
-                $mail->Host = 'smtp.sendgrid.net';
-                $mail->Port = 587;
+                $mail->Host = $detail['host'];
+                $mail->Port = $detail['post'];
                 $mail->SMTPSecure = 'tls';
                 $mail->SMTPAuth = true;
-                $mail->Username = "apikey"; //sender email address 
-                $mail->Password = "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"; // sender email password
+                $mail->Username = $detail['username']; //sender email address 
+                $mail->Password = $detail['password']; // sender email password
                 $mail->setFrom('hr@excellencetechnologies.in', 'Excellence Technologies'); // name and email address from which email is send
                 $mail->addReplyTo('hr@excellencetechnologies.in', 'Excellence Technologies'); // reply email address with name 
                 $mail->addAddress($work_email, $name); // name and address to whome mail is to send
