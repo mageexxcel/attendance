@@ -1666,17 +1666,18 @@ class Salary extends DATABASE {
                 $message.= "Total deduction = " . $arr['total_deduction'] . "\n";
                 $message.= "Net Salary = " . $arr['net_salary'] . "\n";
             }
+            $query = "UPDATE payslips SET status= 0 WHERE id = " . $row['id'];
             if ($arr == 0) {
                 $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
+                 $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             }
-
+          self::DBrunQuery($query);   
             //Please visit below link \n $google_drive_file_url
 
 
 
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
-            $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
-            self::DBrunQuery($query);
+           
             $r_error = 0;
             $r_message = "Slack Message send to employee";
             $r_data['message'] = $r_message;
