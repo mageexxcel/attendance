@@ -1754,6 +1754,7 @@ class HR extends DATABASE {
         $r_data = array();
 
         $f_dateofjoining = $f_name = $f_jobtitle = $f_gender = $f_dob = $f_username = $f_workemail = "";
+        $f_training_month = 0;
 
         if (isset($PARAMS['dateofjoining']) && $PARAMS['dateofjoining'] != '') {
             $f_dateofjoining = trim($PARAMS['dateofjoining']);
@@ -1779,6 +1780,7 @@ class HR extends DATABASE {
          if (isset($PARAMS['training_month']) && $PARAMS['training_month'] != '') {
             $f_training_month = trim($PARAMS['training_month']);
         }
+        
 
 
 
