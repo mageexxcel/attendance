@@ -67,7 +67,7 @@ $time_table2 = array();
 $time_table2 = get_time_array($de, $link);
 
 $time_table = array();
-$query2 = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' ";
+$query2 = "SELECT users.*,user_profile.name,user_profile.work_email,user_profile.slack_msg FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' ";
 $w = mysqli_query($link, $query2) or die(mysqli_error($link));
 while ($s = mysqli_fetch_assoc($w)) {
     $sid = $s['id'];
@@ -79,6 +79,7 @@ while ($s = mysqli_fetch_assoc($w)) {
         $time_table[$sid]['timing'][] = "";
     }
 }
+
 
 if (isset($sendmessage) && $sendmessage == 1) {
     $qv = "SELECT * from admin";
@@ -228,6 +229,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
     if (sizeof($time_table) > 0) {
         foreach ($time_table as $value) {
             $e = $value['work_email'];
+            $slack_msg = $value['slack_msg'];
             $id = $value['id'];
             foreach ($fresult['members'] as $foo) {
                 $msg = "";
@@ -280,11 +282,11 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     if (current($value['timing']) == "") {
                         $d1 = 0;
                     }
-                    if ($d1 == 0) {
+                    if ($d1 == 0 && $slack_msg == 0) {
                         $msg = $msg . "You have not entered time Today ";
                         send_slack_message($c_id, $token, $msg);
                     }
-                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
+                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM') && $slack_msg == 0) {
                         $s = getLateComingInfo($e, $link);
                         if ($s != "") {
                             $msg = $msg . $s;
@@ -292,7 +294,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
                               send_slack_message($c_id, $token, $msg, $hr6);
-                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
+                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30') && $slack_msg == 0) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                             send_slack_message($c_id, $token, $msg);
                     }

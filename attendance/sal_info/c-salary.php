@@ -1065,7 +1065,8 @@ class Salary extends DATABASE {
     }
 
 // get employee particular month and year  salary details 
-    public function getUserManagePayslip($userid, $year, $month) {
+    public function getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month) {
+        
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -1171,6 +1172,15 @@ class Salary extends DATABASE {
         $final_spl = $salary_detail['Special_Allowance'] - ( $pday_spl * $unpaid_leave);
         $final_arrear = $salary_detail['Arrears'] - ( $pday_arrear * $unpaid_leave);
         //end final salary calculation 
+        // calculate arrear of previous month
+        if (!empty($extra_arrear) && !empty($arrear_for_month)) {
+            
+           $user_salaryinfo['extra_arrear'] = $extra_arrear;
+           $user_salaryinfo['arrear_for_month'] = $arrear_for_month;
+           $final_arrear = self::checkArrearDetail($userid, $year, $month, $extra_arrear, $arrear_for_month);
+        }
+        
+
         //array formation with values to display on hr system.
         $salary_detail['Basic'] = round($final_basic, 2);
         $salary_detail['HRA'] = round($final_hra, 2);
@@ -1669,15 +1679,15 @@ class Salary extends DATABASE {
             $query = "UPDATE payslips SET status= 0 WHERE id = " . $row['id'];
             if ($arr == 0) {
                 $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
-                 $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
+                $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
             }
-          self::DBrunQuery($query);   
+            self::DBrunQuery($query);
             //Please visit below link \n $google_drive_file_url
 
 
 
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
-           
+
             $r_error = 0;
             $r_message = "Slack Message send to employee";
             $r_data['message'] = $r_message;
@@ -2140,13 +2150,13 @@ class Salary extends DATABASE {
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-        
+
         $q = "select * from config where type='email_detail'";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRow($r);
-        
+
         $detail = json_decode($row['value'], true);
-            
+
         include "phpmailer/PHPMailerAutoload.php";
 
 
@@ -2541,6 +2551,60 @@ class Salary extends DATABASE {
             return $result;
         }
     }
+    
+    public static function checkArrearDetail($userid, $year, $month, $extra_arrear, $arrear_for_month) {
+            $prev_month = $month;
+            $prev_year = $year;
+
+            $prev_arr = array();
+            
+           
+
+            for ($i = 1; $i <= $arrear_for_month; $i++) {
+                $arr = array();
+                $prev_month = $prev_month - 1;
+                if ($prev_month <= 0) {
+                    $prev_year = date('Y', strtotime($year . ' -1 year'));
+                    $prev_month = 12;
+                }
+
+
+                $mon = self::getTotalWorkingDays($prev_year, $prev_month);
+                $c1 = self::getUserMonthLeaves($userid, $prev_year, $prev_month);
+
+
+                $c1_month_leave = 0;
+                // get employee total no. of leave taken in month
+                if (sizeof($c1) > 0) {
+                    foreach ($c1 as $v) {
+                        if ($v['status'] == "Approved" || $v['status'] == "approved" || $v['status'] == "Pending" || $v['status'] == "pending") {
+                            if ($v['no_of_days'] < 1) {
+                                $c1_month_leave = $c1_month_leave + $v['no_of_days'];
+                            } else {
+                                $c1_month_leave = $c1_month_leave + 1;
+                            }
+                        }
+                    }
+                }
+               $arr['year'] =  $prev_year;
+               $arr['month'] =  $prev_month;
+               $arr['total_working_days'] =  $mon;
+               $arr['leave'] = $c1_month_leave;
+               $arr['arrear_amount'] = $extra_arrear - ($extra_arrear/$mon)*$c1_month_leave;
+               $prev_arr[]= $arr;
+                
+            }
+            
+            $arrear = 0;
+            
+            foreach($prev_arr as $fin){
+                $arrear = $arrear + $fin['arrear_amount'];
+            }
+            
+            return $arrear;
+            
+           
+    }      
 
 }
 
