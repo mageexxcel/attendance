@@ -3,8 +3,7 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
-//$q = "DELETE from config where type='team_list'";
-//$r = Database::DBrunQuery($q);
+
 // constants define
 define("admin", "admin");
 define("hr", "hr");
@@ -24,17 +23,17 @@ $res = array(
 $token = $PARAMS['token'];
 $validateToken = Salary::validateToken($token);
 if ($validateToken == false) {
-  header("HTTP/1.1 401 Unauthorized");
-  exit;
- }
+    header("HTTP/1.1 401 Unauthorized");
+    exit;
+}
 $user_id = Salary::getIdUsingToken($token);
-	
+
 $userinfo = Salary::getUserDetail($user_id);
 
- if ($userinfo['type'] == admin ){
-      $data = "admin";
-      Salary::setAdmin($data); 
-  }
+if ($userinfo['type'] == admin) {
+    $data = "admin";
+    Salary::setAdmin($data);
+}
 
 // action to get employee profile detail
 if ($action == 'get_user_profile_detail') {
@@ -203,15 +202,26 @@ if ($action == 'create_employee_salary_slip') {
 }
 // aciton to get employee last month salary details 
 if ($action == 'get_user_manage_payslips_data') {
+
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+
+            $extra_arrear = "";
+            $arrear_for_month = "";
             $userid = $PARAMS['user_id'];
             if (isset($PARAMS['year'])) {
                 $year = $PARAMS['year'];
             }
             if (isset($PARAMS['month'])) {
                 $month = $PARAMS['month'];
-            } else {
+            }
+            if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
+                $extra_arrear = $PARAMS['extra_arrear'];
+                $arrear_for_month = $PARAMS['arrear_for_month'];
+            } 
+            
+            if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
+
                 $currentYear = date("Y");
                 $currentMonth = date("F");
                 if ($currentMonth == "January") {
@@ -222,7 +232,8 @@ if ($action == 'get_user_manage_payslips_data') {
                     $month = date('m', strtotime($currentMonth . 'last month'));
                 }
             }
-            $res = Salary::getUserManagePayslip($userid, $year, $month);
+
+            $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
         } else {
             $res['data']['message'] = 'Please give user_id ';
         }
@@ -431,9 +442,8 @@ if ($action == 'save_policy_document') {
 
 // action to get policy document.
 if ($action == 'get_policy_document') {
-    
-        $res = Salary::getPolicyDocument();
-    
+
+    $res = Salary::getPolicyDocument();
 }
 
 // action to get user policy document.
@@ -453,17 +463,16 @@ if ($action == 'update_user_policy_document') {
 if ($action == 'add_team_list') {
     if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
 
-       $PARAMS['value'] = json_encode($PARAMS['value']);
+        $PARAMS['value'] = json_encode($PARAMS['value']);
 
-       $res = Salary::saveTeamList($PARAMS);
+        $res = Salary::saveTeamList($PARAMS);
     } else {
         $res['data']['message'] = 'You are not authorise person for this operation ';
     }
 }
 if ($action == 'get_team_list') {
-   
+
     $res = Salary::getTeamList();
-  
 }
 
 // action to get all employee details on basis of team
