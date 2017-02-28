@@ -1,9 +1,11 @@
 <?php
+
 error_reporting(0);
 ini_set('display_errors', 0);
 
 
 require_once 'c-hr.php';
+
 
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -14,13 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
+
 if (isset($_GET['userslack_id'])) {
     $PARAMS = $_GET;
 }
-
 $action = false;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
@@ -31,6 +32,7 @@ if (isset($PARAMS['userslack_id'])) {
 }
 
 $token = $PARAMS['token'];
+
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
     $token = $PARAMS['token'];
@@ -46,11 +48,10 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
             $mins = $time_diff / 60;
             if ($mins > 60) { //if 60 mins more
                 $validateToken = false;
-            }
-            else{
+            } else {
                 if (strtolower($tokenInfo['role']) == 'admin') {
-                     $data = "admin";
-                     HR::setAdmin($data); 
+                    $data = "admin";
+                    HR::setAdmin($data);
                 }
             }
         } else {
@@ -152,9 +153,9 @@ if ($action == 'login') {
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
         $day_status = $PARAMS['day_status'];
-        
-       
-        
+
+
+
         $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
     } else {
         $res['error'] = 1;
@@ -174,7 +175,7 @@ if ($action == 'login') {
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
         $day_status = $PARAMS['day_status'];
-        
+
         $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
     }
 } else if ($action == 'get_all_leaves') {
@@ -394,7 +395,7 @@ if ($action == 'login') {
         if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
             $res['data']['message'] = 'You are not authorise for this operation';
         } else {
-            $PARAMS['role']= strtolower($loggedUserInfo['role']);
+            $PARAMS['role'] = strtolower($loggedUserInfo['role']);
             if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
                 $res = HR::cancelAppliedLeave($PARAMS);
             } else {
@@ -418,7 +419,7 @@ if ($action == 'login') {
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
-}elseif ($action == 'get_user_current_status') { // action to cancel employee applied leaves
+} elseif ($action == 'get_user_current_status') { // action to cancel employee applied leaves
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
 
@@ -426,61 +427,54 @@ if ($action == 'login') {
             $res['data']['message'] = 'You are not authorise for this operation';
         } else {
             $res = HR::getAllUserCurrentStatus();
-         }
+        }
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
-}
-elseif($action == "lunch_break"){
+} elseif ($action == "lunch_break") {
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-         $PARAMS['user_id'] = $loggedUserInfo['id'];
-         $res = HR::lunchBreak($PARAMS);
-        
-         
+        $PARAMS['user_id'] = $loggedUserInfo['id'];
+        $res = HR::lunchBreak($PARAMS);
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
-    
-    
-}
-elseif($action == "get_lunch_break_detail"){
+} elseif ($action == "get_lunch_break_detail") {
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-         $userid = $loggedUserInfo['id'];
-         if(!isset($PARAMS['month']) && $PARAMS['month'] ==""){
-             $month = date('Y-m');
-         }
-         else{
-             $month = $PARAMS['month'];
-         }
-         $res = HR::getlunchBreakDetail($userid,$month);
-        
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-    
-    
-}elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-
-        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-            $res['data']['message'] = 'You are not authorise for this operation';
+        $userid = $loggedUserInfo['id'];
+        if (!isset($PARAMS['month']) && $PARAMS['month'] == "") {
+            $month = date('Y-m');
         } else {
-            
-            if(isset($PARAMS['date']) && $PARAMS['date'] !=""){
-                $date = $PARAMS['date'];
-            }
-            else{
-                $date = date("Y-m-d");
-            }
-           
-            $res = HR::getAllUserLunchDetail($date);
-         }
+            $month = $PARAMS['month'];
+        }
+        $res = HR::getlunchBreakDetail($userid, $month);
     } else {
         $res['data']['message'] = 'Please give user_slackid ';
     }
+} elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
+    
+    if ($slack_id == "") {
+        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+    }
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
+   
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['data']['message'] = 'You are not authorise for this operation';
+    } else {
+
+        if (isset($PARAMS['date']) && $PARAMS['date'] != "") {
+            $date = $PARAMS['date'];
+        } else {
+            $date = date("Y-m-d");
+        }
+
+        $res = HR::getAllUserLunchDetail($date);
+    }
+
 }
 
 
