@@ -1777,10 +1777,10 @@ class HR extends DATABASE {
         if (isset($PARAMS['workemail']) && $PARAMS['workemail'] != '') {
             $f_workemail = trim($PARAMS['workemail']);
         }
-         if (isset($PARAMS['training_month']) && $PARAMS['training_month'] != '') {
+        if (isset($PARAMS['training_month']) && $PARAMS['training_month'] != '') {
             $f_training_month = trim($PARAMS['training_month']);
         }
-        
+
 
 
 
@@ -1820,7 +1820,7 @@ class HR extends DATABASE {
                     //user is inserted
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES 
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
-                    
+
                     self::DBrunQuery($q1);
                     $r_error = 0;
                     $r_message = "Employee added Successfully !!";
@@ -2311,53 +2311,49 @@ class HR extends DATABASE {
     }
 
     public static function getAllUserLunchDetail($date) {
-
+      
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $month = date("Y-m", strtotime($date));
 
-        $q = "SELECT * FROM lunch_break where lunch_start like '%$date%'";
-        $r = self::DBrunQuery($q);
-        $run = self::DBfetchRows($r);
-
         $arr = array();
-       $arr[] = date("jS M Y",  strtotime($date)); 
+        $dt = date("jS M Y", strtotime($date));
+        $employee_list = self::getEnabledUsersList();
+        foreach ($employee_list as $val) {
+            $fill = array();
+            $name = $val['name'];
+            $q = "SELECT * FROM lunch_break where lunch_start like '%$date%' AND user_Id =" . $val['user_Id'];
+            $r = self::DBrunQuery($q);
+            $run = self::DBfetchRow($r);
+            $average = self::lunchBreakAvg($val['user_Id'], $month);
+            
+            if (sizeof($run) > 0) {
 
-        if (sizeof($run) > 0) {
-            foreach ($run as $val) {
-
-                $q2 = "select name from user_profile where user_Id=" . $val['user_Id'];
-                $r2 = self::DBrunQuery($q2);
-                $row = self::DBfetchRow($r2);
-                $name = $row['name'];
-                $val['name'] = $name;
-
-                $average = self::lunchBreakAvg($val['user_Id'], $month);
-
-                if ($val['lunch_end'] != "" && $val['lunch_start'] != "") {
-                    $diff = abs(strtotime($val['lunch_end']) - strtotime($val['lunch_start']));
-                    $diff = floor($diff / 60);
-                    $arr[] = $name . ":" . $diff . " min | " . date("h:i A", strtotime($val['lunch_start'])) . " - " . date("h:i A", strtotime($val['lunch_end'])) . " | Average time " . $average . " min";
-                } else {
-                    $diff = "Lunch end time missing";
-                    $arr[] = $name . ":" . $diff . " | " . $val['lunch_start'] . " - " . $val['lunch_end'] . " | Average time " . $average . " min";
-                }
-            }
-
-            if (sizeof($arr) > 0) {
-                $r_error = 0;
-                $r_data = $arr;
+                $fill['name'] = $name;
+                $fill['lunch_start'] = $run['lunch_start'];
+                $fill['lunch_end'] = $run['lunch_end'];
+                $fill['diff'] = $diff;
+                $fill['average'] = $average;
+                $arr[$date][] = $fill;
             } else {
-                $r_error = 1;
-                $r_message = "Some error occured";
+                $fill['name'] = $name;
+                $fill['lunch_start'] = 0;
+                $fill['lunch_end'] = 0;
+                $fill['diff'] = 0;
+                $fill['average'] = $average;
+                $arr[$date][] = $fill;
             }
-        } else {
-           
-            $prev_date = self::getPreviousWorkDate($date);
-            $prev_workdate = date("Y-m-d", strtotime($prev_date));
-            return self::getAllUserLunchDetail($prev_workdate);
         }
+        
+        if (sizeof($arr) > 0) {
+            $r_error = 0;
+            $r_data = $arr;
+        } elseif (sizeof($arr) <= 0) {
+            $r_error = 1;
+            $r_message = "Some error occured";
+        }
+
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -2370,7 +2366,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM lunch_break where lunch_start like '%$month%' AND user_Id=$user_id";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRows($r);
-
+         $average = 0;
         $arr = array();
 
         foreach ($row as $val) {
@@ -2380,13 +2376,15 @@ class HR extends DATABASE {
                 $arr[] = $diff;
             }
         }
-        $average = floor(array_sum($arr) / sizeof($arr));
+        if(sizeof($arr) > 0){
+             $average = floor(array_sum($arr) / sizeof($arr));
+        }
 
         return $average;
     }
 
     public static function getPreviousWorkDate($date) {
-        
+
         $prev_date = date("m-d-Y", strtotime($date . '-1 day'));
 
         $c = "select * from attendance where timing like '%$prev_date%'";

@@ -451,7 +451,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $ph_no = "";
             $image = "";
             $email_adr = $vol['profile']['email'];
-            if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
+            if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && $vol['is_bot'] == false && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
 //          $fr[] = $vol; 
                 $f = $vol['id'];
                 $update_msg = "Hi " . $vol['name'] . "\n You have not added your \n";
