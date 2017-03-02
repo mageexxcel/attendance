@@ -292,7 +292,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'admin') {
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
