@@ -1686,7 +1686,7 @@ class Salary extends DATABASE {
                 $email_dta['email'][] = $email_data;
                 self::sendEmail($email_dta);
                 
-                $message = "Hi " . $userInfo_name . ". \nYou can view your salary details on your email";
+                $message = "Hi " . $userInfo_name . ". \nPlease check you office email for salary details";
                 $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             }
             $query = "UPDATE payslips SET status= 0 WHERE id = " . $row['id'];
