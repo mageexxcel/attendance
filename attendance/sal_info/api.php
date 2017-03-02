@@ -226,11 +226,13 @@ if ($action == 'get_user_manage_payslips_data') {
                 $currentMonth = date("F");
                 if ($currentMonth == "January") {
                     $year = date('Y', strtotime($currentYear . ' -1 year'));
-                    $month = date('m', strtotime($currentMonth . 'last month'));
+                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
                 } else {
                     $year = $currentYear;
-                    $month = date('m', strtotime($currentMonth . 'last month'));
+                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
+                    
                 }
+               
             }
 
             $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
