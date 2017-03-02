@@ -1637,7 +1637,7 @@ class Salary extends DATABASE {
 
         $db = self::getInstance();
         $mysqli = $db->getConnection();
-
+        $email_data = array();
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -1659,34 +1659,54 @@ class Salary extends DATABASE {
                     $slack_userChannelid = $v['id'];
                 }
             }
+            
+            $email_data['email_id'] = $userInfo['work_email'];
+                $email_data['name'] = $userInfo_name;
+                $email_data['subject'] = "Payslip detail for month $month_name";
+                
+            
             if ($arr != 0) {
-                $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Details: \n";
-                $message.= "Total Working Days = " . $arr['total_working_days'] . "\n";
-                $message.= "Days Present = " . $arr['days_present'] . "\n";
-                $message.= "Paid Leave Taken = " . $arr['paid_leaves'] . "\n";
-                $message.= "Leave Without Pay = " . $arr['unpaid_leaves'] . "\n";
-                $message.= "Total leave taken = " . $arr['total_leave_taken'] . "\n";
-                $message.= "Allocated Leave = " . $arr['allocated_leaves'] . "\n";
-                $message.= "Previous month leave  balance = " . $arr['leave_balance'] . "\n";
-                $message.= "Final leave balance = " . $arr['final_leave_balance'] . "\n";
-                $message.= "Arrears = " . $arr['arrear'] . "\n";
-                $message.= "Misc Deduction = " . $arr['misc_deduction'] . "\n";
-                $message.= "Bonus = " . $arr['bonus'] . "\n";
-                $message.= "Total earning = " . $arr['total_earning'] . "\n";
-                $message.= "Total deduction = " . $arr['total_deduction'] . "\n";
-                $message.= "Net Salary = " . $arr['net_salary'] . "\n";
+                $message1 = "Hi <b>" . $userInfo_name . "</b>.<br>Your salary slip is created for month of $month_name. Details: <br>";
+                $message1.= "Total Working Days = " . $arr['total_working_days'] . "<br>";
+                $message1.= "Days Present = " . $arr['days_present'] . "<br>";
+                $message1.= "Paid Leave Taken = " . $arr['paid_leaves'] . "<br>";
+                $message1.= "Leave Without Pay = " . $arr['unpaid_leaves'] . "<br>";
+                $message1.= "Total leave taken = " . $arr['total_leave_taken'] . "<br>";
+                $message1.= "Allocated Leave = " . $arr['allocated_leaves'] . "<br>";
+                $message1.= "Previous month leave  balance = " . $arr['leave_balance'] . "<br>";
+                $message1.= "Final leave balance = " . $arr['final_leave_balance'] . "<br>";
+                $message1.= "Arrears = " . $arr['arrear'] . "<br>";
+                $message1.= "Misc Deduction = " . $arr['misc_deduction'] . "<br>";
+                $message1.= "Bonus = " . $arr['bonus'] . "<br>";
+                $message1.= "Total earning = " . $arr['total_earning'] . "<br>";
+                $message1.= "Total deduction = " . $arr['total_deduction'] . "<br>";
+                $message1.= "Net Salary = " . $arr['net_salary'] . "<br>";
+                
+                $email_data['body'] = $message1;
+                $email_dta['email'][] = $email_data;
+                self::sendEmail($email_dta);
+                
+                $message = "Hi " . $userInfo_name . ". \nYou can view your salary details on your email";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
             }
             $query = "UPDATE payslips SET status= 0 WHERE id = " . $row['id'];
             if ($arr == 0) {
-                $message = "Hi " . $userInfo_name . ". \nYour salary slip is created for month of $month_name. Please visit below link \n $google_drive_file_url";
+                $message = "Hi <b>" . $userInfo_name . "</b>. <br>Your salary slip is created for month of $month_name. Please visit below link <br> $google_drive_file_url";
+               
+                $email_data['body'] = $message;
+                $email_dta['email'][] = $email_data;
+                self::sendEmail($email_dta);
+                
                 $query = "UPDATE payslips SET status= 1 WHERE id = " . $row['id'];
+                
+                
             }
             self::DBrunQuery($query);
             //Please visit below link \n $google_drive_file_url
 
 
 
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message notification to employee
+            
 
             $r_error = 0;
             $r_message = "Slack Message send to employee";
@@ -1912,18 +1932,18 @@ class Salary extends DATABASE {
             $val['no_of_days_join'] = $interval->y . " years, " . $interval->m . " months, " . $interval->d . " days ";
             $val['holdin_amt_detail'] = $holding;
             $row2[] = $val;
-            $q = "SELECT * FROM user_profile where user_Id = $userid ";
-
-            $runQuery = self::DBrunQuery($q);
-            $row = self::DBfetchRow($runQuery);
-            $no_of_rows = self::DBnumRows($runQuery);
-
-            if ($no_of_rows > 0) {
-                if ($row['slack_id'] == "") {
-                    $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
-                    $runQuery2 = self::DBrunQuery($q2);
-                }
-            }
+//            $q = "SELECT * FROM user_profile where user_Id = $userid ";
+//
+//            $runQuery = self::DBrunQuery($q);
+//            $row = self::DBfetchRow($runQuery);
+//            $no_of_rows = self::DBnumRows($runQuery);
+//
+//            if ($no_of_rows > 0) {
+//                if ($row['slack_id'] == "") {
+//                    $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
+//                    $runQuery2 = self::DBrunQuery($q2);
+//                }
+//            }
         }
         $return = array();
         $r_error = 0;
@@ -2162,6 +2182,7 @@ class Salary extends DATABASE {
 
         if (!empty($data['email'])) {
 
+            
             foreach ($data['email'] as $var) {
 
                 $work_email = $var['email_id'];
@@ -2173,7 +2194,7 @@ class Salary extends DATABASE {
                 $cc = $var['cc_detail'];
                 $bcc = $var['bcc_detail'];
                 $file_upload = $var['upload_file'];
-
+                
                 $mail = new PHPMailer;
                 $mail->isSMTP();
                 $mail->SMTPDebug = 0;
@@ -2215,6 +2236,7 @@ class Salary extends DATABASE {
             }
         }
 
+        
         if ($row3 != "Message sent") {
 
             $r_error = 1;
