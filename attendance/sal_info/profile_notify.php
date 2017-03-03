@@ -74,9 +74,9 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
 // profile update check
             if ($val['updated_on'] == "") {
                 if ($message != "") {
-                    $message = $message . "\n Your Profile details are not Updated. Please update it on your hr profile asap\n ";
+                    $message = $message . "\n Your Profile details are not Updated. Please update your details on hr system asap\n ";
                 } else {
-                    $message = "Hey $username !!  \n Your Profile details are not Updated. Please update it on your hr profile asap\n ";
+                    $message = "Hey $username !!  \n Your Profile details are not Updated. Please update your details on hr system asap\n ";
                 }
             }
 
