@@ -112,7 +112,7 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
                     $random_keys=array_rand($birthday,1);
                     
                     $message3 = "<@".$slackinfo['id']."|".$slackinfo['name']."> ".$birthday[$random_keys].":birthday: :blush:";
-                    $slackMessageStatus = Salary::sendSlackMessageToUser('general', $message3);   // send slack notification to employee
+                 //   $slackMessageStatus = Salary::sendSlackMessageToUser('general', $message3);   // send slack notification to employee
                 }
             }
         }
