@@ -2208,8 +2208,6 @@ class HR extends DATABASE {
 
     public static function lunchBreak($data) {
 
-
-
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2255,11 +2253,34 @@ class HR extends DATABASE {
                     $r_message = "Your lunch end time :" . date("jS M h:i A", strtotime($date)) . " Total time = $diff min";
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
-                    if ($diff > 40) {
 
-                        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+                    if ($diff > 35) {
 
-                        $msg = "Hi $name! Keep your lunch under 40 minutes, or time will be added in compensation";
+                        $extra = $diff - 35;
+                       
+                        $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
+                        
+                        $run3 = self::DBrunQuery($q3);
+                        $row3 = self::DBfetchRow($run3);
+                        
+                         if (empty($row3)) {
+                             $increase_time = date("H:i", strtotime('09:00 + '.$extra.' minute'));
+                             $ins2 = array(
+                                'user_Id' => $userid,
+                                'date' => $d,
+                                'working_hours' => $increase_time,
+                                'reason' => 'lunch time exceed'
+                            );
+                               self::DBinsertQuery('user_working_hours', $ins2);
+                        } else {
+                           $increase_time = date("H:i", strtotime($row3['working_hours'].'+'.$extra.' minute'));
+                            
+                            $q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
+                            $run4 = self::DBrunQuery($q4);
+                        }
+                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                        $msg = "Hi $name! Your working hours has been increased to $increase_time min as you have exceeded lunch time. \nKeep your lunch under 35 minutes\n In case of any issue contact HR";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
                     $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
@@ -2311,7 +2332,7 @@ class HR extends DATABASE {
     }
 
     public static function getAllUserLunchDetail($date) {
-      
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2327,7 +2348,7 @@ class HR extends DATABASE {
             $r = self::DBrunQuery($q);
             $run = self::DBfetchRow($r);
             $average = self::lunchBreakAvg($val['user_Id'], $month);
-            
+
             if (sizeof($run) > 0) {
 
                 $fill['name'] = $name;
@@ -2345,7 +2366,7 @@ class HR extends DATABASE {
                 $arr[$date][] = $fill;
             }
         }
-        
+
         if (sizeof($arr) > 0) {
             $r_error = 0;
             $r_data = $arr;
@@ -2366,7 +2387,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM lunch_break where lunch_start like '%$month%' AND user_Id=$user_id";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRows($r);
-         $average = 0;
+        $average = 0;
         $arr = array();
 
         foreach ($row as $val) {
@@ -2376,8 +2397,8 @@ class HR extends DATABASE {
                 $arr[] = $diff;
             }
         }
-        if(sizeof($arr) > 0){
-             $average = floor(array_sum($arr) / sizeof($arr));
+        if (sizeof($arr) > 0) {
+            $average = floor(array_sum($arr) / sizeof($arr));
         }
 
         return $average;
