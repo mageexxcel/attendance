@@ -2275,8 +2275,8 @@ class HR extends DATABASE {
                         } else {
                             $increase_time = date("H:i", strtotime($row3['working_hours'] . '+' . $extra . ' minute'));
 
-                            $q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
-                            $run4 = self::DBrunQuery($q4);
+                            //$q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
+                          //  $run4 = self::DBrunQuery($q4);
                         }
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
