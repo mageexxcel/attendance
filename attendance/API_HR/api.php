@@ -6,7 +6,6 @@ ini_set('display_errors', 0);
 
 require_once 'c-hr.php';
 
-
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
@@ -15,12 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
     exit(0);
 }
-
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
-if (isset($_GET['userslack_id'])) {
-    $PARAMS = $_GET;
+if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats') {
+$PARAMS = $_GET;
 }
 $action = false;
 $slack_id = "";
@@ -31,10 +29,22 @@ if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
 
+$res = array(
+    'error' => 1,
+    'data' => array()
+);
+
+if ($action == 'updatebandwidthstats') {
+$data = $PARAMS['data'];
+ $res = HR::updateBandwidthStats($data);
+
+}
+
+
 $token = $PARAMS['token'];
 
 //validate a token
-if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
+if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' ) {
     $token = $PARAMS['token'];
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
@@ -64,11 +74,6 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "") {
         exit;
     }
 }
-
-$res = array(
-    'error' => 1,
-    'data' => array()
-);
 
 if ($action == 'login') {
     $username = $password = '';
@@ -453,7 +458,6 @@ if ($action == 'login') {
         $res['data']['message'] = 'Please give user_slackid ';
     }
 } elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
-    
     if ($slack_id == "") {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -461,7 +465,7 @@ if ($action == 'login') {
     if ($slack_id != "") {
         $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
     }
-   
+
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['data']['message'] = 'You are not authorise for this operation';
     } else {
@@ -474,8 +478,47 @@ if ($action == 'login') {
 
         $res = HR::getAllUserLunchDetail($date);
     }
-
 }
+else if ($action == 'add_office_machine') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+       $res = HR::addOfficeMachine($PARAMS);
+    }
+}
+else if ($action == 'assign_user_machine') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+      $res = HR::assignUserMachine($PARAMS);
+    }
+}
+else if ($action == 'get_machines_detail') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+      $res = HR::getAllMachineDetail();
+    }
+}
+
 
 
 

@@ -2208,8 +2208,6 @@ class HR extends DATABASE {
 
     public static function lunchBreak($data) {
 
-
-
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2255,11 +2253,34 @@ class HR extends DATABASE {
                     $r_message = "Your lunch end time :" . date("jS M h:i A", strtotime($date)) . " Total time = $diff min";
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
-                    if ($diff > 40) {
 
+                    if ($diff > 35) {
+
+                        $extra = $diff - 35;
+
+                        $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
+
+                        $run3 = self::DBrunQuery($q3);
+                        $row3 = self::DBfetchRow($run3);
+
+                        if (empty($row3)) {
+                            $increase_time = date("H:i", strtotime('09:00 + ' . $extra . ' minute'));
+                            $ins2 = array(
+                                'user_Id' => $userid,
+                                'date' => $d,
+                                'working_hours' => $increase_time,
+                                'reason' => 'lunch time exceed'
+                            );
+                            self::DBinsertQuery('user_working_hours', $ins2);
+                        } else {
+                            $increase_time = date("H:i", strtotime($row3['working_hours'] . '+' . $extra . ' minute'));
+
+                            $q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
+                            $run4 = self::DBrunQuery($q4);
+                        }
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                        $msg = "Hi $name! Keep your lunch under 40 minutes, or time will be added in compensation";
+                        $msg = "Hi $name! Your working hours has been increased to $increase_time min as you have exceeded lunch time. \nKeep your lunch under 35 minutes\n In case of any issue contact HR";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
                     $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
@@ -2311,7 +2332,7 @@ class HR extends DATABASE {
     }
 
     public static function getAllUserLunchDetail($date) {
-      
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -2327,7 +2348,7 @@ class HR extends DATABASE {
             $r = self::DBrunQuery($q);
             $run = self::DBfetchRow($r);
             $average = self::lunchBreakAvg($val['user_Id'], $month);
-            
+
             if (sizeof($run) > 0) {
 
                 $fill['name'] = $name;
@@ -2345,7 +2366,7 @@ class HR extends DATABASE {
                 $arr[$date][] = $fill;
             }
         }
-        
+
         if (sizeof($arr) > 0) {
             $r_error = 0;
             $r_data = $arr;
@@ -2366,7 +2387,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM lunch_break where lunch_start like '%$month%' AND user_Id=$user_id";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRows($r);
-         $average = 0;
+        $average = 0;
         $arr = array();
 
         foreach ($row as $val) {
@@ -2376,8 +2397,8 @@ class HR extends DATABASE {
                 $arr[] = $diff;
             }
         }
-        if(sizeof($arr) > 0){
-             $average = floor(array_sum($arr) / sizeof($arr));
+        if (sizeof($arr) > 0) {
+            $average = floor(array_sum($arr) / sizeof($arr));
         }
 
         return $average;
@@ -2399,6 +2420,142 @@ class HR extends DATABASE {
             return self::getPreviousWorkDate($date);
         }
     }
+
+    public static function updateBandwidthStats($data) {
+
+        $r_error = 1;
+        $r_message = "";
+
+        $data_array = json_decode($data, true);
+        $mac = "";
+        $date = "";
+        $rx = "";
+        $tx = "";
+        $total = "";
+        if (sizeof($data_array) > 0) {
+            $mac = $data_array['mac'];
+            if (isset($data_array['dayWise']) && sizeof($data_array['dayWise']) > 0) {
+
+                foreach ($data_array['dayWise'] as $val) {
+
+                    $date = $val['date'];
+                    $rx = $val['rx'];
+                    $tx = $val['tx'];
+                    $total = $val['total'];
+                    $q = "select * from bandwidth_stats where mac = '$mac' AND date = '$date'";
+                    $run = self::DBrunQuery($q);
+                    $row = self::DBfetchRow($run);
+                    if (sizeof($row) > 0) {
+                        $q2 = "UPDATE bandwidth_stats SET rx = '$rx', tx='$tx', $total='$total' where mac = '$mac'";
+                    } else {
+                        $q2 = "INSERT INTO bandwidth_stats (mac,date,rx,tx,total) VALUES ('$mac','$date','$rx','$tx','$total')";
+                    }
+                    $run2 = self::DBrunQuery($q2);
+                }
+            }
+            $r_error = 0;
+            $r_message = "Data inserted successfully";
+        } else {
+            $r_error = 1;
+            $r_message = "Some error occured. Please try again";
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+
+    public static function addOfficeMachine($PARAMS) {
+        $r_error = 1;
+        $r_message = "";
+
+        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $comment = "";
+        if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
+            $m_type = trim($PARAMS['machine_type']);
+        }
+        if (isset($PARAMS['machine_name']) && $PARAMS['machine_name'] != '') {
+            $m_name = trim($PARAMS['machine_name']);
+        }
+        if (isset($PARAMS['machine_price']) && $PARAMS['machine_price'] != '') {
+            $m_price = trim($PARAMS['machine_price']);
+        }
+        if (isset($PARAMS['serial_no']) && $PARAMS['serial_no'] != '') {
+            $serial_no = trim($PARAMS['serial_no']);
+        }
+        if (isset($PARAMS['purchase_date']) && $PARAMS['purchase_date'] != '') {
+            $date_purchase = trim($PARAMS['purchase_date']);
+        }
+        if (isset($PARAMS['mac_address']) && $PARAMS['mac_address'] != '') {
+            $mac_addr = trim($PARAMS['mac_address']);
+        }
+        if (isset($PARAMS['operating_system']) && $PARAMS['operating_system'] != '') {
+            $os = trim($PARAMS['operating_system']);
+        }
+        if (isset($PARAMS['status']) && $PARAMS['status'] != '') {
+            $status = trim($PARAMS['status']);
+        }
+        if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
+            $comment = trim($PARAMS['comment']);
+        }
+
+        //check user name exists
+        $q = "select * from machines_list where mac_address='$mac_addr'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if ($row != false) {
+            $r_message = "Machine already exists!!";
+        } else {
+            $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment' ) ";
+            self::DBrunQuery($q);
+            $r_error = 0;
+            $r_message = "Machine added Successfully !!";
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+
+        return $return;
+    }
+
+    public static function assignUserMachine($PARAMS) {
+        $r_error = 1;
+        $r_message = "";
+
+        $machine_id = $PARAMS['machine_id'];
+        $userid = $PARAMS['user_id'];
+        $date = date("Y-m-d");
+        //check user name exists
+        $q = "select * from machines_user where machine_id ='$machine_id'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if ($row != false) {
+            $r_message = "Machine already assigned!!";
+        } else {
+            $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
+            self::DBrunQuery($q);
+            $r_error = 0;
+            $r_message = "Machine assigned Successfully !!";
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+
+        return $return;
+    }
+
+    public static function getAllMachineDetail() {
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $row;
+        return $return;
+    }
+
 
 }
 
