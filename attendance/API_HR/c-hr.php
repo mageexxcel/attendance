@@ -2254,9 +2254,9 @@ class HR extends DATABASE {
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
 
-                    if ($diff > 35) {
+                    if ($diff > 40) {
 
-                        $extra = $diff - 35;
+                        $extra = $diff - 40;
 
                         $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
 
@@ -2281,7 +2281,8 @@ class HR extends DATABASE {
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
                        // $msg = "Hi $name! Your working hours has been increased to $increase_time min as you have exceeded lunch time. \nKeep your lunch under 35 minutes\n In case of any issue contact HR";
-                       // $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
+                         $msg = "Hi $name! you have exceeded lunch time duration . \nKeep your lunch under 35 minutes";
+                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
                     $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
                 } else {
