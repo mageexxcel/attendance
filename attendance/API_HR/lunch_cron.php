@@ -47,7 +47,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
             if ($diff > 300) {
                 
-                $add = addUserWorkingHours($userid,$prev_workdate);
+             //   $add = addUserWorkingHours($userid,$prev_workdate);
                 
                 $lunch_start = $prev_workdate . " 13:25:01";
                 $lunch_end = $prev_workdate . " 14:25:01";
@@ -57,7 +57,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                     $run = Database::DBrunQuery($insert);
                     $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours /n In case of any issue contact HR";
 
-                    HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                   // HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
                     // HR::sendSlackMessageToUser("hr", $hr_msg);
                 } catch (Exception $e) {
 
@@ -68,7 +68,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         if (sizeof($status) > 0 && $status['lunch_end'] == "") {
            
             
-                $add = addUserWorkingHours($userid,$prev_workdate);
+             //   $add = addUserWorkingHours($userid,$prev_workdate);
                 $lunch_start = $prev_workdate . " 13:25:01";
                 $lunch_end = $prev_workdate . " 14:25:01";
 
@@ -78,7 +78,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                     $run = Database::DBrunQuery($insert);
                     $hr_msg = "Hi $name ! \n You forgot to put your lunch_exit timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours \n In case of any issue contact HR";
 
-                    HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                   // HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
                     // HR::sendSlackMessageToUser("hr", $hr_msg);
                 } catch (Exception $e) {
 
@@ -87,6 +87,66 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
            
         }
     }
+    
+    //bandwidth slack message.
+    
+       $q = "select * from bandwidth_stats";
+        $runQuery = Database::DBrunQuery($q);
+        $row = Database::DBfetchRows($runQuery);
+        $date = date("Y-m-d");
+        //$date = "2017-03-17";
+        $month = date("Y-m");
+        $current_month = date("F");
+        $arr = array();
+        $f1 = $f2 = 0;
+        foreach ($row as $val) {
+            $mac_address = $val['mac'];
+            if ($val['date'] == $date) {
+                $f1 = round($val['rx'], 2);
+                $f2 = round($val['tx'], 2);
+            }
+
+            if (array_key_exists($mac_address, $arr)) {
+                $arr[$mac_address]['rx_total'] = round($arr[$mac_address]['rx_total'] + $val['rx'], 2);
+                $arr[$mac_address]['tx_total'] = round($arr[$mac_address]['tx_total'] + $val['tx'], 2);
+                $arr[$mac_address]['rx_' . $date] = $f1;
+                $arr[$mac_address]['tx_' . $date] = $f2;
+                if (strpos($val['date'], $month) !== false) {
+                    $arr[$mac_address]['rx_month'] = round($arr[$mac_address]['rx_month'] + $val['rx'], 2);
+                    $arr[$mac_address]['tx_month'] = round($arr[$mac_address]['tx_month'] + $val['tx'], 2);
+                }
+            } else {
+                $arr[$mac_address]['rx_total'] = round($val['rx'], 2);
+                $arr[$mac_address]['tx_total'] = round($val['tx'], 2);
+                $arr[$mac_address]['rx_' . $date] = $f1;
+                $arr[$mac_address]['tx_' . $date] = $f2;
+                if (strpos($val['date'], $month) !== false) {
+                    $arr[$mac_address]['rx_month'] = round($val['rx'], 2);
+                    $arr[$mac_address]['tx_month'] = round($val['tx'], 2);
+                } else {
+                    $arr[$mac_address]['rx_month'] = $f1;
+                    $arr[$mac_address]['tx_month'] = $f2;
+                }
+            }
+        }
+
+       $arr = array_sort($arr, 'rx_total', SORT_DESC);
+       
+        if(sizeof($arr) > 0){
+               foreach($arr as $key => $v2){
+                   $message = "";
+                   $message.= $key ." - ".$v2['rx_total']. "Up / ".$v2['tx_total']."Down - ".($v2['rx_total']+$v2['tx_total'])."GB \n";
+                   $message.= $current_month." - ".$v2['rx_month']. "Up / ".$v2['tx_month']."Down - ".($v2['rx_month']+$v2['tx_month'])."GB \n";
+                   $message.= date("jS M", strtotime($date))." - ".$v2['rx_'.$date]. "Up / ".$v2['tx_'.$date]."Down - ".($v2['rx_'.$date]+$v2['tx_'.$date])."GB \n";
+                //  $slackMessageStatus = HR::sendSlackMessageToUser('hr', $message);
+                  $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+                   
+               }
+            }
+    
+    
+    
+    
 }
 
 function lunch_status($user_id, $date) {
@@ -141,3 +201,35 @@ function addUserWorkingHours($userid,$date) {
     return $result;
     
 }
+function array_sort($array, $on, $order = SORT_ASC) {
+        $new_array = array();
+        $sortable_array = array();
+
+        if (count($array) > 0) {
+            foreach ($array as $k => $v) {
+                if (is_array($v)) {
+                    foreach ($v as $k2 => $v2) {
+                        if ($k2 == $on) {
+                            $sortable_array[$k] = $v2;
+                        }
+                    }
+                } else {
+                    $sortable_array[$k] = $v;
+                }
+            }
+
+            switch ($order) {
+                case SORT_ASC:
+                    asort($sortable_array);
+                    break;
+                case SORT_DESC:
+                    arsort($sortable_array);
+                    break;
+            }
+           foreach ($sortable_array as $k => $v) {
+                $new_array[$k] = $array[$k];
+            }
+        }
+
+        return $new_array;
+    }
