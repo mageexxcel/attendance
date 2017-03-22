@@ -1,12 +1,9 @@
 <?php
 error_reporting(0);
 ini_set('display_errors', 0);
-define("weekoff", "Sunday");
+
 require_once ("c-hr.php");
 $date = date("Y-m-d");
-$a = HR::getAllMachineDetail();
-//echo "<pre>";
-//print_r($a);
 
 $db = Database::getInstance();
 $mysqli = $db->getConnection();
