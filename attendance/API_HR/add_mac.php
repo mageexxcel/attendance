@@ -40,7 +40,7 @@ if (isset($_POST['submit'])) {
         $mac_id = mysqli_insert_id($mysqli);
     }
     
-    $q2 = "select * from machines_user where mac_address='$mac_addr'";
+    $q2 = "select * from machines_user where machine_id='$mac_id'";
     $runQuery2 = Database::DBrunQuery($q2);
     $row2 = Database::DBfetchRow($runQuery2);
     
