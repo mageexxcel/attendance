@@ -2504,13 +2504,67 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         if ($row != false) {
-            $r_message = "Machine already exists!!";
+            $r_error = 1;
+            $r_message = "Mac Address already exist";
         } else {
             $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment' ) ";
             self::DBrunQuery($q);
             $r_error = 0;
             $r_message = "Machine added Successfully !!";
         }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+
+        return $return;
+    }
+        public static function UpdateOfficeMachine($PARAMS) {
+        $r_error = 1;
+        $r_message = "";
+
+        
+        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $comment = "";
+        if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
+            $m_type = trim($PARAMS['machine_type']);
+        }
+        if (isset($PARAMS['machine_name']) && $PARAMS['machine_name'] != '') {
+            $m_name = trim($PARAMS['machine_name']);
+        }
+        if (isset($PARAMS['machine_price']) && $PARAMS['machine_price'] != '') {
+            $m_price = trim($PARAMS['machine_price']);
+        }
+        if (isset($PARAMS['serial_no']) && $PARAMS['serial_no'] != '') {
+            $serial_no = trim($PARAMS['serial_no']);
+        }
+        if (isset($PARAMS['purchase_date']) && $PARAMS['purchase_date'] != '') {
+            $date_purchase = trim($PARAMS['purchase_date']);
+        }
+        if (isset($PARAMS['mac_address']) && $PARAMS['mac_address'] != '') {
+            $mac_addr = trim($PARAMS['mac_address']);
+        }
+        if (isset($PARAMS['operating_system']) && $PARAMS['operating_system'] != '') {
+            $os = trim($PARAMS['operating_system']);
+        }
+        if (isset($PARAMS['status']) && $PARAMS['status'] != '') {
+            $status = trim($PARAMS['status']);
+        }
+        if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
+            $comment = trim($PARAMS['comment']);
+        }
+
+        //check user name exists
+        $q = "select * from machines_list where id=".$PARAMS['id'];
+        
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+         if ($row != false) {
+           
+            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment' WHERE id =".$PARAMS['id'];
+            $runQuery = self::DBrunQuery($q1);
+            $r_error = 0;
+            $r_message = "Machine successfully updated";
+        } 
 
         $return = array();
         $return['error'] = $r_error;
@@ -2556,7 +2610,14 @@ class HR extends DATABASE {
         $return['data'] = $row;
         return $return;
     }
-
+    public static function removeMachineAssignToUser($data) {
+        $q = "Delete from machines_user where id=$data";
+        $runQuery = self::DBrunQuery($q);
+        $return = array();
+        $return['error'] = 0;
+        $return['message'] = "User removed successfully";
+        return $return;
+    }            
 
 }
 
