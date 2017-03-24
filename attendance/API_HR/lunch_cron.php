@@ -142,8 +142,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 if (sizeof($arr) > 0) {
                     foreach ($arr as $key => $v2) {
                         $assign_with_data.= $name . " - " . $key . "\n";
-                        $assign_with_data.= $current_month . " - " . Mb_or_Gb($v2['rx_month']) . " Up / " . Mb_or_Gb($v2['tx_month']) . " Down - " . Mb_or_Gb($v2['rx_month'] + $v2['tx_month'])."\n";
-                        $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['rx_' . $date]) . " Up / " . Mb_or_Gb($v2['tx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
+                        $assign_with_data.= $current_month . " - " . Mb_or_Gb($v2['tx_month']) . " Up / " . Mb_or_Gb($v2['rx_month']) . " Down - " . Mb_or_Gb($v2['rx_month'] + $v2['tx_month'])."\n";
+                        $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
 
                         // $slackMessageStatus = HR::sendSlackMessageToUser('hr', $message);
                         // $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
