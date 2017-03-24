@@ -2249,41 +2249,45 @@ class HR extends DATABASE {
                     $run2 = self::DBrunQuery($q2);
                     $diff = abs(strtotime($date) - strtotime($row['lunch_start']));
                     $diff = floor($diff / 60);
+                    
                     $r_error = 0;
                     $r_message = "Your lunch end time :" . date("jS M h:i A", strtotime($date)) . " Total time = $diff min";
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
+                    if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320) {
+                       
+                        if ($diff > 35) {
 
-                    if ($diff > 35) {
+                            $extra = $diff - 35;
 
-                        $extra = $diff - 35;
+                            $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
 
-                        $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
+                            $run3 = self::DBrunQuery($q3);
+                            $row3 = self::DBfetchRow($run3);
 
-                        $run3 = self::DBrunQuery($q3);
-                        $row3 = self::DBfetchRow($run3);
+                            if (empty($row3)) {
+                                $increase_time = date("H:i", strtotime('09:00 + ' . $extra . ' minute'));
+                                $ins2 = array(
+                                    'user_Id' => $userid,
+                                    'date' => $d,
+                                    'working_hours' => $increase_time,
+                                    'reason' => 'lunch time exceed'
+                                );
+                                self::DBinsertQuery('user_working_hours', $ins2);
+                            } else {
+                                $increase_time = date("H:i", strtotime($row3['working_hours'] . '+' . $extra . ' minute'));
 
-                        if (empty($row3)) {
-                            $increase_time = date("H:i", strtotime('09:00 + ' . $extra . ' minute'));
-                            $ins2 = array(
-                                'user_Id' => $userid,
-                                'date' => $d,
-                                'working_hours' => $increase_time,
-                                'reason' => 'lunch time exceed'
-                            );
-                            self::DBinsertQuery('user_working_hours', $ins2);
-                        } else {
-                            $increase_time = date("H:i", strtotime($row3['working_hours'] . '+' . $extra . ' minute'));
+                                $q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
+                                $run4 = self::DBrunQuery($q4);
+                            }
+                            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                            $q4 = "UPDATE user_working_hours SET working_hours = '$increase_time' where id =" . $row3['id'];
-                            $run4 = self::DBrunQuery($q4);
+                            $msg = "Hi $name! Your working hours has been increased to $increase_time min as you have exceeded lunch time. \nKeep your lunch under 35 minutes\n In case of any issue contact HR";
+                            //  $msg = "Hi $name! you have exceeded lunch time duration . \nKeep your lunch under 35 minutes";
+                            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                         }
-                        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-
-                        $msg = "Hi $name! Your working hours has been increased to $increase_time min as you have exceeded lunch time. \nKeep your lunch under 35 minutes\n In case of any issue contact HR";
-                       //  $msg = "Hi $name! you have exceeded lunch time duration . \nKeep your lunch under 35 minutes";
-                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $msg);
                     }
+
                     $slackMessageStatus = self::sendSlackMessageToUser("hr", $hr_msg);
                 } else {
                     $r_error = 1;
@@ -2519,11 +2523,12 @@ class HR extends DATABASE {
 
         return $return;
     }
-        public static function UpdateOfficeMachine($PARAMS) {
+
+    public static function UpdateOfficeMachine($PARAMS) {
         $r_error = 1;
         $r_message = "";
 
-        
+
         $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $comment = "";
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
@@ -2554,17 +2559,17 @@ class HR extends DATABASE {
         }
 
         //check user name exists
-        $q = "select * from machines_list where id=".$PARAMS['id'];
-        
+        $q = "select * from machines_list where id=" . $PARAMS['id'];
+
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
-         if ($row != false) {
-           
-            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment' WHERE id =".$PARAMS['id'];
+        if ($row != false) {
+
+            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment' WHERE id =" . $PARAMS['id'];
             $runQuery = self::DBrunQuery($q1);
             $r_error = 0;
             $r_message = "Machine successfully updated";
-        } 
+        }
 
         $return = array();
         $return['error'] = $r_error;
@@ -2610,6 +2615,7 @@ class HR extends DATABASE {
         $return['data'] = $row;
         return $return;
     }
+
     public static function removeMachineAssignToUser($data) {
         $q = "Delete from machines_user where id=$data";
         $runQuery = self::DBrunQuery($q);
@@ -2617,7 +2623,7 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $return['message'] = "User removed successfully";
         return $return;
-    }            
+    }
 
 }
 
