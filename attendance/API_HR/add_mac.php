@@ -46,8 +46,9 @@ if (isset($_POST['submit'])) {
     
     
     if ($row2 != false) {
-        $q5 = "UPDATE machines_user SET user_Id='$userid', assign_date='$date' WHERE id=".$row2['id'];
-        Database::DBrunQuery($q5);
+         echo "<p style='color:red'>Mac address already assigned</p>";
+       // $q5 = "UPDATE machines_user SET user_Id='$userid', assign_date='$date' WHERE id=".$row2['id'];
+        //Database::DBrunQuery($q5);
     } else {
         $q5 = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $mac_id, $userid, '$date') ";
         Database::DBrunQuery($q5);
