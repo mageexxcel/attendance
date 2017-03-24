@@ -2254,9 +2254,9 @@ class HR extends DATABASE {
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
 
-                    if ($diff > 40) {
+                    if ($diff > 35) {
 
-                        $extra = $diff - 40;
+                        $extra = $diff - 35;
 
                         $q3 = "select * from user_working_hours where date = '$d' AND user_Id = $userid";
 
