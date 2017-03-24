@@ -15,7 +15,6 @@ $res = HR::getEnabledUsersList();
 
 $array = array();
 $current_date = date("Y-m-d");
-//$current_date = "2017-01-12";
 
 $prev_workdate = date("Y-m-d", strtotime(getPreviousWorkDate($current_date)));
 
@@ -49,7 +48,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
             if ($diff > 300) {
 
-                //   $add = addUserWorkingHours($userid,$prev_workdate);
+                   $add = addUserWorkingHours($userid,$prev_workdate);
 
                 $lunch_start = $prev_workdate . " 13:25:01";
                 $lunch_end = $prev_workdate . " 14:25:01";
@@ -59,8 +58,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                       $run = Database::DBrunQuery($insert);
                     $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours /n In case of any issue contact HR";
 
-                    // HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
-                    // HR::sendSlackMessageToUser("hr", $hr_msg);
+                     HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                     HR::sendSlackMessageToUser("hr", $hr_msg);
                 } catch (Exception $e) {
 
                     echo "Error occured while inserting data";
@@ -70,7 +69,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         if (sizeof($status) > 0 && $status['lunch_end'] == "") {
 
 
-            //   $add = addUserWorkingHours($userid,$prev_workdate);
+               $add = addUserWorkingHours($userid,$prev_workdate);
             $lunch_start = $prev_workdate . " 13:25:01";
             $lunch_end = $prev_workdate . " 14:25:01";
 
@@ -80,8 +79,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 $run = Database::DBrunQuery($insert);
                 $hr_msg = "Hi $name ! \n You forgot to put your lunch_exit timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours \n In case of any issue contact HR";
 
-                // HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
-                // HR::sendSlackMessageToUser("hr", $hr_msg);
+                 HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                 HR::sendSlackMessageToUser("hr", $hr_msg);
             } catch (Exception $e) {
 
                 echo "Error occured while inserting data";
