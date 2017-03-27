@@ -135,6 +135,7 @@ $a = HR::getAllMachineDetail();
                     <th>#Sr No.</th>
                     <th>MAC_address</th>
                     <th>User Name</th>
+                    <th>Email address</th>
                     <th>Action</th>
                 </tr>
                <?php 
@@ -146,6 +147,7 @@ $a = HR::getAllMachineDetail();
                     <td><?php echo  $i?></td>
                     <td><?php echo  $val['mac_address']?></td>
                     <td><?php echo  $val['name']?></td>
+                    <td><?php echo  $val['work_email']?></td>
                     <td><a href="?edit=<?php echo  $val['id']?>"><button>Edit</button></a> / <a href="?delete=<?php echo  $val['id']?>"><button>Delete</button></a></td>
                 </tr>
                 <?php  
