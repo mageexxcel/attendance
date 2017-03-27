@@ -132,20 +132,24 @@ $a = HR::getAllMachineDetail();
         <div>
             <table>
                 <tr>
+                    <th>#Sr No.</th>
                     <th>MAC_address</th>
                     <th>User Name</th>
                     <th>Action</th>
                 </tr>
                <?php 
                if(isset($a['data']) && sizeof($a['data']) > 0){
+                   $i= 1;
                    foreach($a['data'] as $val){
                   ?> 
                 <tr>
+                    <td><?php echo  $i?></td>
                     <td><?php echo  $val['mac_address']?></td>
                     <td><?php echo  $val['name']?></td>
                     <td><a href="?edit=<?php echo  $val['id']?>"><button>Edit</button></a> / <a href="?delete=<?php echo  $val['id']?>"><button>Delete</button></a></td>
                 </tr>
-                <?php     
+                <?php  
+                $i++;
                    }
                }
                ?>

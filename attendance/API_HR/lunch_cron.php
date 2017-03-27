@@ -11,8 +11,6 @@ require_once ("c-hr.php");
 define("weekoff", "Sunday");
 
 $res = HR::getEnabledUsersList();
-
-
 $array = array();
 $current_date = date("Y-m-d");
 
@@ -35,61 +33,61 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
     $assign_with_no_data = "";
     foreach ($res as $val) {
         $userid = $val['user_Id'];
+
         $name = $val['name'];
         $slack_channel_id = $val['slack_channel_id'];
         $status = lunch_status($userid, $prev_workdate);
-        if($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320){
-          
-           if (sizeof($status) <= 0) {
+        if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320) {
 
-            $d = HR::getUserDayPunchingDetails($userid, $prev_workdate);
+            if (sizeof($status) <= 0) {
 
-            $diff = strtotime($d['out_time']) - strtotime($d['in_time']);
-            $diff = abs($diff / 60);
+                $d = HR::getUserDayPunchingDetails($userid, $prev_workdate);
 
-            if ($diff > 300) {
+                $diff = strtotime($d['out_time']) - strtotime($d['in_time']);
+                $diff = abs($diff / 60);
 
-                   $add = addUserWorkingHours($userid,$prev_workdate);
+                if ($diff > 300) {
 
+                    $add = addUserWorkingHours($userid, $prev_workdate);
+
+                    $lunch_start = $prev_workdate . " 13:25:01";
+                    $lunch_end = $prev_workdate . " 14:25:01";
+
+                    try {
+                        $insert = "INSERT INTO lunch_break (user_Id, lunch_start, lunch_end, type) VALUES ($userid, '$lunch_start', '$lunch_end', 1)";
+                        $run = Database::DBrunQuery($insert);
+                        $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours /n In case of any issue contact HR";
+
+                        HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                        HR::sendSlackMessageToUser("hr", $hr_msg);
+                    } catch (Exception $e) {
+
+                        echo "Error occured while inserting data";
+                    }
+                }
+            }
+            if (sizeof($status) > 0 && $status['lunch_end'] == "") {
+
+
+                $add = addUserWorkingHours($userid, $prev_workdate);
                 $lunch_start = $prev_workdate . " 13:25:01";
                 $lunch_end = $prev_workdate . " 14:25:01";
 
-                try {
-                      $insert = "INSERT INTO lunch_break (user_Id, lunch_start, lunch_end, type) VALUES ($userid, '$lunch_start', '$lunch_end', 1)";
-                      $run = Database::DBrunQuery($insert);
-                    $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours /n In case of any issue contact HR";
 
-                     HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
-                     HR::sendSlackMessageToUser("hr", $hr_msg);
+                try {
+                    $insert = "UPDATE lunch_break SET lunch_start = '$lunch_start',lunch_end = '$lunch_end', type='1' WHERE id =" . $status['id'];
+                    $run = Database::DBrunQuery($insert);
+                    $hr_msg = "Hi $name ! \n You forgot to put your lunch_exit timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours \n In case of any issue contact HR";
+
+                    HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
+                    HR::sendSlackMessageToUser("hr", $hr_msg);
                 } catch (Exception $e) {
 
                     echo "Error occured while inserting data";
                 }
             }
         }
-        if (sizeof($status) > 0 && $status['lunch_end'] == "") {
 
-
-               $add = addUserWorkingHours($userid,$prev_workdate);
-            $lunch_start = $prev_workdate . " 13:25:01";
-            $lunch_end = $prev_workdate . " 14:25:01";
-
-
-            try {
-                $insert = "UPDATE lunch_break SET lunch_start = '$lunch_start',lunch_end = '$lunch_end', type='1' WHERE id =" . $status['id'];
-                $run = Database::DBrunQuery($insert);
-                $hr_msg = "Hi $name ! \n You forgot to put your lunch_exit timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours \n In case of any issue contact HR";
-
-                 HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
-                 HR::sendSlackMessageToUser("hr", $hr_msg);
-            } catch (Exception $e) {
-
-                echo "Error occured while inserting data";
-            }
-        }
-            
-        }
-       
         $query = "select machines_list.*,machines_user.user_Id from machines_list left join machines_user on machines_list.id = machines_user.machine_id  where machines_user.user_Id = $userid";
         $runQuery = Database::DBrunQuery($query);
         $row = Database::DBfetchRow($runQuery);
@@ -142,11 +140,18 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 if (sizeof($arr) > 0) {
                     foreach ($arr as $key => $v2) {
                         $assign_with_data.= $name . " - " . $key . "\n";
-                        $assign_with_data.= $current_month . " - " . Mb_or_Gb($v2['tx_month']) . " Up / " . Mb_or_Gb($v2['rx_month']) . " Down - " . Mb_or_Gb($v2['rx_month'] + $v2['tx_month'])."\n";
-                        $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
-
-                        // $slackMessageStatus = HR::sendSlackMessageToUser('hr', $message);
-                        // $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+                        $assign_with_data.= $current_month . " - " . Mb_or_Gb($v2['tx_month']) . " Up / " . Mb_or_Gb($v2['rx_month']) . " Down - " . Mb_or_Gb($v2['rx_month'] + $v2['tx_month']) . "\n";
+                        if($v2['tx_' . $date] == 0){
+                           $a = getLasttwoDaysData($userid, $key, $current_date);
+                           if($a == 1 ){
+                             $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n";
+                             $assign_with_data.= " Last three days data not stored. Please check machine\n\n";
+                           }
+                           else{
+                               $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
+                           }
+                        }
+                       
                     }
                 }
             } else {
@@ -157,13 +162,15 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $not_assign[] = $name;
         }
     }
-    if(!empty($assign_with_data)){
+    if (!empty($assign_with_data)) {
         $title = "User consumed bandwidth list";
         $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_data);
+        
     }
-    if(!empty($assign_with_no_data)){
+    if (!empty($assign_with_no_data)) {
         $title = "User bandwidth not found list";
         $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_no_data);
+        
     }
     if (sizeof($not_assign) > 0) {
         $message = "";
@@ -172,7 +179,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $message.= $v . "\n";
         }
         if (!empty($message)) {
-             $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+            $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+           
         }
     }
 }
@@ -268,4 +276,37 @@ function Mb_or_Gb($data) {
     } else {
         return $data * 1000 . " Mb";
     }
+}
+
+function getLasttwoDaysData($userid, $mac_address, $date) {
+
+    $result = 0;
+    $i = 0;
+    $date2 = date("Y-m-d", strtotime(getPreviousWorkDate($date)));
+    $date3 = date("Y-m-d", strtotime(getPreviousWorkDate($date2)));
+    $arr = array($date, $date2, $date3);
+    $pr = HR::getUserMonthLeaves($userid, date("Y"), date("m"));
+
+    $q = "select * from bandwidth_stats where mac = '$mac' AND (date='$date' OR date='$date2' OR date='$date3')";
+    $run = Database::DBrunQuery($q);
+    $row = Database::DBfetchRows($run);
+    if (empty($row)) {
+        if (sizeof($pr) > 0) {
+            foreach ($arr as $v) {
+                $d = date("d", strtotime($v));
+            if (array_key_exists($d, $pr) && ($pr[$d]['status']=="Approved" || $pr[$d]['status']=="Pending")) {
+                    $i = $i + 1;
+                }
+            }
+            if ($i == 0) {
+                $result = 1;
+            }
+        } else {
+            $result = 1;
+        }
+    } else {
+        $result = 0;
+    }
+
+    return $result;
 }
