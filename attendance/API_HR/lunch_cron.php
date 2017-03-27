@@ -164,12 +164,12 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
     }
     if (!empty($assign_with_data)) {
         $title = "User consumed bandwidth list";
-        $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_data);
+        $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $assign_with_data);
         
     }
     if (!empty($assign_with_no_data)) {
         $title = "User bandwidth not found list";
-        $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_no_data);
+        $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $assign_with_no_data);
         
     }
     if (sizeof($not_assign) > 0) {
@@ -179,7 +179,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $message.= $v . "\n";
         }
         if (!empty($message)) {
-            $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+            $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $message);
            
         }
     }
