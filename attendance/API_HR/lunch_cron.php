@@ -11,8 +11,6 @@ require_once ("c-hr.php");
 define("weekoff", "Sunday");
 
 $res = HR::getEnabledUsersList();
-$pr = HR::getUserMonthLeaves($userid="343", date("Y"), date("m"));
-
 $array = array();
 $current_date = date("Y-m-d");
 
@@ -50,14 +48,14 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
                 if ($diff > 300) {
 
-                  //  $add = addUserWorkingHours($userid, $prev_workdate);
+                    $add = addUserWorkingHours($userid, $prev_workdate);
 
                     $lunch_start = $prev_workdate . " 13:25:01";
                     $lunch_end = $prev_workdate . " 14:25:01";
 
                     try {
                         $insert = "INSERT INTO lunch_break (user_Id, lunch_start, lunch_end, type) VALUES ($userid, '$lunch_start', '$lunch_end', 1)";
-                      //  $run = Database::DBrunQuery($insert);
+                        $run = Database::DBrunQuery($insert);
                         $hr_msg = "Hi $name ! \n You forgot to put your lunch timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours /n In case of any issue contact HR";
 
                         HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
@@ -71,14 +69,14 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             if (sizeof($status) > 0 && $status['lunch_end'] == "") {
 
 
-            //    $add = addUserWorkingHours($userid, $prev_workdate);
+                $add = addUserWorkingHours($userid, $prev_workdate);
                 $lunch_start = $prev_workdate . " 13:25:01";
                 $lunch_end = $prev_workdate . " 14:25:01";
 
 
                 try {
                     $insert = "UPDATE lunch_break SET lunch_start = '$lunch_start',lunch_end = '$lunch_end', type='1' WHERE id =" . $status['id'];
-                 //   $run = Database::DBrunQuery($insert);
+                    $run = Database::DBrunQuery($insert);
                     $hr_msg = "Hi $name ! \n You forgot to put your lunch_exit timing on " . date("jS M ", strtotime($prev_workdate)) . ", so assumed 1 hour \n Added 30 min on your working hours \n In case of any issue contact HR";
 
                     HR::sendSlackMessageToUser($slack_channel_id, $hr_msg);
@@ -166,13 +164,13 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
     }
     if (!empty($assign_with_data)) {
         $title = "User consumed bandwidth list";
-       // $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_data);
-         $slackMessageStatus = HR::sendSlackMessageToUser('hr', $assign_with_data);
+        $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_data);
+        
     }
     if (!empty($assign_with_no_data)) {
         $title = "User bandwidth not found list";
-        //$slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_no_data);
-        $slackMessageStatus = HR::sendSlackMessageToUser('hr', $assign_with_no_data);
+        $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $assign_with_no_data);
+        
     }
     if (sizeof($not_assign) > 0) {
         $message = "";
@@ -181,8 +179,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $message.= $v . "\n";
         }
         if (!empty($message)) {
-           // $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
-            $slackMessageStatus = HR::sendSlackMessageToUser('hr', $message);
+            $slackMessageStatus = HR::sendSlackMessageToUser('D1HUPANG6', $message);
+           
         }
     }
 }
