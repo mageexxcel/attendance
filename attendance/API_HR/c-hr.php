@@ -2606,7 +2606,7 @@ class HR extends DATABASE {
     }
 
     public static function getAllMachineDetail() {
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id";
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
 
