@@ -65,8 +65,11 @@ if(isset($_POST['update'])){
 if(isset($_GET['delete']) && !empty($_GET['delete'])){
     
    $data = $_GET['delete'];
-    $p = HR::removeMachineAssignToUser($data);
-echo "Assigned user removed";
+    $q = "Delete from machines_user where machine_id=$data";
+    echo $q;
+    $runQuery = Database::DBrunQuery($q);
+    header('location: add_mac.php');
+    exit();
 }
 if(isset($_GET['edit']) && !empty($_GET['edit'])){
     
@@ -140,6 +143,7 @@ $a = HR::getAllMachineDetail();
                 </tr>
                <?php 
                if(isset($a['data']) && sizeof($a['data']) > 0){
+                   
                    $i= 1;
                    foreach($a['data'] as $val){
                   ?> 
