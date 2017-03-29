@@ -15,7 +15,7 @@ if (isset($_POST['submit'])) {
     $email = trim($_POST['work_email']);
     
     
-    $q4 = "select * from user_profile where work_email='$email'";
+    $q4 = "SELECT users.*,user_profile.* from users LEFT JOIN user_profile on users.id = user_profile.user_Id WHERE users.status = 'Enabled' and user_profile.work_email='$email'";
     $runQuery4 = Database::DBrunQuery($q4);
     $row4 = Database::DBfetchRow($runQuery4);
     if ($row4 != false) {
