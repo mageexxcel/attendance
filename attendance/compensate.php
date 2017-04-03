@@ -480,6 +480,33 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 }
             }
         }
+        
+        $holy_msg1="";
+        $holy_msg2="";
+        $q4 = "Select * from holidays where date like '%$current_month%'";
+        $s4 = mysqli_query($link, $q4) or die(mysqli_error($link));
+        while ($row4 = mysqli_fetch_assoc($s4)) {
+            
+            $frm2 = date('Y-m-d', strtotime($row4['date'] . ' -2 day'));
+            $frm3 = date('Y-m-d', strtotime($row4['date'] . ' -1 day'));
+            if ($frm2 == $current_date) {
+                $holy_msg1 = $holy_msg1 .$row4['name']. " holiday is on ".date('dS M(D)', strtotime($row4['date']))."\n";
+               
+            }
+            if ($frm3 == $current_date) {
+                $holy_msg2 = $holy_msg2 .$row4['name']. " holiday is on ".date('dS M(D)', strtotime($row4['date']))."\n";
+                }
+        }
+        if($holy_msg1 !=""){
+           echo $holy_msg1; 
+           // send_slack_message($c_id = hr_system, $token, $holy_msg1);
+        }
+        if($holy_msg2 !=""){
+            echo $holy_msg2;
+           // send_slack_message($c_id = hr_system, $token, $holy_msg2);
+        }
+      
+        
 //---end update profile pic and phone no. slack message--- 
     }
 }
