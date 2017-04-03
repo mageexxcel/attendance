@@ -2249,13 +2249,13 @@ class HR extends DATABASE {
                     $run2 = self::DBrunQuery($q2);
                     $diff = abs(strtotime($date) - strtotime($row['lunch_start']));
                     $diff = floor($diff / 60);
-                    
+
                     $r_error = 0;
                     $r_message = "Your lunch end time :" . date("jS M h:i A", strtotime($date)) . " Total time = $diff min";
                     $hr_msg = "$name !  lunch start time:" . date("jS M h:i A", strtotime($row['lunch_start'])) . " lunch end time: " . date("jS M h:i A", strtotime($date)) . " \nTotal time = $diff min";
 
                     if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320) {
-                       
+
                         if ($diff > 35) {
 
                             $extra = $diff - 35;
@@ -2623,6 +2623,181 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $return['message'] = "User removed successfully";
         return $return;
+    }
+
+    public static function userCompensateTimedetail($userid, $date=false) {
+        date_default_timezone_set('UTC');
+        $array = array();
+        $de = date("m-Y");
+        $year = date("Y");
+        $month = date("month");
+        if($date != false){
+            $de = date("m-Y", strtotime($date));
+            $year = date("Y", strtotime($date));
+            $month = date("m", strtotime($date));
+        }
+        
+        $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.user_id=$userid AND hr_data.date LIKE '%$de%'";
+        $runQuery = self::DBrunQuery($query);
+        $row1 = self::DBfetchRows($runQuery);
+        foreach ($row1 as $tv) {
+            $d = strtotime($tv['date']);
+            if (array_key_exists($d, $rows)) {
+                $rows[$d] = $tv;
+            } else {
+                $rows[$d] = $tv;
+            }
+        }
+        ksort($rows);
+
+        $getDaysOfMonth = self::getDaysOfMonth($year, $month);
+
+        foreach ($getDaysOfMonth as $getd) {
+            $de = 0;
+            $de = self::getData(date('m-d-Y', strtotime($getd['full_date'])));
+            if ($de != 0) {
+                $set[] = $getd['full_date'];
+            }
+        }
+        array_pop($set);
+        foreach ($rows as $f) {
+            if ($f['entry_time'] != 0 && $f['exit_time'] != 0) {
+                $ed = strtotime($f['exit_time']) - strtotime($f['entry_time']);
+                $te = date("h:i", $ed);
+                $user_id = $f['user_id'];
+                $cdate = date('Y-m-d', strtotime($f['date']));
+                $working_hour = self::getWorkingHours($cdate);
+                $half_time = date("h:i", strtotime($working_hour) / 2);
+                if ($working_hour != 0) {
+                    $user_working_hour = self::getUserWorkingHours($user_id, $cdate);
+                    if ($user_working_hour != 0) {
+                        $working_hour = $user_working_hour;
+                        //     echo $user_id."-".$cdate."-".$working_hour;
+                    }
+                    if (strtotime($te) < strtotime($half_time)) {
+                        $ed1 = strtotime($half_time) - strtotime($te);
+                        $te1 = $ed1 / 60;
+                        if ($te1 >= 5) {
+                            $vv['ptime'][] = $te1;
+                            $vv['ctime'][] = 0;
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                        }
+                        $vv['half'][] = date("m-d-Y", strtotime($f['date']));
+                    }
+                    if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
+                        $hd = self::getUserHalfDay($user_id, $cdate);
+                        if ($hd != 0) {
+                            
+                        } else {
+                            $ed1 = strtotime($working_hour) - strtotime($te);
+                            $te1 = $ed1 / 60;
+                            if ($te1 >= 5) {
+                                $vv['ptime'][] = $te1;
+                                $vv['ctime'][] = 0;
+                                $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            }
+                        }
+                    }
+                    if (strtotime($te) > strtotime($working_hour)) {
+                        $ed1 = strtotime($te) - strtotime($working_hour);
+                        $te1 = $ed1 / 60;
+                        if ($te1 >= 5) {
+                            $vv['ctime'][] = $te1;
+                            $vv['ptime'][] = 0;
+                            $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                        }
+                    }
+                }
+            }
+            $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
+            $vv['userid'] = $f['user_id'];
+        }
+        
+        $pending = $vv['ptime'];
+        $compensate = $vv['ctime'];
+        $entry = $vv['entry_exit'];
+        $wdate = $vv['wdate'];
+        $half = array();
+        if (array_key_exists('half', $value)) {
+            $half = $value['half'];
+        }
+        $to_compensate = 0;
+        $index = 0;
+        $rep = array();
+        for ($i = 0; $i < sizeof($pending); $i++) {
+            if ($pending[$i] != 0 || !empty($rep)) {
+                $at = array();
+                $at['pend'] = $pending[$i];
+                $at['comp'] = $compensate[$i];
+                $at['entry'] = $entry[$i];
+                $rep[] = $at;
+            }
+            $to_compensate = $pending[$i] + $to_compensate;
+            if ($to_compensate != 0) {
+                $to_compensate = $to_compensate - $compensate[$i];
+                
+            }
+            if ($to_compensate <= 0) {
+                $to_compensate = 0;
+                 $rep = array();
+            }
+          
+        }
+        if ($to_compensate >= 10) {
+            $rep['t-remain'] = $to_compensate;
+        }
+       
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $rep;
+        return $return;
+    }
+
+    public static function getData($date) {
+
+        $result = 0;
+        $q = "select * from attendance where timing like '%$date%'";
+
+        $runQuery = self::DBrunQuery($q);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows >= 1) {
+            $result = 1;
+            return $result;
+        } else {
+            return $result;
+        }
+    }
+
+    public static function getWorkingHours($data) {
+
+        $result = "09:00"; // default value
+        $qry = "select * from working_hours where date='$data'";
+        $runQuery = self::DBrunQuery($qry);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows > 0) {
+            $row = self::DBfetchRow($runQuery);
+            $result = $row['working_hours'];
+        }
+        return $result;
+    }
+
+    public static function getUserWorkingHours($uid, $date) {
+        $result = 0;
+        $qry = "select * from user_working_hours where user_Id = '$uid' AND date='$date'";
+        $runQuery = self::DBrunQuery($qry);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows > 0) {
+            $row = self::DBfetchRow($runQuery);
+            $result = $row['working_hours'];
+        }
+        return $result;
+    }
+
+    public static function getUserHalfDay($userid, $date) {
+        $query = "select * from leaves where user_Id=" . $userid . " AND from_date like '%$date%' AND status != 'Rejected'";
+        $runQuery = self::DBrunQuery($qry);
+        $no_of_rows = self::DBnumRows($runQuery);
+        return $no_of_rows;
     }
 
 }

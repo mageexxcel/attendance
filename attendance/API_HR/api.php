@@ -518,6 +518,23 @@ else if ($action == 'get_machines_detail') {
       $res = HR::getAllMachineDetail();
     }
 }
+else if ($action == 'get_user_worktime_detail') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+    $userid = $PARAMS['user_id'];
+    //$userid = 343;
+    $date = $PARAMS['date'];
+    //$date = "2017-03-02";
+    
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+      $res = HR::userCompensateTimedetail($userid,$date);
+    }
+}
 
 
 
