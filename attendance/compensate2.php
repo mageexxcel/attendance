@@ -451,13 +451,22 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $ph_no = "";
             $image = "";
             $email_adr = $vol['profile']['email'];
-            if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && $vol['is_bot'] == false && ($vol['profile']['phone'] == "" || !array_key_exists("image_original", $vol['profile']))) {
+            if ($vol['deleted'] == "" && $vol['is_primary_owner'] == "" && $vol['id'] != "USLACKBOT" && $vol['is_bot'] == false && (!array_key_exists("image_original", $vol['profile']))) {
 //          $fr[] = $vol; 
                 $f = $vol['id'];
                 $update_msg = "Hi " . $vol['name'] . "\n You have not added your \n";
                 if ($vol['profile']['phone'] == "") {
                     $ph_no = " phone number ";
                 }
+                 if ($vol['profile']['phone'] != "") {
+                     $moph = $vol['profile']['phone']; 
+                     $q = "SELECT * from user_profile where mobile_ph= '$moph' OR home_ph= '$moph'";
+                     $rq = mysqli_query($link, $q) or die(mysqli_error($link));
+                     if (mysqli_num_rows($rq) == 0) {
+                        $ph_no = " phone number (same as in hr system) "; 
+                     }
+                }
+              
                 if (!array_key_exists("image_original", $vol['profile'])) {
 
                     $image = "profile picture";
@@ -481,7 +490,9 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             }
         }
 //---end update profile pic and phone no. slack message--- 
-//---start holiday slack message.        
+//---start holiday slack message.      
+    
+        
         $holy_msg1="";
         $holy_msg2="";
         $q4 = "Select * from holidays where date like '%$current_month%'";
