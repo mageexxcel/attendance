@@ -491,16 +491,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         }
 //---end update profile pic and phone no. slack message--- 
 //---start holiday slack message.      
-        
-        $q = "SELECT users.*,user_profile.name,user_profile.work_email,user_profile.dateofjoining FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled'";
-        $rq = mysqli_query($link, $q) or die(mysqli_error($link));
-     $are = array();
-            while ($row = mysqli_fetch_assoc($rq)) {
-               $are[]=$row;
-            }
-        echo "<pre>";    
-        print_r($are);
-        die;
+    
         
         $holy_msg1="";
         $holy_msg2="";
