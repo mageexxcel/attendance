@@ -136,7 +136,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 }
 
                 $arr = array_sort($arr, 'rx_total', SORT_DESC);
-
+                
                 if (sizeof($arr) > 0) {
                     foreach ($arr as $key => $v2) {
                         $assign_with_data.= $name . " - " . $key . "\n";
@@ -151,6 +151,9 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                                $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
                            }
                         }
+                        else{
+                           $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";  
+                        }
                        
                     }
                 }
@@ -162,6 +165,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $not_assign[] = $name;
         }
     }
+    
+    
     if (!empty($assign_with_data)) {
         $title = "User consumed bandwidth list";
         $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $assign_with_data);
