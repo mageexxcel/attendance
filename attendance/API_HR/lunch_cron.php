@@ -37,7 +37,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         $name = $val['name'];
         $slack_channel_id = $val['slack_channel_id'];
         $status = lunch_status($userid, $prev_workdate);
-        if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320) {
+        if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320 && $userid != 415 && $userid != 418) {
 
             if (sizeof($status) <= 0) {
 
