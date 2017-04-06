@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
-if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats') {
+if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats' || $_GET['action'] =='send_slack_msg') {
 $PARAMS = $_GET;
 }
 $action = false;
@@ -39,12 +39,17 @@ $data = $PARAMS['data'];
  $res = HR::updateBandwidthStats($data);
 
 }
+if ($action == 'send_slack_msg') {
+    $slack_userChannelid = $PARAMS['channel'];
+    $message = $PARAMS['message'];
+    $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
+}
 
 
 $token = $PARAMS['token'];
 
 //validate a token
-if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' ) {
+if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats'  && $action != 'send_slack_msg' ) {
     $token = $PARAMS['token'];
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
