@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
-if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats' || $_GET['action'] =='send_slack_msg') {
+if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats' || $_GET['action'] =='send_slack_msg' || $_GET['action'] =='save_bandwidth_detail' || $_GET['action'] =='get_bandwidth_detail') {
 $PARAMS = $_GET;
 }
 $action = false;
@@ -44,12 +44,21 @@ if ($action == 'send_slack_msg') {
     $message = $PARAMS['message'];
     $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
 }
+if ($action == 'save_bandwidth_detail') {
+    $data = $PARAMS['details'];
+   
+     $data = json_decode($data,true);
+    $res = HR::saveBandwidthDetail($data);
+}
+if ($action == 'get_bandwidth_detail') {
+    $res = HR::getBandwidthDetail();
+}
 
 
 $token = $PARAMS['token'];
 
 //validate a token
-if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats'  && $action != 'send_slack_msg' ) {
+if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats'  && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' ) {
     $token = $PARAMS['token'];
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
@@ -79,7 +88,6 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $ac
         exit;
     }
 }
-
 if ($action == 'login') {
     $username = $password = '';
 
@@ -110,6 +118,7 @@ if ($action == 'login') {
     $date = $PARAMS['date'];
     $res = HR::getUserDaySummary($userid, $date);
 } else if ($action == "get_enable_user") {
+    
     $res = HR::getEnabledUsersListWithoutPass();
 } else if ($action == 'update_user_day_summary') {
 
@@ -540,6 +549,7 @@ else if ($action == 'get_user_worktime_detail') {
       $res = HR::userCompensateTimedetail($userid,$date);
     }
 }
+
 
 
 
