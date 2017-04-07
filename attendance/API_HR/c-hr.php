@@ -205,6 +205,11 @@ class HR extends DATABASE {
                                 $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
                                 $runQuery2 = self::DBrunQuery($q2);
                             }
+//                            if ($row['unique_key'] == "") {
+//                                $bytes = random_bytes(8);
+//                                $q2 = "UPDATE user_profile SET unique_key = '$bytes' WHERE user_Id = $userid ";
+//                                $runQuery2 = self::DBrunQuery($q2);
+//                            }
                         }
 
                         break;
@@ -2625,18 +2630,18 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function userCompensateTimedetail($userid, $date=false) {
+    public static function userCompensateTimedetail($userid, $date = false) {
         date_default_timezone_set('UTC');
         $array = array();
         $de = date("m-Y");
         $year = date("Y");
         $month = date("month");
-        if($date != false){
+        if ($date != false) {
             $de = date("m-Y", strtotime($date));
             $year = date("Y", strtotime($date));
             $month = date("m", strtotime($date));
         }
-        
+
         $query = "SELECT hr_data.*,users.status FROM hr_data LEFT JOIN users ON hr_data.user_id = users.id where users.status='Enabled' AND hr_data.user_id=$userid AND hr_data.date LIKE '%$de%'";
         $runQuery = self::DBrunQuery($query);
         $row1 = self::DBfetchRows($runQuery);
@@ -2712,7 +2717,7 @@ class HR extends DATABASE {
             $vv['wdate'][] = date('m-d-Y', strtotime($f['date']));
             $vv['userid'] = $f['user_id'];
         }
-        
+
         $pending = $vv['ptime'];
         $compensate = $vv['ctime'];
         $entry = $vv['entry_exit'];
@@ -2735,18 +2740,16 @@ class HR extends DATABASE {
             $to_compensate = $pending[$i] + $to_compensate;
             if ($to_compensate != 0) {
                 $to_compensate = $to_compensate - $compensate[$i];
-                
             }
             if ($to_compensate <= 0) {
                 $to_compensate = 0;
-                 $rep = array();
+                $rep = array();
             }
-          
         }
         if ($to_compensate >= 10) {
             $rep['t-remain'] = $to_compensate;
         }
-       
+
         $return = array();
         $return['error'] = 0;
         $return['data'] = $rep;
@@ -2798,6 +2801,67 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($qry);
         $no_of_rows = self::DBnumRows($runQuery);
         return $no_of_rows;
+    }
+
+    public static function saveBandwidthDetail($data) {
+        
+        $error = 1;
+        $message = "";
+        
+        $plan = "";
+        $left_data = "";
+        $days_left = "";
+        $dsl = "";
+        $date = date("Y-m-d");
+        if (sizeof($data) > 0) {
+            $plan = $data['plan'];
+            $left_data = $data['left_data'];
+            $days_left = $data['days_left'];
+            $dsl = $data['dsl_number'];
+            
+            $q = "select * from bandwidth_detail where dsl_number = '$dsl'";
+            $runQuery = self::DBrunQuery($q);
+           $no_of_rows = self::DBnumRows($runQuery);
+           if($no_of_rows > 0){
+               $qry = "UPDATE bandwidth_detail SET data_plan = '$plan', left_data = '$left_data', days_left = '$days_left', date = '$date' Where dsl_number = '$dsl'";
+               $error = 0; 
+               $message = "Table updated";
+               }
+           else{
+             $qry = "INSERT INTO bandwidth_detail (data_plan, left_data, dsl_number, days_left , date) VALUES ('$plan','$left_data','$dsl','$days_left','$date' )";   
+             $error = 0;
+             $message = "Data Inserted";
+           }
+            $runQuery2 = self::DBrunQuery($qry);
+            
+        }
+      else{
+          $error = 1;
+          $message = "Passed data should not be empty";
+      }  
+      $return = array();
+      $return['error'] = $error;
+      $return['data'] = $message;
+      return $return;
+      
+    }
+
+    public static function getBandwidthDetail() {
+        $query = "select * from bandwidth_detail";
+        $runQuery = self::DBrunQuery($query);
+        $rows = self::DBfetchRows($runQuery);
+        if(sizeof($rows)> 0){
+           $error = 0;
+           $message = $rows;  
+        }
+        else{
+            $error = 1;
+           $message = 'No data found';  
+        }
+        $return = array();
+        $return['error'] = $error;
+        $return['data'] = $message;
+        return $return;
     }
 
 }
