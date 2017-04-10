@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
-if (isset($_GET['userslack_id']) || $_GET['action'] =='updatebandwidthstats' || $_GET['action'] =='send_slack_msg' || $_GET['action'] =='save_bandwidth_detail' || $_GET['action'] =='get_bandwidth_detail') {
-$PARAMS = $_GET;
+if (isset($_GET['userslack_id']) || $_GET['action'] == 'updatebandwidthstats' || $_GET['action'] == 'send_slack_msg' || $_GET['action'] == 'save_bandwidth_detail' || $_GET['action'] == 'get_bandwidth_detail' || $_GET['action'] == 'validate_unique_key') {
+    $PARAMS = $_GET;
 }
 $action = false;
 $slack_id = "";
@@ -35,9 +35,8 @@ $res = array(
 );
 
 if ($action == 'updatebandwidthstats') {
-$data = $PARAMS['data'];
- $res = HR::updateBandwidthStats($data);
-
+    $data = $PARAMS['data'];
+    $res = HR::updateBandwidthStats($data);
 }
 if ($action == 'send_slack_msg') {
     $slack_userChannelid = $PARAMS['channel'];
@@ -46,19 +45,22 @@ if ($action == 'send_slack_msg') {
 }
 if ($action == 'save_bandwidth_detail') {
     $data = $PARAMS['details'];
-   
-     $data = json_decode($data,true);
+
+    $data = json_decode($data, true);
     $res = HR::saveBandwidthDetail($data);
 }
 if ($action == 'get_bandwidth_detail') {
     $res = HR::getBandwidthDetail();
+}
+if ($action == 'validate_unique_key') {
+    $res = HR::validateUniqueKey($PARAMS);
 }
 
 
 $token = $PARAMS['token'];
 
 //validate a token
-if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats'  && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' ) {
+if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
     $token = $PARAMS['token'];
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
@@ -118,7 +120,7 @@ if ($action == 'login') {
     $date = $PARAMS['date'];
     $res = HR::getUserDaySummary($userid, $date);
 } else if ($action == "get_enable_user") {
-    
+
     $res = HR::getEnabledUsersListWithoutPass();
 } else if ($action == 'update_user_day_summary') {
 
@@ -492,8 +494,7 @@ if ($action == 'login') {
 
         $res = HR::getAllUserLunchDetail($date);
     }
-}
-else if ($action == 'add_office_machine') {
+} else if ($action == 'add_office_machine') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -503,10 +504,9 @@ else if ($action == 'add_office_machine') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-       $res = HR::addOfficeMachine($PARAMS);
+        $res = HR::addOfficeMachine($PARAMS);
     }
-}
-else if ($action == 'assign_user_machine') {
+} else if ($action == 'assign_user_machine') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -516,10 +516,9 @@ else if ($action == 'assign_user_machine') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-      $res = HR::assignUserMachine($PARAMS);
+        $res = HR::assignUserMachine($PARAMS);
     }
-}
-else if ($action == 'get_machines_detail') {
+} else if ($action == 'get_machines_detail') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -529,10 +528,9 @@ else if ($action == 'get_machines_detail') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-      $res = HR::getAllMachineDetail();
+        $res = HR::getAllMachineDetail();
     }
-}
-else if ($action == 'get_user_worktime_detail') {
+} else if ($action == 'get_user_worktime_detail') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -540,13 +538,12 @@ else if ($action == 'get_user_worktime_detail') {
     //$userid = 343;
     $date = $PARAMS['date'];
     //$date = "2017-03-02";
-    
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-      $res = HR::userCompensateTimedetail($userid,$date);
+        $res = HR::userCompensateTimedetail($userid, $date);
     }
 }
 

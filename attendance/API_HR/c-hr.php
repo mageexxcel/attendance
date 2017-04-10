@@ -205,11 +205,11 @@ class HR extends DATABASE {
                                 $q2 = "UPDATE user_profile SET slack_id = '$slack_id' WHERE user_Id = $userid ";
                                 $runQuery2 = self::DBrunQuery($q2);
                             }
-//                            if ($row['unique_key'] == "") {
-//                                $bytes = random_bytes(8);
-//                                $q2 = "UPDATE user_profile SET unique_key = '$bytes' WHERE user_Id = $userid ";
-//                                $runQuery2 = self::DBrunQuery($q2);
-//                            }
+                            if ($row['unique_key'] == "") {
+                                $bytes = uniqid();
+                                $q2 = "UPDATE user_profile SET unique_key = '$bytes' WHERE user_Id = $userid ";
+                                $runQuery2 = self::DBrunQuery($q2);
+                            }
                         }
 
                         break;
@@ -2857,6 +2857,37 @@ class HR extends DATABASE {
         else{
             $error = 1;
            $message = 'No data found';  
+        }
+        $return = array();
+        $return['error'] = $error;
+        $return['data'] = $message;
+        return $return;
+    }
+    
+    public static function validateUniqueKey($data) {
+        $unique = $data['unique_key'];
+        $mac = $data['mac_address'];
+        $query = "select * from user_profile where unique_key = '$unique'";
+        $runQuery = self::DBrunQuery($query);
+        $row = self::DBfetchRow($runQuery);
+        if(sizeof($row)> 0){
+            $id = $row['user_Id'];
+            $query2 = "select machines_list.mac_address,machines_list.id, machines_user.machine_id,machines_user.user_Id from machines_list LEFT JOIN machines_user On machines_list.id = machines_user.machine_id  where machines_user.user_Id = $id AND machines_list.mac_address = '$mac'";
+            $run = self::DBrunQuery($query2);
+             $row2 = self::DBfetchRow($run);
+             if(sizeof($row2)> 0){
+                $error = 0;
+                 $message = 'User is authentic';   
+             }
+             else{
+            $error = 1;
+            $message = 'Mac address associated to user is not valid';  
+             }
+            
+        }
+        else{
+            $error = 1;
+           $message = 'User with given unique key not found';  
         }
         $return = array();
         $return['error'] = $error;
