@@ -2507,11 +2507,14 @@ class HR extends DATABASE {
         if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
             $comment = trim($PARAMS['comment']);
         }
-
+        $row = false;
         //check user name exists
-        $q = "select * from machines_list where mac_address='$mac_addr'";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
+        if ($m_type == "Laptop" || $m_type == "Mobile") {
+            $q = "select * from machines_list where mac_address='$mac_addr'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+        }
+
         if ($row != false) {
             $r_error = 1;
             $r_message = "Mac Address already exist";
@@ -2583,29 +2586,56 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getMachineDetail($PARAMS) {
+        $r_error = 1;
+        $row = array();
+        //check user name exists
+        $q = "select * from machines_list where id=" . $PARAMS['id'];
+
+        $runQuery = self::DBrunQuery($q);
+
+        try {
+            $row = self::DBfetchRow($runQuery);
+            $r_error = 0;
+        } catch (Exception $e) {
+            $r_error = 1;
+            $row = "Some error occured.";
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $row;
+
+        return $return;
+    }
+
     public static function assignUserMachine($PARAMS) {
         $r_error = 1;
         $r_message = "";
 
         $machine_id = $PARAMS['machine_id'];
         $userid = $PARAMS['user_id'];
-        $date = date("Y-m-d");
-        //check user name exists
-        $q = "select * from machines_user where machine_id ='$machine_id'";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
-        if ($row != false) {
-            $r_message = "Machine already assigned!!";
+        if ($userid == "") {
+            $return = self::removeMachineAssignToUser($machine_id);
         } else {
-            $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
-            self::DBrunQuery($q);
-            $r_error = 0;
-            $r_message = "Machine assigned Successfully !!";
+            $date = date("Y-m-d");
+            //check user name exists
+            $q = "select * from machines_user where machine_id ='$machine_id'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            if ($row != false) {
+                $r_message = "Machine already assigned!!";
+            } else {
+                $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
+                self::DBrunQuery($q);
+                $r_error = 0;
+                $r_message = "Machine assigned Successfully !!";
+            }
+
+            $return = array();
+            $return['error'] = $r_error;
+            $return['message'] = $r_message;
         }
 
-        $return = array();
-        $return['error'] = $r_error;
-        $return['message'] = $r_message;
 
         return $return;
     }
@@ -2622,11 +2652,23 @@ class HR extends DATABASE {
     }
 
     public static function removeMachineAssignToUser($data) {
-        $q = "Delete from machines_user where id=$data";
+        $q = "Delete from machines_user where machine_id=$data";
         $runQuery = self::DBrunQuery($q);
         $return = array();
         $return['error'] = 0;
         $return['message'] = "User removed successfully";
+        return $return;
+    }
+
+    public static function removeMachineDetails($data) {
+        $q = "Delete from machines_list where id=$data";
+        $runQuery = self::DBrunQuery($q);
+
+        self::removeMachineAssignToUser($data);
+
+        $return = array();
+        $return['error'] = 0;
+        $return['message'] = "Machine detail removed successfully";
         return $return;
     }
 
@@ -2804,10 +2846,10 @@ class HR extends DATABASE {
     }
 
     public static function saveBandwidthDetail($data) {
-        
+
         $error = 1;
         $message = "";
-        
+
         $plan = "";
         $left_data = "";
         $days_left = "";
@@ -2818,76 +2860,68 @@ class HR extends DATABASE {
             $left_data = $data['left_data'];
             $days_left = $data['days_left'];
             $dsl = $data['dsl_number'];
-            
+
             $q = "select * from bandwidth_detail where dsl_number = '$dsl'";
             $runQuery = self::DBrunQuery($q);
-           $no_of_rows = self::DBnumRows($runQuery);
-           if($no_of_rows > 0){
-               $qry = "UPDATE bandwidth_detail SET data_plan = '$plan', left_data = '$left_data', days_left = '$days_left', date = '$date' Where dsl_number = '$dsl'";
-               $error = 0; 
-               $message = "Table updated";
-               }
-           else{
-             $qry = "INSERT INTO bandwidth_detail (data_plan, left_data, dsl_number, days_left , date) VALUES ('$plan','$left_data','$dsl','$days_left','$date' )";   
-             $error = 0;
-             $message = "Data Inserted";
-           }
+            $no_of_rows = self::DBnumRows($runQuery);
+            if ($no_of_rows > 0) {
+                $qry = "UPDATE bandwidth_detail SET data_plan = '$plan', left_data = '$left_data', days_left = '$days_left', date = '$date' Where dsl_number = '$dsl'";
+                $error = 0;
+                $message = "Table updated";
+            } else {
+                $qry = "INSERT INTO bandwidth_detail (data_plan, left_data, dsl_number, days_left , date) VALUES ('$plan','$left_data','$dsl','$days_left','$date' )";
+                $error = 0;
+                $message = "Data Inserted";
+            }
             $runQuery2 = self::DBrunQuery($qry);
-            
-        }
-      else{
-          $error = 1;
-          $message = "Passed data should not be empty";
-      }  
-      $return = array();
-      $return['error'] = $error;
-      $return['data'] = $message;
-      return $return;
-      
-    }
-
-    public static function getBandwidthDetail() {
-        $query = "select * from bandwidth_detail";
-        $runQuery = self::DBrunQuery($query);
-        $rows = self::DBfetchRows($runQuery);
-        if(sizeof($rows)> 0){
-           $error = 0;
-           $message = $rows;  
-        }
-        else{
+        } else {
             $error = 1;
-           $message = 'No data found';  
+            $message = "Passed data should not be empty";
         }
         $return = array();
         $return['error'] = $error;
         $return['data'] = $message;
         return $return;
     }
-    
+
+    public static function getBandwidthDetail() {
+        $query = "select * from bandwidth_detail";
+        $runQuery = self::DBrunQuery($query);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) > 0) {
+            $error = 0;
+            $message = $rows;
+        } else {
+            $error = 1;
+            $message = 'No data found';
+        }
+        $return = array();
+        $return['error'] = $error;
+        $return['data'] = $message;
+        return $return;
+    }
+
     public static function validateUniqueKey($data) {
         $unique = $data['unique_key'];
         $mac = $data['mac_address'];
         $query = "select * from user_profile where unique_key = '$unique'";
         $runQuery = self::DBrunQuery($query);
         $row = self::DBfetchRow($runQuery);
-        if(sizeof($row)> 0){
+        if (sizeof($row) > 0) {
             $id = $row['user_Id'];
             $query2 = "select machines_list.mac_address,machines_list.id, machines_user.machine_id,machines_user.user_Id from machines_list LEFT JOIN machines_user On machines_list.id = machines_user.machine_id  where machines_user.user_Id = $id AND machines_list.mac_address = '$mac'";
             $run = self::DBrunQuery($query2);
-             $row2 = self::DBfetchRow($run);
-             if(sizeof($row2)> 0){
+            $row2 = self::DBfetchRow($run);
+            if (sizeof($row2) > 0) {
                 $error = 0;
-                 $message = 'User is authentic';   
-             }
-             else{
+                $message = 'User is authentic';
+            } else {
+                $error = 1;
+                $message = 'Mac address associated to user is not valid';
+            }
+        } else {
             $error = 1;
-            $message = 'Mac address associated to user is not valid';  
-             }
-            
-        }
-        else{
-            $error = 1;
-           $message = 'User with given unique key not found';  
+            $message = 'User with given unique key not found';
         }
         $return = array();
         $return['error'] = $error;
