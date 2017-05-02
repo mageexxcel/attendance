@@ -131,7 +131,8 @@ class HR extends DATABASE {
 
                 self::insertToken($userInfo['user_Id'], $jwtToken);
                 $r_data = array(
-                    "token" => $jwtToken
+                    "token" => $jwtToken,
+                    "userid" => $userInfo['user_Id']
                 );
             }
         }
@@ -1250,11 +1251,11 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status) {
+    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason) {
         //date format = Y-m-d
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
-        $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status' )";
+        $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status,leave_type,late_reason ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status','$leave_type','$late_reason' )";
 
         $r_error = 0;
         $r_message = "";
@@ -1284,13 +1285,15 @@ class HR extends DATABASE {
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
             }
+            
+            if($late_reason !=""){
+                $message_to_user.="\nLate Reason: $late_reason";
+                $message_to_hr.="\nLate Reason: $late_reason";
+            }
 
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
             $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
-        } else {
-            
         }
-
         $return = array();
         $r_data = array();
         $return['error'] = $r_error;
@@ -1463,6 +1466,124 @@ class HR extends DATABASE {
             $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
 
             $r_message = "Leave status changes from $old_status to $newstatus";
+        } else {
+            $r_message = "No such leave found";
+            $r_error = 1;
+        }
+
+        $return = array();
+        $r_data = array();
+        $return['error'] = 0;
+        $r_data['message'] = $r_message;
+        $return['data'] = $r_data;
+
+        return $return;
+    }
+
+    public static function addExtraLeaveDay($leaveid, $extra_day) {
+        $r_error = 0;
+        $r_message = "";
+
+        $q = "UPDATE leaves set extra_day='$extra_day' WHERE id = $leaveid ";
+        try {
+            self::DBrunQuery($q);
+            $r_error = 0;
+            $r_message = "Extra day added";
+        } catch (Exception $e) {
+            $r_error = 1;
+            $r_message = "Some error occured";
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+
+    public static function addHrComment($leaveid, $hr_comment, $hr_approve) {
+
+        $leaveDetails = self::getLeaveDetails($leaveid);
+
+        $r_error = 0;
+        $r_message = "";
+        if (is_array($leaveDetails)) {
+            $old_status = $leaveDetails['status'];
+
+            $from_date = $leaveDetails['from_date'];
+            $to_date = $leaveDetails['to_date'];
+            $no_of_days = $leaveDetails['no_of_days'];
+            $applied_on = $leaveDetails['applied_on'];
+            $reason = $leaveDetails['reason'];
+
+            
+            if (!empty($hr_comment)) {
+                $q = "UPDATE leaves set hr_comment='$hr_comment' WHERE id = $leaveid ";
+                $r_message = "Hr comment updated";
+                
+            }
+            if (!empty($hr_approve)) {
+                $q = "UPDATE leaves set hr_approved='$hr_approve' WHERE id = $leaveid ";
+                $r_message = "Hr approved leave ";
+            }
+
+
+            try {
+                self::DBrunQuery($q);
+                $r_error = 0;
+                $r_message = "Hr comment updated";
+                
+            } catch (Exception $e) {
+                $r_error = 1;
+                $r_message = "Some error occured";
+            }
+        } else {
+            $r_message = "No such leave found";
+            $r_error = 1;
+        }
+
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+
+    public static function leaveDocRequest($leaveid, $doc_request, $comment) { //api call
+        $leaveDetails = self::getLeaveDetails($leaveid);
+
+        $r_error = 0;
+        $r_message = "";
+        $message_to_user = "";
+        if (is_array($leaveDetails)) {
+            $old_status = $leaveDetails['status'];
+
+            $from_date = $leaveDetails['from_date'];
+            $to_date = $leaveDetails['to_date'];
+            $no_of_days = $leaveDetails['no_of_days'];
+            $applied_on = $leaveDetails['applied_on'];
+            $reason = $leaveDetails['reason'];
+
+            $userInfo = self::getUserInfo($leaveDetails['user_Id']);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            if (!empty($doc_request)) {
+                $q = "UPDATE leaves set doc_require= 1 WHERE id = $leaveid ";
+                self::DBrunQuery($q);
+
+                $message_to_user = "Hi $userInfo_name !!  \n You are requested to submit doc proof for your applied leave \n  Leave Details : \n";
+                $message_to_user .= " From : $from_date \n To : $to_date \n No. of days : $no_of_days \n Applied On : $applied_on \n Reason : $reason";
+                $r_message = 'Admin request for leave doc send';
+            }
+            if (!empty($comment)) {
+                $q = "UPDATE leaves set comment= '$comment' WHERE id = $leaveid ";
+                self::DBrunQuery($q);
+                $message_to_user = "Hi $userInfo_name !!  \n Admin has commented \n '$comment' \n on your applied leave From : $from_date  To : $to_date \n \n";
+                $r_message = 'Admin commented on employee leave saved';
+            }
+
+            if ($message_to_user != '') {
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+            }
         } else {
             $r_message = "No such leave found";
             $r_error = 1;
@@ -2476,10 +2597,14 @@ class HR extends DATABASE {
     }
 
     public static function addOfficeMachine($PARAMS) {
+
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
         $r_error = 1;
         $r_message = "";
 
-        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $comment = "";
+        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
         }
@@ -2507,9 +2632,24 @@ class HR extends DATABASE {
         if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
             $comment = trim($PARAMS['comment']);
         }
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != '') {
+            $userid = trim($PARAMS['user_id']);
+        }
+        if (isset($PARAMS['warranty']) && $PARAMS['warranty'] != '') {
+            $warranty = trim($PARAMS['warranty']);
+        }
+        if (isset($PARAMS['bill_no']) && $PARAMS['bill_no'] != '') {
+            $bill_no = trim($PARAMS['bill_no']);
+        }
+        if (isset($PARAMS['warranty_comment']) && $PARAMS['warranty_comment'] != '') {
+            $warranty_comment = trim($PARAMS['warranty_comment']);
+        }
+        if (isset($PARAMS['repair_comment']) && $PARAMS['repair_comment'] != '') {
+            $repair_comment = trim($PARAMS['repair_comment']);
+        }
         $row = false;
         //check user name exists
-        if ($m_type == "Laptop" || $m_type == "Mobile") {
+        if ($mac_addr != "") {
             $q = "select * from machines_list where mac_address='$mac_addr'";
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
@@ -2519,8 +2659,11 @@ class HR extends DATABASE {
             $r_error = 1;
             $r_message = "Mac Address already exist";
         } else {
-            $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment' ) ";
+            $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
             self::DBrunQuery($q);
+            $machine_id = mysqli_insert_id($mysqli);
+            self::assignUserMachine($machine_id, $userid);
+
             $r_error = 0;
             $r_message = "Machine added Successfully !!";
         }
@@ -2537,7 +2680,7 @@ class HR extends DATABASE {
         $r_message = "";
 
 
-        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $comment = "";
+        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
         }
@@ -2565,6 +2708,22 @@ class HR extends DATABASE {
         if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
             $comment = trim($PARAMS['comment']);
         }
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != '') {
+            $userid = trim($PARAMS['user_id']);
+        }
+        if (isset($PARAMS['warranty']) && $PARAMS['warranty'] != '') {
+            $warranty = trim($PARAMS['warranty']);
+        }
+        if (isset($PARAMS['bill_no']) && $PARAMS['bill_no'] != '') {
+            $bill_no = trim($PARAMS['bill_no']);
+        }
+        if (isset($PARAMS['warranty_comment']) && $PARAMS['warranty_comment'] != '') {
+            $warranty_comment = trim($PARAMS['warranty_comment']);
+        }
+        if (isset($PARAMS['repair_comment']) && $PARAMS['repair_comment'] != '') {
+            $repair_comment = trim($PARAMS['repair_comment']);
+        }
+
 
         //check user name exists
         $q = "select * from machines_list where id=" . $PARAMS['id'];
@@ -2573,11 +2732,16 @@ class HR extends DATABASE {
         $row = self::DBfetchRow($runQuery);
         if ($row != false) {
 
-            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment' WHERE id =" . $PARAMS['id'];
+            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment',warranty_end_date='$warranty', bill_number='$bill_no', warranty_comment='$warranty_comment', repair_comment='$repair_comment'  WHERE id =" . $PARAMS['id'];
             $runQuery = self::DBrunQuery($q1);
+
+            self::assignUserMachine($PARAMS['id'], $userid);
             $r_error = 0;
             $r_message = "Machine successfully updated";
         }
+
+
+
 
         $return = array();
         $return['error'] = $r_error;
@@ -2590,7 +2754,9 @@ class HR extends DATABASE {
         $r_error = 1;
         $row = array();
         //check user name exists
-        $q = "select * from machines_list where id=" . $PARAMS['id'];
+        // $q = "select * from machines_list where id=" . $PARAMS['id'];
+
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_list.id =" . $PARAMS['id'];
 
         $runQuery = self::DBrunQuery($q);
 
@@ -2608,12 +2774,9 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function assignUserMachine($PARAMS) {
+    public static function assignUserMachine($machine_id, $userid) {
         $r_error = 1;
         $r_message = "";
-
-        $machine_id = $PARAMS['machine_id'];
-        $userid = $PARAMS['user_id'];
         if ($userid == "") {
             $return = self::removeMachineAssignToUser($machine_id);
         } else {
@@ -2623,13 +2786,13 @@ class HR extends DATABASE {
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
             if ($row != false) {
-                $r_message = "Machine already assigned!!";
+                $q = "UPDATE machines_user SET  user_Id = '$userid', assign_date = '$date' where id =" . $row['id'];
             } else {
                 $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
-                self::DBrunQuery($q);
-                $r_error = 0;
-                $r_message = "Machine assigned Successfully !!";
             }
+            self::DBrunQuery($q);
+            $r_error = 0;
+            $r_message = "Machine assigned Successfully !!";
 
             $return = array();
             $return['error'] = $r_error;
@@ -2640,8 +2803,35 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getAllMachineDetail() {
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id";
+    public static function getUserMachine($userid) {
+        $r_error = 1;
+        $r_message = "";
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machine_user.user_Id = '$userid'";
+
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if (sizeof($row) == 0) {
+            $r_message = "No Machine assigned to user!";
+        } else {
+            $r_error = 0;
+            $r_message = $row;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+
+        return $return;
+    }
+
+    public static function getAllMachineDetail($sort = false, $status_sort=false) {
+        if ($sort != false) {
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort'";
+        }if ($status_sort != false) {
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort'";
+        }else {
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id ORDER BY machines_list.id DESC";
+        }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
 
@@ -2926,6 +3116,146 @@ class HR extends DATABASE {
         $return = array();
         $return['error'] = $error;
         $return['data'] = $message;
+        return $return;
+    }
+
+    public static function addMachineType($data) {
+        $r_error = 1;
+        $not_deleted = "";
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'type' => $data['type'],
+            'value' => $data['value']
+        );
+        $q1 = "select * from config where type ='" . $data['type'] . "'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+            $res = self::DBinsertQuery('config', $ins);
+            $r_error = 0;
+            $r_message = "Variable Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } if ($no_of_rows != 0) {
+            $p = json_decode($row1['value'],true);
+            $value = json_decode($data['value'],true);
+            $s = array_diff($p, $value);
+          
+            if(sizeof($s) > 0){
+                foreach($s as $v){
+                    $query="select * from machines_list where machine_type = '$v'"; 
+                    $run = self::DBrunQuery($query);
+                    $n_rows = self::DBnumRows($run);
+                   if($n_rows > 0){
+                      $r_data['not_delete'][] = $v;
+                      array_push($value,$v);
+                    }
+                    
+                }
+            }
+          $res = json_encode($value);
+          $q = "UPDATE config set value='$res' WHERE type ='" . $data['type'] . "'";
+          self::DBrunQuery($q);
+
+            $r_error = 0;
+            $r_message = "Variable updated successfully";
+            $r_data['message'] = $r_message;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+        public static function addMachineStatus($data) {
+        $r_error = 1;
+        $not_deleted = "";
+        $r_message = "";
+        $r_data = array();
+        $ins = array(
+            'type' => $data['type'],
+            'value' => $data['value']
+        );
+        $q1 = "select * from config where type ='" . $data['type'] . "'";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+        $no_of_rows = self::DBnumRows($runQuery1);
+        if ($no_of_rows == 0) {
+            $res = self::DBinsertQuery('config', $ins);
+            $r_error = 0;
+            $r_message = "Variable Successfully Inserted";
+            $r_data['message'] = $r_message;
+        } if ($no_of_rows != 0) {
+            $p = json_decode($row1['value'],true);
+            $value = json_decode($data['value'],true);
+            $s = array_diff($p, $value);
+          
+            if(sizeof($s) > 0){
+                foreach($s as $v){
+                    $query="select * from machines_list where status = '$v'"; 
+                    $run = self::DBrunQuery($query);
+                    $n_rows = self::DBnumRows($run);
+                   if($n_rows > 0){
+                      $r_data['not_delete'][] = $v;
+                      array_push($value,$v);
+                    }
+                    
+                }
+            }
+          $res = json_encode($value);
+          $q = "UPDATE config set value='$res' WHERE type ='" . $data['type'] . "'";
+          self::DBrunQuery($q);
+
+            $r_error = 0;
+            $r_message = "Variable updated successfully";
+            $r_data['message'] = $r_message;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function getMachineTypeList() {
+        $r_error = 1;
+        $r_message = "";
+        $q1 = "select * from config where type ='machine_type'";
+        $runQuery = self::DBrunQuery($q1);
+        $row = self::DBfetchRow($runQuery);
+        if (sizeof($row) == 0) {
+            $r_message = "No machine type list found!";
+        } else {
+            $r_error = 0;
+            $r_message = $row;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+
+        return $return;
+    }
+    public static function getMachineStatusList() {
+        
+        $r_error = 1;
+        $r_message = "";
+        $q1 = "select * from config where type ='machine_status'";
+        
+        $runQuery = self::DBrunQuery($q1);
+        $row = self::DBfetchRow($runQuery);
+        if (sizeof($row) == 0) {
+            $r_message = "No machine type list found!";
+        } else {
+            $r_error = 0;
+            $r_message = $row;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+
         return $return;
     }
 

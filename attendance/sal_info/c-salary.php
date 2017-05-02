@@ -591,11 +591,14 @@ class Salary extends DATABASE {
         $r_data = array();
         $user_bank_detail = self::getUserBankDetail($userid);
         $user_profile_detail = self::getUserprofileDetail($userid);
+        $user_assign_machine = self::getUserAssignMachines($userid);
         $return = array();
         $r_error = 0;
         $return['error'] = $r_error;
         $return['data']['user_profile_detail'] = $user_profile_detail;
         $return['data']['user_bank_detail'] = $user_bank_detail;
+        $return['data']['user_assign_machine'] = $user_assign_machine;
+        
         return $return;
     }
 
@@ -2626,7 +2629,15 @@ class Salary extends DATABASE {
             return $arrear;
             
            
-    }      
+    }
+    // get employee profile details with bank details.
+    public static function getUserAssignMachines($userid) {
+        $q = "select machines_list.machine_type,machines_list.machine_name,machines_list.mac_address,machines_list.serial_number,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_user.user_Id = '$userid'";
+        
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
 
 }
 

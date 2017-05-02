@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
         header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
     exit(0);
 }
+
+
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
@@ -174,10 +176,12 @@ if ($action == 'login') {
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
         $day_status = $PARAMS['day_status'];
+        $leave_type = $PARAMS['leave_type'];
+        $late_reason = $PARAMS['late_reason'];
 
 
 
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
+        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type,$late_reason);
     } else {
         $res['error'] = 1;
         $res['data']['message'] = "userid not found";
@@ -506,8 +510,7 @@ if ($action == 'login') {
     } else {
         $res = HR::addOfficeMachine($PARAMS);
     }
-}
-else if ($action == 'update_office_machine') {
+} else if ($action == 'update_office_machine') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -517,10 +520,10 @@ else if ($action == 'update_office_machine') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
+
         $res = HR::UpdateOfficeMachine($PARAMS);
     }
-}
-else if ($action == 'get_machine') {
+} else if ($action == 'get_machine') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -532,7 +535,7 @@ else if ($action == 'get_machine') {
     } else {
         $res = HR::getMachineDetail($PARAMS);
     }
-}else if ($action == 'remove_machine_detail') {
+} else if ($action == 'remove_machine_detail') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -545,8 +548,7 @@ else if ($action == 'get_machine') {
         $id = $PARAMS['id'];
         $res = HR::removeMachineDetails($id);
     }
-}
-else if ($action == 'assign_user_machine') {
+} else if ($action == 'assign_user_machine') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -556,28 +558,49 @@ else if ($action == 'assign_user_machine') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-        $res = HR::assignUserMachine($PARAMS);
+        $machine_id = $PARAMS['machine_id'];
+        $user_id = $PARAMS['user_id'];
+        $res = HR::assignUserMachine($machine_id, $user_id);
+    }
+} else if ($action == 'get_user_machine') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+        $userid = $PARAMS['user_id'];
+        $res = HR::getUserMachine($userid);
     }
 } else if ($action == 'get_machines_detail') {
-
+    
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if(strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-        $res = HR::getAllMachineDetail();
+        if (isset($PARAMS['sort']) && $PARAMS['sort'] != "") {
+            $sort = trim($PARAMS['sort']);
+            $res = HR::getAllMachineDetail($sort);
+        }if (isset($PARAMS['status_sort']) && $PARAMS['status_sort'] != "") {
+            $status_sort = trim($PARAMS['status_sort']);
+            $res = HR::getAllMachineDetail($sort=false,$status_sort);
+        }
+        else {
+            $res = HR::getAllMachineDetail();
+        }
     }
 } else if ($action == 'get_user_worktime_detail') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
     $userid = $PARAMS['user_id'];
-    //$userid = 343;
     $date = $PARAMS['date'];
-    //$date = "2017-03-02";
     //check for guest so that he can't update
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
@@ -585,8 +608,98 @@ else if ($action == 'assign_user_machine') {
     } else {
         $res = HR::userCompensateTimedetail($userid, $date);
     }
-}
+} else if ($action == 'add_machine_type') {
+ 
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+  
+        $res = HR::addMachineType($PARAMS);
+    }
+}else if ($action == 'add_machine_status') {
+ 
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+       $res = HR::addMachineStatus($PARAMS);
+    }
+} else if ($action == 'get_machine_type_list') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+        $res = HR::getMachineTypeList();
+    }
+}else if ($action == 'get_machine_status_list') {
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+        $res = HR::getMachineStatusList();
+    }
+}
+else if ($action == 'send_request_for_doc') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to update";
+    } else {
+        $leaveid = $PARAMS['leaveid'];
+        $doc_request = $PARAMS['doc_request'];
+        $comment = $PARAMS['comment'];
+        $res = HR::leaveDocRequest($leaveid, $doc_request, $comment);
+    }
+}
+else if ($action == 'add_extra_leave_day') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to update";
+    } else {
+        $leaveid = $PARAMS['leaveid'];
+        $extra_day = $PARAMS['extra_day'];
+        $res = HR::addExtraLeaveDay($leaveid, $extra_day);
+    }
+}
+else if ($action == 'add_hr_comment') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to update";
+    } else {
+        $leaveid = $PARAMS['leaveid'];
+        $hr_comment = $PARAMS['hr_comment'];
+        $hr_approve = $PARAMS['hr_approve'];
+        $res = HR::addHrComment($leaveid, $hr_comment,$hr_approve);
+    }
+}
 
 
 
