@@ -37,13 +37,13 @@ if ($_FILES) {
         $ext = pathinfo($file_name, PATHINFO_EXTENSION);
         $exten = array('pdf', 'jpeg', 'docx', 'doc', 'jpg', 'png');
         if (in_array($ext, $exten)) {
-            if (!move_uploaded_file($file_tmp, "leave_doc/" . $file_name)) {
+            if (!move_uploaded_file($file_tmp, "../sal_info/payslip/leave_doc/" . $file_name)) {
                  echo "File Not uploaded";
                 die;
             } else {
                 $ar = array();
                 $ar['name'] = $file_name;
-                $ar['path'] = (isset($_SERVER['HTTPS']) ? "https" : "http") ."://".$_SERVER['HTTP_HOST']."/hr/attendance/API_HR/leave_doc/" . $file_name;
+                $ar['path'] = (isset($_SERVER['HTTPS']) ? "https" : "http") ."://".$_SERVER['HTTP_HOST']."/attendance/sal_info/payslip/leave_doc/" . $file_name;
                 $arr[] = $ar;
                 $q = "UPDATE leaves set doc_link= '".$ar['path']."' WHERE id = $leaveid ";
                 HR::DBrunQuery($q);
