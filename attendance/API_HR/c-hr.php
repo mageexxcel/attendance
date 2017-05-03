@@ -1502,9 +1502,9 @@ class HR extends DATABASE {
     public static function addHrComment($leaveid, $hr_comment, $hr_approve) {
 
         $leaveDetails = self::getLeaveDetails($leaveid);
-
         $r_error = 0;
         $r_message = "";
+        $slkmsg = "";
         if (is_array($leaveDetails)) {
             $old_status = $leaveDetails['status'];
 
@@ -1513,16 +1513,19 @@ class HR extends DATABASE {
             $no_of_days = $leaveDetails['no_of_days'];
             $applied_on = $leaveDetails['applied_on'];
             $reason = $leaveDetails['reason'];
-
-            
+            $username = $leaveDetails['username'];
+            $userInfo = self::getUserInfo($leaveDetails['user_Id']);
+            $userInfo_name = $userInfo['name'];
             if (!empty($hr_comment)) {
                 $q = "UPDATE leaves set hr_comment='$hr_comment' WHERE id = $leaveid ";
                 $r_message = "Hr comment updated";
+                $slkmsg = "On applied leave of $userInfo_name from $from_date to $to_date \n Hr has commented \n $hr_comment";
                 
             }
             if (!empty($hr_approve)) {
                 $q = "UPDATE leaves set hr_approved='$hr_approve' WHERE id = $leaveid ";
                 $r_message = "Hr approved leave ";
+                $slkmsg = "Hr has approved the applied leave of $userInfo_name from $from_date to $to_date";
             }
 
 
@@ -1530,6 +1533,9 @@ class HR extends DATABASE {
                 self::DBrunQuery($q);
                 $r_error = 0;
                 $r_message = "Hr comment updated";
+                if(!empty($slkmsg)){
+                  $slackMessageStatus = self::sendSlackMessageToUser("D1HUPANG6", $slkmsg);  
+                }
                 
             } catch (Exception $e) {
                 $r_error = 1;
