@@ -129,7 +129,7 @@ class Salary extends DATABASE {
             if ($val['username'] != strtolower(self::$Admin)) {
                 $userid = $val['user_Id'];
                 $val['user_bank_detail'] = self::getUserBankDetail($userid); // user bank details.
-
+                $val['user_assign_machine']=self::getUserAssignMachines($userid);
                 if (empty(self::$isAdmin)) {
                     unset($val['holding_comments']);
                 }
