@@ -39,7 +39,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         $status = lunch_status($userid, $prev_workdate);
         if ($userid != 302 && $userid != 288 && $userid != 313 && $userid != 320 && $userid != 415 && $userid != 418) {
 
-            if (sizeof($status) <= 0) {
+           if (sizeof($status) <= 0) {
 
                 $d = HR::getUserDayPunchingDetails($userid, $prev_workdate);
 
@@ -101,6 +101,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $month = date("Y-m");
             $current_month = date("F");
             $arr = array();
+            
 
             $f1 = $f2 = 0;
             if ($row != false) {
@@ -136,13 +137,13 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 }
 
                 $arr = array_sort($arr, 'rx_total', SORT_DESC);
-                
+               
                 if (sizeof($arr) > 0) {
                     foreach ($arr as $key => $v2) {
                         $assign_with_data.= $name . " - " . $key . "\n";
                         $assign_with_data.= $current_month . " - " . Mb_or_Gb($v2['tx_month']) . " Up / " . Mb_or_Gb($v2['rx_month']) . " Down - " . Mb_or_Gb($v2['rx_month'] + $v2['tx_month']) . "\n";
                         if($v2['tx_' . $date] == 0){
-                           $a = getLasttwoDaysData($userid, $key, $current_date);
+                          $a = getLasttwoDaysData($userid, $key, $date);
                            if($a == 1 ){
                              $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n";
                              $assign_with_data.= " Last three days data not stored. Please check machine\n\n";
@@ -291,10 +292,13 @@ function getLasttwoDaysData($userid, $mac_address, $date) {
     $date3 = date("Y-m-d", strtotime(getPreviousWorkDate($date2)));
     $arr = array($date, $date2, $date3);
     $pr = HR::getUserMonthLeaves($userid, date("Y"), date("m"));
-
-    $q = "select * from bandwidth_stats where mac = '$mac' AND (date='$date' OR date='$date2' OR date='$date3')";
+    
+   //$pr = HR::getUserMonthLeaves($userid, "2017", "04");
+    
+    $q = "select * from bandwidth_stats where mac = '$mac_address' AND (date='$date' OR date='$date2' OR date='$date3')";
     $run = Database::DBrunQuery($q);
     $row = Database::DBfetchRows($run);
+    
     if (empty($row)) {
         if (sizeof($pr) > 0) {
             foreach ($arr as $v) {

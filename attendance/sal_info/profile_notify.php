@@ -11,6 +11,7 @@ require_once ("c-salary.php");
 $birthday = array("Bright Birthday Wishes. Our whole team is wishing you the happiest of birthdays.", "Our whole team is wishing you the happiest of birthdays.", "It’s time to get happy! Wishing you all the best on your birthday and everything good in the year ahead.");
 
 $res = Salary::getAllUserDetail();
+
 $allSlackUsers = Salary::getSlackUsersList();
 
 $array = array();
@@ -20,7 +21,7 @@ $second_sat = date('Y-m-d', strtotime('second sat of ' . $cmonth_name));
 $fourth_sat = date('Y-m-d', strtotime('fourth sat of ' . $cmonth_name));
 
 $cmonth = date("Y-m-d");
-
+$assign_machine_msg="";
 $q2 = "select * from config where type ='policy_document_update'";
 $runQuery2 = Database::DBrunQuery($q2);
 $row2 = Database::DBfetchRow($runQuery2);
@@ -115,7 +116,19 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
                  //   $slackMessageStatus = Salary::sendSlackMessageToUser('general', $message3);   // send slack notification to employee
                 }
             }
-        }
+        
+             if(sizeof($val['user_assign_machine']) == 0){
+                 $assign_machine_msg.= $username."\n";
+             }
+            
+           }
+    }
+    
+    if(!empty($assign_machine_msg)){
+        $m = "Hi HR!\n Following employee assigned machine details are not store in database:\n";
+        $m.= $assign_machine_msg."Please save them asap";
+        $slackMessageStatus = Salary::sendSlackMessageToUser('hr', $m);
+       
     }
 }
 
