@@ -3183,6 +3183,8 @@ class HR extends DATABASE {
             'type' => $data['type'],
             'value' => $data['value']
         );
+        
+        
         $q1 = "select * from config where type ='" . $data['type'] . "'";
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
@@ -3195,16 +3197,17 @@ class HR extends DATABASE {
         } if ($no_of_rows != 0) {
             $p = json_decode($row1['value'],true);
             $value = json_decode($data['value'],true);
-            $s = array_diff($p, $value);
+            $s = array_diff_assoc($p, $value);
           
+            echo "<pre>";
             if(sizeof($s) > 0){
-                foreach($s as $v){
-                    $query="select * from machines_list where status = '$v'"; 
+                foreach($s as $k=>$v){
+                    $query="select * from machines_list where status = '$k'"; 
                     $run = self::DBrunQuery($query);
                     $n_rows = self::DBnumRows($run);
                    if($n_rows > 0){
-                      $r_data['not_delete'][] = $v;
-                      array_push($value,$v);
+                      $r_data['not_delete'][] = $k;
+                      $value[$k]=$v;
                     }
                     
                 }

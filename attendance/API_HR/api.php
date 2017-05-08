@@ -629,7 +629,7 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-       $res = HR::addMachineStatus($PARAMS);
+     $res = HR::addMachineStatus($PARAMS);
     }
 } else if ($action == 'get_machine_type_list') {
 
