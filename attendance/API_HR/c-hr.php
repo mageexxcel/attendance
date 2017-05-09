@@ -1524,8 +1524,13 @@ class HR extends DATABASE {
             }
             if (!empty($hr_approve)) {
                 $q = "UPDATE leaves set hr_approved='$hr_approve' WHERE id = $leaveid ";
-                $r_message = "Hr approved leave ";
+                 $r_message = "Hr approved leave ";
                 $slkmsg = "Hr has approved the applied leave of $userInfo_name from $from_date to $to_date";
+                if($hr_approve == "2"){
+                  $r_message = "Hr not approved leave ";
+                $slkmsg = "Hr has not approved the applied leave of $userInfo_name from $from_date to $to_date";   
+                }
+               
             }
 
 
