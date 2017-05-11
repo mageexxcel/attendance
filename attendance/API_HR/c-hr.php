@@ -1537,8 +1537,7 @@ class HR extends DATABASE {
             try {
                 self::DBrunQuery($q);
                 $r_error = 0;
-                $r_message = "Hr comment updated";
-                if(!empty($slkmsg)){
+               if(!empty($slkmsg)){
                   $slackMessageStatus = self::sendSlackMessageToUser("D1HUPANG6", $slkmsg);  
                 }
                 
@@ -3185,41 +3184,23 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
         $ins = array(
-            'type' => $data['type'],
-            'value' => $data['value']
+            'status' => $data['status'],
+            'color' => $data['color']
         );
-        
-        
-        $q1 = "select * from config where type ='" . $data['type'] . "'";
+        $q1 = "select * from machine_status where status ='" . trim($data['status']) . "'";
+       
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
+     
         if ($no_of_rows == 0) {
-            $res = self::DBinsertQuery('config', $ins);
+            $res = self::DBinsertQuery('machine_status', $ins);
             $r_error = 0;
             $r_message = "Variable Successfully Inserted";
             $r_data['message'] = $r_message;
         } if ($no_of_rows != 0) {
-            $p = json_decode($row1['value'],true);
-            $value = json_decode($data['value'],true);
-            $s = array_diff_assoc($p, $value);
-          
-            echo "<pre>";
-            if(sizeof($s) > 0){
-                foreach($s as $k=>$v){
-                    $query="select * from machines_list where status = '$k'"; 
-                    $run = self::DBrunQuery($query);
-                    $n_rows = self::DBnumRows($run);
-                   if($n_rows > 0){
-                      $r_data['not_delete'][] = $k;
-                      $value[$k]=$v;
-                    }
-                    
-                }
-            }
-          $res = json_encode($value);
-          $q = "UPDATE config set value='$res' WHERE type ='" . $data['type'] . "'";
-          self::DBrunQuery($q);
+            $q = "UPDATE machine_status set status='".$data['status']."', color='".$data['color']."'WHERE id ='" . $row1['id'] . "'";
+             self::DBrunQuery($q);
 
             $r_error = 0;
             $r_message = "Variable updated successfully";
@@ -3255,12 +3236,12 @@ class HR extends DATABASE {
         
         $r_error = 1;
         $r_message = "";
-        $q1 = "select * from config where type ='machine_status'";
+        $q1 = "select * from machine_status";
         
         $runQuery = self::DBrunQuery($q1);
-        $row = self::DBfetchRow($runQuery);
+        $row = self::DBfetchRows($runQuery);
         if (sizeof($row) == 0) {
-            $r_message = "No machine type list found!";
+            $r_message = "No machine status list found!";
         } else {
             $r_error = 0;
             $r_message = $row;
@@ -3270,6 +3251,48 @@ class HR extends DATABASE {
         $return['error'] = $r_error;
         $return['data'] = $r_message;
 
+        return $return;
+    }
+    public static function deleteMachineStatus($data) {
+        
+         $r_error = 1;
+        $r_message = "";
+        
+        $q = "select * from machines_list where status = '$data'";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+       if(sizeof($rows) > 0){
+           $r_message = "Machine status is in use"; 
+        }
+        else{
+          
+       $q = "Delete from machine_status where status = '$data'";
+        $runQuery = self::DBrunQuery($q);  
+        
+        $r_error = 0;
+        $r_message = "Machine status removed successfully";
+        
+        }
+        
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+     public static function deleteUser($data) {
+        
+        $r_error = 1;
+        $r_message = "";
+        $q = "Delete users,user_profile from users INNER JOIN user_profile ON users.id = user_profile.user_Id where users.id = '$data'";
+        $runQuery = self::DBrunQuery($q);  
+        
+        $r_error = 0;
+        $r_message = "Employee removed successfully";
+      
+        $return = array();
+        $return['error'] = $r_error;
+        $return['message'] = $r_message;
         return $return;
     }
 
