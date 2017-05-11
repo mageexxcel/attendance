@@ -3,7 +3,7 @@
    "version": "0.3.0",
    "description": "HR system api using Postman",
    "scripts": {
-       "precommit": "newman run postman.json"
+       "precommit": "newman run postman_collection.json"
    },
    "devDependencies": {
        "husky": "^0.13.3"
