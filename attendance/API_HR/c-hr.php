@@ -1505,6 +1505,7 @@ class HR extends DATABASE {
         $r_error = 0;
         $r_message = "";
         $slkmsg = "";
+        $r_data = array();
         if (is_array($leaveDetails)) {
             $old_status = $leaveDetails['status'];
 
@@ -1549,11 +1550,12 @@ class HR extends DATABASE {
             $r_message = "No such leave found";
             $r_error = 1;
         }
-
-
+              
+              $r_data['message'] = $r_message;
+              $r_data['leaveid'] = $leaveid;
         $return = array();
         $return['error'] = $r_error;
-        $return['message'] = $r_message;
+        $return['data'] = $r_data;
         return $return;
     }
 
@@ -1563,6 +1565,7 @@ class HR extends DATABASE {
         $r_error = 0;
         $r_message = "";
         $message_to_user = "";
+        $r_data = array();
         if (is_array($leaveDetails)) {
             $old_status = $leaveDetails['status'];
 
@@ -1601,8 +1604,9 @@ class HR extends DATABASE {
 
         $return = array();
         $r_data = array();
-        $return['error'] = 0;
         $r_data['message'] = $r_message;
+        $r_data['leaveid'] = $leaveid;
+        $return['error'] = $r_error;
         $return['data'] = $r_data;
 
         return $return;
