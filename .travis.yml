@@ -2,17 +2,17 @@
 language: php
 
 # list any PHP version you want to test against
-php:
+#php:
   # using major version aliases
 
   # aliased to a recent 5.6.x version
-  - 5.6
+ # - 5.6
   # aliased to a recent 7.x version
-  - 7.0
+ # - 7.0
   # aliased to a recent hhvm version
-  - hhvm
+  #- hhvm
 
 # optionally specify a list of environments, for example to test different RDBMS
-env:
-  - DB=mysqli
+#env:
+  #- DB=mysqli
 # script: bundle exec rspec spec
