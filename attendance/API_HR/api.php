@@ -672,7 +672,6 @@ else if ($action == 'delete_machine_status') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-        $PARAMS['status'] = 'working';
         $res = HR::deleteMachineStatus($PARAMS['status']);
     }
 }
