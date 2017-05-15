@@ -3196,8 +3196,12 @@ class HR extends DATABASE {
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
-     
-        if ($no_of_rows == 0) {
+        
+        $q2 = "select * from machine_status where color ='" . trim($data['color']) . "' AND status !='" . trim($data['status']) . "'";
+        $runQuery2 = self::DBrunQuery($q2);
+        $no_of_rows2 = self::DBnumRows($runQuery2);
+     if($no_of_rows2 == 0){
+           if ($no_of_rows == 0) {
             $res = self::DBinsertQuery('machine_status', $ins);
             $r_error = 0;
             $r_message = "Variable Successfully Inserted";
@@ -3210,6 +3214,14 @@ class HR extends DATABASE {
             $r_message = "Variable updated successfully";
             $r_data['message'] = $r_message;
         }
+     }
+     else{
+         $r_error = 0;
+            $r_message = "Color already assigned to status";
+            $r_data['message'] = $r_message; 
+     }
+        
+      
 
         $return = array();
         $return['error'] = $r_error;

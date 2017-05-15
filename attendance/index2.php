@@ -67,7 +67,7 @@ while ($s = mysqli_fetch_assoc($w)) {
         $time_table[$sid]['timing'][] = "";
     }
 }
-//$sendmessage = "Hello";
+$sendmessage = "Hello";
 if (isset($sendmessage)) {
     $qv = "SELECT * from admin";
     $qw = mysqli_query($link, $qv) or die(mysqli_error($link));
@@ -140,7 +140,14 @@ if (isset($sendmessage)) {
         }
         if ($t['name'] != "" && $t['name'] != "Admin") {
             if ($j1 == 0) {
-                $string5 = $string5 . $t['name'] . ": Did not Come Yet! \n";
+                $string5 = $string5 . $t['name'] . ": Did not Come Yet!";
+                $r = getleaveinfo($t['id'],$date,$link);
+               if($r == 1){
+                   $string5.="(Leave Applied)\n";
+               }
+               else{
+                    $string5.="(Leave Not Applied)\n";
+               }
             }
             if ($j1 != 0 && strtotime($j1) < strtotime('10:30')) {
                 $string2 = $string2 . $t['name'] . ":  Entry Time: " . $j1 . "\n";
@@ -150,22 +157,23 @@ if (isset($sendmessage)) {
             }
         }
     }
-//echo $string1;
-//echo "<hr>";
-//echo $string4;
-//echo "<hr>";
-//echo $string;
-//echo "<hr>";
-//echo "<hr>";
-//echo $string2;
-//echo "<hr>";
-//echo $string3;
-//echo "<hr>";
-//echo $string5;
-//echo "<hr>";
-//echo "<br>";
+ 
+echo $string1;
+echo "<hr>";
+echo $string4;
+echo "<hr>";
+echo $string;
+echo "<hr>";
+echo "<hr>";
+echo $string2;
+echo "<hr>";
+echo $string3;
+echo "<hr>";
+echo $string5;
+echo "<hr>";
+echo "<br>";
 //D0KGJ5HPH
-//die;
+die;
   //  send_slack_message($c_id = 'hr_system', $token, $string, $hr, $day);
     if ($string4 != "") {
         $hr4 = "hrfile4";
@@ -476,6 +484,54 @@ function _beautyDaySummary($dayRaw) {
     $return['in_time'] = $inTime;
     $return['out_time'] = $outTime;
     $return['date'] = $rf_date;
+    return $return;
+}
+function getleaveinfo($userid,$date,$link) {
+ $result= 0;
+ $year = date("Y");
+ $month = date("m");
+ $list = array();
+    $qry = "SELECT * FROM leaves Where user_Id = $userid ";
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    $rows = array();
+    while ($row = mysqli_fetch_assoc($resl)) {
+        $rows[] = $row;
+    }
+
+    foreach ($rows as $pp) {
+        $pp_start = $pp['from_date'];
+        $pp_end = $pp['to_date'];
+        $datesBetween = getDatesBetweenTwoDates($pp_start, $pp_end);
+
+        foreach ($datesBetween as $d) {
+            $h_month = date('m', strtotime($d));
+            $h_year = date('Y', strtotime($d));
+
+            if ($h_year == $year && $h_month == $month) {
+                $h_full_date = date("Y-m-d", strtotime($d));
+                $list[] = $h_full_date;
+            }
+        }
+    }
+    ksort($list);
+  
+    if(in_array($date,$list)){
+      $result= 1;  
+    }
+    
+   return $result; 
+}
+function getDatesBetweenTwoDates($startDate, $endDate) {
+    $return = array($startDate);
+    $start = $startDate;
+    $i = 1;
+    if (strtotime($startDate) < strtotime($endDate)) {
+        while (strtotime($start) < strtotime($endDate)) {
+            $start = date('Y-m-d', strtotime($startDate . '+' . $i . ' days'));
+            $return[] = $start;
+            $i++;
+        }
+    }
     return $return;
 }
 //die;
