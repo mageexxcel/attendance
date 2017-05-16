@@ -15,7 +15,7 @@ if (isset($_FILES['image'])) {
     if ($file_name != "AGL_001.TXT") {
         echo "Wrong file inserted";
     } else {
-        // $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
+      
         if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
             echo "File Not uploaded";
             die;
@@ -63,7 +63,6 @@ if (isset($_FILES['image'])) {
     }
 }
 $time_table2 = array();
-//$de = "08-09-2016";
 $time_table2 = get_time_array($de, $link);
 
 $time_table = array();
@@ -90,16 +89,15 @@ if (isset($sendmessage) && $sendmessage == 1) {
         $token = $qs['token'];
     }
     $time_table6 = array();
-    //$date = "2016-08-09";
     $date = date("Y-m-d");
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
+    $prev_date2 = date('Y-m-d', strtotime($date . ' -1 day'));
     $hr = "hrfile";
     $hr2 = "hrfile2";
     $time_table6 = get_time_array($prev_date, $link, $hr);
     $ada = $time_table6['date'];
     $pdate = date("d-m-Y", strtotime(str_replace("-", "/", $ada)));
     $day = date('l', strtotime($pdate));
-    // echo $ada."--".$day;
     $w = mysqli_query($link, $query2) or die(mysqli_error($link));
     while ($s = mysqli_fetch_assoc($w)) {
         $sid = $s['id'];
@@ -116,9 +114,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
     $string2 = "";
     $string3 = "";
     $string4 = "";
-    // echo "<pre>";
-    // print_r($ttable);
-    //die;
+    
     foreach ($ttable as $valo) {
         $a = current($valo['timing']);
         $a = strtotime(str_replace("-", "/", $a));
@@ -132,9 +128,15 @@ if (isset($sendmessage) && $sendmessage == 1) {
             $a1 = $b1 = 0;
         }
         if ($valo['name'] != "" && $valo['name'] != "Admin") {
-//             echo $valo['name']."---".$a1."<br>";
             if ($a1 == 0) {
-                $string1 = $string1 . $valo['name'] . ":  was absent on " . $day . "\n";
+               $string1 = $string1 . $valo['name'] . ":  was absent on " . $day ;
+                  $r = getleaveinfo($valo['id'],$prev_date2,$link);
+               if($r == 1){
+                   $string1.=" (Leave Applied)\n";
+               }
+               else{
+                    $string1.=" (Leave Not Applied)\n";
+               }
             }
             if (strtotime($a1) > strtotime('10:30') && $a1 != 0) {
                 $string4 = $string4 . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
@@ -170,22 +172,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
             }
         }
     }
-//echo $string1;
-//echo "<hr>";
-//echo $string4;
-//echo "<hr>";
-//echo $string;
-//echo "<hr>";
-//echo "<hr>";
-//echo $string2;
-//echo "<hr>";
-//echo $string3;
-//echo "<hr>";
-//echo $string5;
-//echo "<hr>";
-//echo "<br>";
-//D0KGJ5HPH
-//die;
+
        send_slack_message($c_id = 'hr_system', $token, $string, $hr, $day);
     if ($string4 != "") {
         $hr4 = "hrfile4";
@@ -282,7 +269,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     $ff = saveUserMonthPunching($id, $e, $link);
                     $ffprev = saveUserMonthPunching($id, $e, $link, $prev_year, $prev_month);
                     $c_id = get_channel_id($f, $cid_array);
-                    //  if ($e == "meraj.etech@excellencetechnologies.in") {
+                
                     $d = str_replace("PM", "", current($value['timing']));
                     $d = strtotime(str_replace("-", "/", $d));
                     $d1 = date("h:i A", $d);
@@ -305,9 +292,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                             send_slack_message($c_id, $token, $msg);
                     }
-                    // echo $msg;
-                    //echo "<hr>";
-                    //   }
+                  
                 }
             }
             if (!in_array($e, $are)) {
@@ -440,7 +425,7 @@ function saveUserMonthPunching($userid, $email, $link, $cyear = false, $cmonth =
         $month = $cmonth;
         $c_day = "";
     }
-    //$c_day = date("05");
+  
     $list = array();
     $q = "SELECT * FROM attendance Where user_id = $userid";
     $runQuery = mysqli_query($link, $q) or die();
@@ -570,7 +555,6 @@ function getDatesBetweenTwoDates($startDate, $endDate) {
     return $return;
 }
 
-//die;
 ?>
 <html>
     <head>

@@ -77,13 +77,16 @@ if (isset($sendmessage)) {
         $token = $qs['token'];
     }
     $time_table6 = array();
-    //$date = "2016-08-09";
+    //$date = "2017-05-15";
     $date = date("Y-m-d");
     $prev_date = date('m-d-Y', strtotime($date . ' -1 day'));
+    $prev_date2 = date('Y-m-d', strtotime($date . ' -1 day'));
     $hr = "hrfile";
     $hr2 = "hrfile2";
     $time_table6 = get_time_array($prev_date, $link, $hr);
     $ada = $time_table6['date'];
+    
+    
     $pdate = date("d-m-Y", strtotime(str_replace("-", "/", $ada)));
     $day = date('l', strtotime($pdate));
     // echo $ada."--".$day;
@@ -121,7 +124,14 @@ if (isset($sendmessage)) {
         if ($valo['name'] != "" && $valo['name'] != "Admin") {
 //             echo $valo['name']."---".$a1."<br>";
             if ($a1 == 0) {
-                $string1 = $string1 . $valo['name'] . ":  was absent on " . $day . "\n";
+                $string1 = $string1 . $valo['name'] . ":  was absent on " . $day ;
+                  $r = getleaveinfo($valo['id'],$prev_date2,$link);
+               if($r == 1){
+                   $string1.=" (Leave Applied)\n";
+               }
+               else{
+                    $string1.=" (Leave Not Applied)\n";
+               }
             }
             if (strtotime($a1) > strtotime('10:30') && $a1 != 0) {
                 $string4 = $string4 . $valo['name'] . ": Total hours on " . $c . " Entry Time: " . $a1 . " Exit Time: " . $b1 . "\n";
@@ -487,6 +497,7 @@ function _beautyDaySummary($dayRaw) {
     return $return;
 }
 function getleaveinfo($userid,$date,$link) {
+  
  $result= 0;
  $year = date("Y");
  $month = date("m");

@@ -3252,20 +3252,23 @@ class HR extends DATABASE {
         
         $r_error = 1;
         $r_message = "";
+        $r_data = array();
         $q1 = "select * from machine_status";
         
         $runQuery = self::DBrunQuery($q1);
         $row = self::DBfetchRows($runQuery);
         if (sizeof($row) == 0) {
+            
             $r_message = "No machine status list found!";
         } else {
             $r_error = 0;
-            $r_message = $row;
+            $r_data = $row;
         }
 
         $return = array();
         $return['error'] = $r_error;
-        $return['data'] = $r_message;
+        $return['data'] = $r_data;
+        $return['message'] = $r_message;
 
         return $return;
     }
