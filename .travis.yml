@@ -21,7 +21,7 @@ env:
 matrix:
   exclude:
     - php: hhvm
-      env: DB=pgsql  # PDO driver for pgsql is unsupported by HHVM (3rd party install for support)
+     
   allow_failures:
     - php: 7.0
     - php: hhvm
@@ -31,7 +31,4 @@ matrix:
 # use the $DB env variable to determine the phpunit.xml to use
 script: phpunit --configuration phpunit_$DB.xml --coverage-text
 
-# configure notifications (email, IRC, campfire etc)
-notifications:
-  irc: "irc.freenode.org#yourfavouriteroomfortravis"
 
