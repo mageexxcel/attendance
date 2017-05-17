@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <phpunit>
+   <filter>
+        <whitelist>
+            <directory>./</directory>
+            <exclude>
+                <directory>./attendance/sal_info/google-api</directory>
+                <directory>./node_modules</directory>
+                <directory>./assets</directory>
+                <directory>./libs</directory>
+                <directory>./scripts</directory>
+            </exclude>
+        </whitelist>
+    </filter>
    <testsuites>
         <testsuite name="Test Suite">
             <directory>./attendance/</directory>
         </testsuite>
     </testsuites>
-
-    <filter>
-        <whitelist>
-            <directory>./</directory>
-            <exclude>
-                <directory>./node_modules</directory>
-                <directory>./assets</directory>
-                <directory>./libs</directory>
-                <directory>./scripts</directory>
-                <directory>./attendance/sal_info/google-api</directory>
-            </exclude>
-        </whitelist>
-    </filter>
 </phpunit>
