@@ -5,7 +5,6 @@
         <whitelist>
             <directory>./</directory>
             <exclude>
-                <directory>./attendance/sal_info/google-api</directory>
                 <directory>./node_modules</directory>
                 <directory>./assets</directory>
                 <directory>./libs</directory>
@@ -14,8 +13,11 @@
         </whitelist>
     </filter>
    <testsuites>
-        <testsuite name="Test Suite">
-            <directory>./attendance/</directory>
+         <testsuite name="HR API 1">
+            <directory>./attendance/API_HR</directory>
+        </testsuite>
+        <testsuite name="HR API 2">
+            <directory>./attendance/sal_info</directory>
         </testsuite>
     </testsuites>
 </phpunit>
