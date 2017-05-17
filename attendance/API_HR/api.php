@@ -6,6 +6,7 @@ ini_set('display_errors', 0);
 
 require_once 'c-hr.php';
 
+
 header("Access-Control-Allow-Origin: *");
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
@@ -64,6 +65,7 @@ $token = $PARAMS['token'];
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
     $token = $PARAMS['token'];
+    
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
         //start -- check for token expiry
@@ -130,7 +132,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
@@ -151,14 +153,16 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
-        $date = $PARAMS['date'];
+           $date = $PARAMS['date'];
         $time = $PARAMS['time'];
         $res = HR::updateDayWorkingHours($date, $time);
     }
+    
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
 } else if ($action == "apply_leave") {
@@ -246,15 +250,23 @@ if ($action == 'login') {
     $end_date = $PARAMS['end_date'];
     $res = HR::getDaysBetweenLeaves($start_date, $end_date);
 } else if ($action == "get_managed_user_working_hours") {
-    $userid = $PARAMS['userid'];
-    $res = HR::geManagedUserWorkingHours($userid);
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to update";
+    } else {
+        $userid = $PARAMS['userid'];
+        $res = HR::geManagedUserWorkingHours($userid);
+    }
+    
 } else if ($action == 'add_user_working_hours') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
@@ -504,7 +516,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -516,7 +528,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -529,7 +541,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -541,7 +553,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -568,7 +580,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -580,7 +592,7 @@ if ($action == 'login') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
     //check for guest so that he can't update
-    if(strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -613,7 +625,7 @@ if ($action == 'login') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -625,18 +637,18 @@ if ($action == 'login') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-       $res = HR::addMachineStatus($PARAMS);
+     $res = HR::addMachineStatus($PARAMS);
     }
 } else if ($action == 'get_machine_type_list') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -646,11 +658,22 @@ if ($action == 'login') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
         $res = HR::getMachineStatusList();
+    }
+}
+else if ($action == 'delete_machine_status') {
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission";
+    } else {
+        $res = HR::deleteMachineStatus($PARAMS['status']);
     }
 }
 else if ($action == 'send_request_for_doc') {
@@ -685,19 +708,34 @@ else if ($action == 'add_extra_leave_day') {
     }
 }
 else if ($action == 'add_hr_comment') {
+ 
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+     if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to update";
+    } else {
+       
+        $leaveid = $PARAMS['leaveid'];
+        $hr_comment = $PARAMS['hr_comment'];
+        $hr_approve = $PARAMS['hr_approve'];
+        $res = HR::addHrComment($leaveid, $hr_comment,$hr_approve);
+    }
+}
+else if ($action == 'delete_employee') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to update";
+        $res['data']['message'] = "You don't have permission to delete user";
     } else {
-        $leaveid = $PARAMS['leaveid'];
-        $hr_comment = $PARAMS['hr_comment'];
-        $hr_approve = $PARAMS['hr_approve'];
-        $res = HR::addHrComment($leaveid, $hr_comment,$hr_approve);
+        $userid = $PARAMS['user_id'];
+       $res = HR::deleteUser($userid);
     }
 }
 

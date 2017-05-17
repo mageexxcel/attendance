@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit>
+   <filter>
+        <whitelist>
+            <directory>./</directory>
+            <exclude>
+                <directory>./attendance/sal_info/google-api</directory>
+                <directory>./node_modules</directory>
+                <directory>./assets</directory>
+                <directory>./libs</directory>
+                <directory>./scripts</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+   <testsuites>
+         <testsuite name="HR API 1">
+            <directory>./attendance/API_HR</directory>
+        </testsuite>
+        <testsuite name="HR API 2">
+            <directory>./attendance/sal_info</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

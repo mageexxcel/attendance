@@ -1,0 +1,2267 @@
+{
+	"variables": [],
+	"info": {
+		"name": "New Hr system",
+		"_postman_id": "4583b125-e936-b4da-ebde-b8cf50f51cb1",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1.Admin api detail",
+			"description": "",
+			"item": [
+				{
+					"name": "Admin signin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.token) {",
+									"    tests[\"Admin Exists\"] = true;",
+									"    postman.setEnvironmentVariable(\"admintoken\", jsonData.data.token);",
+									"} else {",
+									"    tests[\"User Exists\"] = false;",
+									"    tests[\"Critical Test Fail. All tests will fail if this fails. Make sure user exists and verified\"] = false;",
+									"}",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"let url = environment.url;",
+									"postman.clearEnvironmentVariables();",
+									"postman.setEnvironmentVariable(\"url\", \"http://dev.hr.excellencetechnologies.in/hr/attendance\");",
+									"postman.setEnvironmentVariable(\"name\", \"Test\" + Math.floor(Math.random() * 10000));",
+									"postman.setEnvironmentVariable(\"jobtitle\", \"tester\");",
+									"postman.setEnvironmentVariable(\"team-variable\", \"tester\" + Math.floor(Math.random() * 10000));",
+									"postman.setEnvironmentVariable(\"date\", \"2017-05-06\");",
+									"postman.setEnvironmentVariable(\"year\", \"2017\");",
+									"postman.setEnvironmentVariable(\"month\", \"05\");",
+									"postman.setEnvironmentVariable(\"workemail\", \"test\" + Math.floor(Math.random() * 10000) + \"@excellencetechnologies.in\");",
+									"",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"action\":\"login\",\"username\":\"arun\",\"password\":\"java@123\"}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add new employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Employee added Successfully !!\" ) {",
+									"    tests[\"Employee added\"] = true;",
+									"  ",
+									" ",
+									"} ",
+									"",
+									"",
+									"",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"dateofjoining\", \"2017-04-01\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_new_employee\",\n\"dateofjoining\":\"{{dateofjoining}}\",\n\"dob\":\"1990-01-02\",\n\"gender\":\"Male\",\n\"jobtitle\":\"{{jobtitle}}\",\n\"name\":\"{{name}}\",\n\"token\":\"{{admintoken}}\",\n\"training_month\":\"1\",\n\"username\":\"{{name}}\",\n\"workemail\":\"{{workemail}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get All enabled user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.length > 0){",
+									"      for (var i = 0; i < jsonData.data.length; i++) {",
+									"               if (jsonData.data[i].slack_profile && jsonData.data[i].slack_profile.length !== 0) {",
+									"                   tests[\"is slack profile present :\" + i] = true;",
+									"               } ",
+									"               ",
+									"                if (jsonData.data[i].policy_document&& jsonData.data[i].policy_document !== 0) {",
+									"                   tests[\"is policy document :\" + i] = true;",
+									"               }",
+									"               if(jsonData.data[i].username=== environment.name){",
+									"                   tests[\"Added User found on list\"] = true;",
+									"                   postman.setEnvironmentVariable(\"userid\",jsonData.data[i].user_Id);",
+									"               }",
+									"           }",
+									"    }",
+									"  ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_enable_user\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add team in team list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Variable updated successfully\" ) {",
+									"    tests[\"Team added in list\"] = true;",
+									"",
+									"} ",
+									"",
+									"",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_team_list\",\n\"token\":\"{{admintoken}}\",\n\"type\":\"team_list\",\n\"value\":[\"ReactJs\", \"AngularJs\", \"React Native\", \"Ionic\", \"PHP\", \"MAGENTO1\", \"MAGENTO2\",\"{{team-variable}}\"]\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Team list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"  ",
+									"}",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.length > 0){",
+									"       tests[\"Team list obtained\"] = true; ",
+									"       for(var i=0; i<jsonData.data.length; i++){",
+									"            if(jsonData.data[i]=== environment.team_variable){",
+									"                   tests[\"Added team variable found on list\"] = true;",
+									"               }",
+									"       }",
+									"    }",
+									"  ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_team_list\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Team ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Variable updated successfully\" ) {",
+									"    tests[\"Team deleted in list\"] = true;",
+									"",
+									"} ",
+									"",
+									"",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_team_list\",\n\"token\":\"{{admintoken}}\",\n\"type\":\"team_list\",\n\"value\":[\"ReactJs\", \"AngularJs\", \"React Native\", \"Ionic\", \"PHP\", \"MAGENTO1\", \"MAGENTO2\"]\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add User Day attendance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"}",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.message ===\"\"){",
+									"        tests[\"User day attendance detail added\"] = true;  ",
+									"      }",
+									"     ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"update_user_day_summary\",\n\"date\":\"{{date}}\",\n\"entry_time\":\"09:30 AM\",\n\"exit_time\":\"06:30 PM\",\n\"reason\":\"test\",\n\"token\":\"{{admintoken}}\",\n\"userid\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User day detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.name ===environment.name){",
+									"        tests[\"User name valid\"] = true;  ",
+									"      }",
+									"      if(jsonData.data.entry_time ===\"09:30 AM\"){",
+									"        tests[\"User entry time matched \"] = true;  ",
+									"      }",
+									"     if(jsonData.data.exit_time ===\"06:30 PM\"){",
+									"        tests[\"User exit time matched\"] = true;  ",
+									"      }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"user_day_summary\",\n\"date\":\"{{date}}\",\n\"token\":\"{{admintoken}}\",\n\"userid\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "User Month attendance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.name ===environment.name){",
+									"        tests[\"User name valid\"] = true;  ",
+									"      }",
+									"     if(jsonData.data.nextMonth){",
+									"        tests[\"next month detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.previousMonth){",
+									"        tests[\"previous month detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.attendance.length > 0){",
+									"       ",
+									"        for(var i=0; i<jsonData.data.attendance.length; i++){",
+									"            if(jsonData.data.attendance[i].full_date === environment.date && jsonData.data.attendance[i].in_time === \"09:30 AM\"){",
+									"                tests[\"Day entry found on attendance\"] = true;  ",
+									"            }",
+									"        }",
+									"         ",
+									"        ",
+									"         ",
+									"       }",
+									"        ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"month_attendance\",\n\"month\":\"{{month}}\",\n\"token\":\"{{admintoken}}\",\n\"userid\":\"{{userid}}\",\n\"year\":\"{{year}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update User profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.message === \"Successfully Updated into table\"){",
+									"        tests[\"User profile detail updated\"] = true;  ",
+									"      }",
+									"      ",
+									"    ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"update_user_profile_detail\",\n\"blood_group\":\"B+\",\n\"current_address\":\"Test address\",\n\"dateofjoining\":\"2017-05-01\",\n\"dob\":\"1990-01-02\",\n\"emergency_ph1\":\"121212\",\n\"emergency_ph2\":\"1212121\",\n\"gender\":\"Male\",\n\"holding_comments\":\"\",\n\"jobtitle\":\"{{jobtitle}}\",\n\"marital_status\":\"Single\",\n\"medical_condition\":\"no\",\n\"name\":\"{{name}}\",\n\"permanent_address\":\"Test address\",\n\"send_slack_msg\":\"\",\n\"slack_msg\":\"0\",\n\"team\":\"AngularJs\",\n\"termination_date\":\"\",\n\"token\":\"{{admintoken}}\",\n\"training_completion_date\":\"\",\n\"training_month\":\"1\",\n\"user_id\":\"{{userid}}\",\n\"work_email\":\"{{workemail}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User profile detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.user_profile_detail !==\"\"){",
+									"        tests[\"User profile detail\"] = true;  ",
+									"        if(jsonData.data.user_profile_detail.current_address !==\"\"){",
+									"            tests[\"User updated profile detail found\"] = true;  ",
+									"        }",
+									"      }",
+									"     ",
+									"      if(jsonData.data.user_bank_detail){",
+									"        tests[\"User bank detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.user_assign_machine.length>0){",
+									"        tests[\"User assign machine detail\"] = true;  ",
+									"      }",
+									"     ",
+									"   ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_profile_detail\",\n\"token\":\"{{admintoken}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "user document detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.user_document_info.length > 0){",
+									"       tests[\"User document detail retrieved\"] = true;  ",
+									"    }",
+									"   ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_document\",\n\"token\":\"{{admintoken}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2.User api detail",
+			"description": "",
+			"item": [
+				{
+					"name": "User Signin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.token) {",
+									"    tests[\"User Exists\"] = true;",
+									"    postman.setEnvironmentVariable(\"token\", jsonData.data.token);",
+									"    postman.setEnvironmentVariable(\"userid\", jsonData.data.userid);",
+									"} else {",
+									"    tests[\"User Exists\"] = false;",
+									"    tests[\"Critical Test Fail. All tests will fail if this fails. Make sure user exists and verified\"] = false;",
+									"}",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"action\":\"login\",\"username\":\"{{name}}\",\"password\":\"java@123\"}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get user attendance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"      if(jsonData.data.monthSummary){",
+									"        tests[\"Month summery retrieved\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.nextMonth){",
+									"        tests[\"next month detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.previousMonth){",
+									"        tests[\"previous month detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.attendance.length > 0){",
+									"       ",
+									"         tests[\"User month attendance data found\"] = true; ",
+									"              for(var i=0; i<jsonData.data.attendance.length; i++){",
+									"            if(jsonData.data.attendance[i].full_date === environment.date && jsonData.data.attendance[i].in_time === \"09:30 AM\"){",
+									"                tests[\"Day entry found on attendance\"] = true;  ",
+									"            }",
+									"        }",
+									"      }",
+									"      ",
+									"      ",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"month_attendance\",\n\"token\":\"{{token}}\",\n\"month\":\"{{month}}\",\n\"year\":\"{{year}}\",\n\"userid\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get user profile detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"}",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.user_profile_detail){",
+									"        tests[\"User profile detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.user_bank_detail){",
+									"        tests[\"User bank detail\"] = true;  ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.user_assign_machine){",
+									"        tests[\"User assign machine detail\"] = true;  ",
+									"      }",
+									"     ",
+									"   ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_profile_detail\",\n\"token\":\"{{token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User policy document ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"  ",
+									"}",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    if(jsonData.data.length > 0){",
+									"       tests[\"User policy document detail retrieved\"] = true;  ",
+									"    }",
+									"   ",
+									"   ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_policy_document\",\n\"token\":\"{{token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Document detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.user_document_info.length > 0){",
+									"       tests[\"User document detail retrieved\"] = true;  ",
+									"    }",
+									"  ",
+									"  ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_document\",\n\"token\":\"{{token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3.Hr api detail",
+			"description": "",
+			"item": [
+				{
+					"name": "HR Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.token) {",
+									"    tests[\"User Exists\"] = true;",
+									"    postman.setEnvironmentVariable(\"hr_token\", jsonData.data.token);",
+									"} else {",
+									"    tests[\"User Exists\"] = false;",
+									"    tests[\"Critical Test Fail. All tests will fail if this fails. Make sure user exists and verified\"] = false;",
+									"}",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"hr_name\", \"meraj\");",
+									"postman.setEnvironmentVariable(\"hr_pass\", \"java@123\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"action\":\"login\",\"username\":\"{{hr_name}}\",\"password\":\"{{hr_pass}}\"}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Get Holiday List",
+			"description": "",
+			"item": [
+				{
+					"name": "Holiday list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.holidays.length > 0){",
+									"       tests[\"Holiday list retrieved\"] = true;  ",
+									"    }",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_holidays_list\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inventory",
+			"description": "",
+			"item": []
+		},
+		{
+			"name": "Leaves",
+			"description": "",
+			"item": [
+				{
+					"name": "Get Days between dates",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.start_date ===\"\" ){",
+									"        tests[\"start date not found\"] = false;",
+									"    }",
+									"    else{",
+									"        tests[\"start date found\"] = true;",
+									"        postman.setEnvironmentVariable(\"from_date\", jsonData.data.start_date); ",
+									"    }",
+									"    if(jsonData.data.end_date ===\"\" ){",
+									"         tests[\"end date not found\"] = false;",
+									"    }",
+									"    else{",
+									"        tests[\"end date found\"] = true;",
+									"         postman.setEnvironmentVariable(\"to_date\", jsonData.data.end_date);",
+									"    }",
+									"    if(jsonData.data.working_days ===\"\" ){",
+									"         tests[\"No. of working days between days\"] = false;",
+									"    }",
+									"    else{",
+									"        tests[\"No. of working days between days\"] = true;",
+									"       postman.setEnvironmentVariable(\"no_of_days\", jsonData.data.working_days); ",
+									"    }",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_days_between_leaves\",\n\"end_date\":\"2017-05-05\",\n\"start_date\":\"2017-05-05\",\n\"token\":\"{{token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Apply User leave",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    tests[\"Applied User Leave\"] = true;",
+									"   ",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									" postman.setEnvironmentVariable(\"leave_reason\", \"postman test\");",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"apply_leave\",\n\"day_status\":\"\",\n\"from_date\":\"{{from_date}}\",\n\"late_reason\":\"test\",\n\"leave_type\":\"Casual Leave\",\n\"no_of_days\":\"{{no_of_days}}\",\n\"reason\":\"{{leave_reason}}\",\n\"to_date\":\"{{to_date}}\",\n\"token\":\"{{token}}\"}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User leave detail:User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"     if(jsonData.data.leaves.length > 0){",
+									"       tests[\"User leaves detail retrieved\"] = true;",
+									"       for(var i=0;i<jsonData.data.leaves.length;i++){",
+									"           if(jsonData.data.leaves[i].no_of_days === environment.no_of_days && jsonData.data.leaves[i].reason === environment.leave_reason){",
+									"              tests[\"User applied leaves detail matched\"] = true;  ",
+									"           }",
+									"       }",
+									"        postman.setEnvironmentVariable(\"leaveid\", jsonData.data.leaves[0].id);",
+									"    }",
+									"  ",
+									"  ",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_my_leaves\",\n\"token\":\"{{token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "All user applied leaves: Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.leaves.length > 0){",
+									"       tests[\"All User applied leave info \"] = true; ",
+									"       ",
+									"       for (var i = 0; i < jsonData.data.leaves.length; i++) {",
+									"         if(jsonData.data.leaves[i].last_applied_leaves){",
+									"            tests[\"User last applied leave info :\" +i] = true; ",
+									"        ",
+									"            }",
+									"            ",
+									"         if(jsonData.data.leaves[i].user_Id === environment.userid && jsonData.data.leaves[i].reason === environment.leave_reason){",
+									"            tests[\"User last applied leave info matched\"] = true;  ",
+									"         }",
+									"         ",
+									"      ",
+									"       ",
+									"    }",
+									"",
+									"        ",
+									"    }",
+									"   ",
+									"  ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_all_leaves\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add hr comment on leave",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.message && jsonData.error !== 1) {",
+									"    if(jsonData.message === \"Hr comment updated\"){",
+									"        tests[jsonData.message] = true; ",
+									"    }",
+									"",
+									"   ",
+									"} "
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"hr_comment\", \"Comment on leave by hr\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_hr_comment\",\n\"hr_comment\":\"{{hr_comment}}\",\n\"hr_approve\":\"\",\n\"leaveid\":\"{{leaveid}}\",\n\"token\":\"{{hr_token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Hr approve leave",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.message && jsonData.error !== 1) {",
+									"    if(jsonData.message === \"Hr approved leave \"){",
+									"        tests[jsonData.message] = true; ",
+									"    }",
+									"",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_hr_comment\",\n\"hr_comment\":\"\",\n\"hr_approve\":\"1\",\n\"leaveid\":\"{{leaveid}}\",\n\"token\":\"{{hr_token}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Admin comment on User leave",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.message == \"Admin commented on employee leave saved\" ) {",
+									"    tests[\"Admin comment on user leave\"] = true;",
+									"",
+									"} ",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"send_request_for_doc\",\n\"comment\":\"testing comment\",\n\"doc_request\":\"\",\n\"leaveid\":\"{{leaveid}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Change User leave status: Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.message !==\"No such leave found\" ) {",
+									"    tests[\"Admin approved or reject user leave\"] = true;",
+									"",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"change_leave_status\",\n\"newstatus\":\"Approved\",\n\"messagetouser\":\"\",\n\"leaveid\":\"{{leaveid}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "All User Leave Summery",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"}",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"      if(jsonData.data.nextMonth){",
+									"        tests[\"next month detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.previousMonth){",
+									"        tests[\"previous month detail\"] = true;  ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.leavesSummary && jsonData.data.leavesSummary.length > 0 ){",
+									"        tests[\"leave summery detail\"] = true;  ",
+									"      }",
+									"      ",
+									"      if(jsonData.data.leavesSummary.length > 0){",
+									"       ",
+									"         tests[\"User month attendance data found\"] = true; ",
+									"         for(var i=0;i < jsonData.data.leavesSummary.length;i++){",
+									"             ",
+									"             if(jsonData.data.leavesSummary[i].monthSummary){",
+									"              tests[\"Month summery data found\"] = true; ",
+									"              }",
+									"          ",
+									"            if(jsonData.data.leavesSummary[i].attendance.length > 0){",
+									"              tests[\"User month attendance data found:\"+i] = true; ",
+									"            }",
+									"           ",
+									"          }",
+									"        }",
+									"     ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_all_leaves_summary\",\n\"month\":\"5\",\n\"token\":\"{{admintoken}}\",\n\"year\":\"{{year}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Mail",
+			"description": "",
+			"item": [
+				{
+					"name": "Create Email Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.message === \"Template Successfully Inserted\"){",
+									"        tests[\"Email template created\"] = true;  ",
+									"    }",
+									"      ",
+									"} "
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"template_name\", \"Test template name\");",
+									"postman.setEnvironmentVariable(\"template_subject\", \"Test Subject\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"create_email_template\",\n\"body\":\"<p>this is a test email template</p>\",\n\"name\":\"{{template_name}}\",\n\"subject\":\"{{template_subject}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Email templates",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"}",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData && jsonData.length > 0) {",
+									"      tests[\"Email template retrieved\"] = true;",
+									"      for(var i=0; i<jsonData.length; i++){",
+									"          if(jsonData[i].name === environment.template_subject){",
+									"              ",
+									"              tests[\"Created Email template found\"] = true;",
+									"              ",
+									"              postman.setEnvironmentVariable(\"template_id\", jsonData[i].id);",
+									"          }",
+									"           ",
+									"      }",
+									"     ",
+									"     ",
+									"} else {",
+									"    tests[\"Email template retrieved\"] = false;",
+									"    ",
+									"}",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_email_template\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Email Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.message === \"Template Successfully deleted\"){",
+									"        tests[\"Email template deleted\"] = true;  ",
+									"    }",
+									"      ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"delete_email_template\",\n\"id\":\"{{template_id}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add email template variable",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.message === \"Variable Successfully Inserted\"){",
+									"        tests[\"Email variable created\"] = true;  ",
+									"    }",
+									"   ",
+									"      ",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"variable_name\", \"#teston\");",
+									"postman.setEnvironmentVariable(\"variable_value\", \"demo text<br>\");",
+									"postman.setEnvironmentVariable(\"variable_type\", \"user\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"create_template_variable\",\n\"name\":\"{{variable_name}}\",\n\"token\":\"{{admintoken}}\",\n\"value\":\"{{variable_value}}\",\n\"variable_type\":\"{{variable_type}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get all template variables",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"if(responseCode.code === 401){",
+									"    tests[\"Login Token Expired. Further api not work\"] = responseCode.code === 401;",
+									"}",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData && jsonData.length > 0) {",
+									"      tests[\"Email template retrieved\"] = true;",
+									"      for(var i=0; i<jsonData.length; i++){",
+									"          ",
+									"          if(jsonData[i].name === environment.variable_name){",
+									"              postman.setEnvironmentVariable(\"template_variable_id\", jsonData[i].id);",
+									"              tests[\"Added variable found on list\"]",
+									"          }",
+									"          ",
+									"           ",
+									"      }",
+									"     ",
+									"     ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_template_variable\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Email template variable",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"    ",
+									"    if(jsonData.data.message === \"Variable Successfully deleted\"){",
+									"        tests[\"Email template variable deleted\"] = true;  ",
+									"    }",
+									"      ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"delete_template_variable\",\n\"id\":\"{{template_variable_id}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Manage Hours",
+			"description": "",
+			"item": [
+				{
+					"name": "Update office hours",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Success Update\" ) {",
+									"    tests[\"Office Hours Updated\"] = true;",
+									"",
+									"} ",
+									"",
+									"if (jsonData.data.monthYear) {",
+									"    tests[\"Current month and year found\"] = true;",
+									"",
+									"} ",
+									"",
+									"",
+									"",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"update_day_working_hours\",\n\"date\":\"2017-05-01\",\n\"time\":\"09:00\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add employee working hours",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Successfully added\" ) {",
+									"    tests[\"Employee Working Hours Updated\"] = true;",
+									"",
+									"} ",
+									"",
+									"",
+									"",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									" postman.setEnvironmentVariable(\"working_hours\",\"09:00\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"add_user_working_hours\",\n\"date\":\"{{date}}\",\n\"reason\":\"Late coming\",\n\"token\":\"{{admintoken}}\",\n\"userid\":\"{{userid}}\",\n\"working_hours\":\"{{working_hours}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get employee working hours detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.list.length > 0 ) {",
+									"    tests[\"Employee Working Hours detail found\"] = true;",
+									"    for(var i=0; i<jsonData.data.list.length;i++ ){",
+									"        if(jsonData.data.list[i].date == environment.date && jsonData.data.list[i].working_hours == environment.working_hours ){",
+									"            tests[\"date and working hours found on user working hour list\"] = true;",
+									"        }",
+									"    }",
+									"} ",
+									"",
+									"if (jsonData.data.userInfo ) {",
+									"    tests[\"Employee info detail found\"] = true;",
+									"    if (jsonData.data.userInfo.slack_profile ) {",
+									"    tests[\"Employee slack info detail found\"] = true;",
+									"    ",
+									"",
+									"} ",
+									"",
+									"} ",
+									"",
+									"",
+									"",
+									"}",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_managed_user_working_hours\",\n\"userid\":\"{{userid}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add office working hours",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.message === \"Success Update\") {",
+									"    tests[\"Office Working hours added\"] = true;",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"update_day_working_hours\",\n\"date\":\"{{date}}\",\n\"time\":\"{{working_hours}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Office Working hour summenry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.monthSummary.length > 0 ) {",
+									"    tests[\"Working hour month detail found\"] = true;",
+									"    for(var i=0; i<jsonData.data.monthSummary.length; i++ ){",
+									"        if(jsonData.data.monthSummary[i].full_date === environment.date && jsonData.data.monthSummary[i].office_working_hours === environment.working_hours){",
+									"             tests[\"Added ofiice working hours found\"] = true;",
+									"        }",
+									"    }",
+									"} ",
+									"",
+									"if (jsonData.data.nextMonth ) {",
+									"    tests[\"next month detail found\"] = true;",
+									"",
+									"} ",
+									"",
+									"if (jsonData.data.previousMonth ) {",
+									"    tests[\"previous month detail found\"] = true;",
+									"",
+									"} ",
+									"",
+									"}",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"working_hours_summary\",\n\"month\":\"{{month}}\",\n\"year\":\"{{year}}\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Salary",
+			"description": "",
+			"item": [
+				{
+					"name": "Add or update user salary",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data ===\"Successfully Salary Updated\" ) {",
+									"    tests[\"User salary updated successfully\"] = true;",
+									"",
+									"}"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"holding_amt\", \"1000\");",
+									"postman.setEnvironmentVariable(\"holding_to\", \"2017-06-30\");",
+									"",
+									"postman.setEnvironmentVariable(\"basic\", \"1000\");",
+									"postman.setEnvironmentVariable(\"hra\", \"1000\");",
+									"postman.setEnvironmentVariable(\"conveyance\", \"1000\");",
+									"postman.setEnvironmentVariable(\"medical\", \"100\");",
+									"postman.setEnvironmentVariable(\"special\", \"100\");",
+									"postman.setEnvironmentVariable(\"arrear\", \"100\");",
+									"",
+									"postman.setEnvironmentVariable(\"epf\", \"0\");",
+									"postman.setEnvironmentVariable(\"leave\", \"1\");",
+									"postman.setEnvironmentVariable(\"loan\", \"0\");",
+									"postman.setEnvironmentVariable(\"misc_deduction\", \"0\");",
+									"postman.setEnvironmentVariable(\"tds\", \"0\");",
+									"",
+									"postman.setEnvironmentVariable(\"total_salary\", \"3300\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/add_sal_structure.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"advance\":\"0\",\n\"applicable_from\":\"{{dateofjoining}}\",\n\"applicable_till\":\"{{holding_to}}\",\n\"arrear\":\"{{arrear}}\",\n\"basic\":\"{{basic}}\",\n\"conveyance\":\"{{conveyance}}\",\n\"epf\":\"{{epf}}\",\n\"hra\":\"{{hra}}\",\n\"leave\":\"{{leave}}\",\n\"loan\":\"{{loan}}\",\n\"medical_allowance\":\"{{medical}}\",\n\"misc_deduction\":\"{{misc_deduction}}\",\n\"special_allowance\":\"{{special}}\",\n\"tds\":\"{{tds}}\",\n\"token\":\"{{admintoken}}\",\n\"total_salary\":\"3300\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Add user holding amount",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data ===\"Successfully Inserted into table\" ) {",
+									"    tests[\"User holding amount successfully added\"] = true;",
+									"",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/add_holding_info.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"holding_amt\":\"{{holding_amt}}\",\n\"holding_end_date\":\"2017-06-30\",\n\"holding_start_date\":\"2017-05-02\",\n\"reason\":\"Add holding amount\",\n\"token\":\"{{admintoken}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get user salary detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error.length <= 0) {",
+									"  if(jsonData.data.salary_details.length > 0 ){",
+									"        tests[\"User salary detail\"] = true;",
+									"          for(var i=0; i< jsonData.data.salary_details.length; i++ ){",
+									"            if(jsonData.data.salary_details[i].test.id){",
+									"                postman.setEnvironmentVariable(\"last_salary_id\", jsonData.data.salary_details[i].test.id);",
+									"                tests['Last salary id found']=true;",
+									"                ",
+									"            }",
+									"          ",
+									"        }",
+									"      }",
+									"     ",
+									"      if(jsonData.data.holding_details.length > 0 ){",
+									"        tests[\"User holding detail\"] = true;  ",
+									"        for (var j=0;j<jsonData.data.holding_details.length;j++){",
+									"            if(jsonData.data.holding_details[j].holding_amt === environment.holding_amt && jsonData.data.holding_details[j].holding_end_date === environment.holding_to){",
+									"              tests[\"User added holding amount detail found\"] = true; ",
+									"            }",
+									"        }",
+									"        ",
+									"        ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.payslip_history.length > 0 ){",
+									"        tests[\"User payslip_history detail\"] = true;  ",
+									"      }",
+									"     ",
+									"   ",
+									"} ",
+									"",
+									"if (jsonData.data && jsonData.error.length > 0) {",
+									"    ",
+									"    tests[jsonData.error] = true; ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/salary_info.php?token={{token}}",
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "User salary detail by admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error.length <= 0) {",
+									"    if(jsonData.data.name === environment.name ){",
+									"        tests[\"Salary detail of token obtain\"] = true;",
+									"          ",
+									"      }",
+									"  if(jsonData.data.salary_details.length > 0 ){",
+									"        tests[\"User salary detail\"] = true;",
+									"          ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.holding_details.length > 0 ){",
+									"        tests[\"User holding detail\"] = true;  ",
+									"        for (var j=0;j<jsonData.data.holding_details.length;j++){",
+									"            if(jsonData.data.holding_details[j].holding_amt === environment.holding_amt && jsonData.data.holding_details[j].holding_end_date === environment.holding_to){",
+									"              tests[\"User added holding amount detail found\"] = true; ",
+									"            }",
+									"        }",
+									"        ",
+									"        ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.payslip_history.length > 0 ){",
+									"        tests[\"User payslip_history detail\"] = true;  ",
+									"      }",
+									"     ",
+									"   ",
+									"} ",
+									"",
+									"if (jsonData.data && jsonData.error.length > 0) {",
+									"    ",
+									"    tests[jsonData.error] = true; ",
+									"}",
+									""
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"postman.setEnvironmentVariable(\"tuserid\",\"386\");"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/salary_info.php?token={{admintoken}}&user_id={{tuserid}}",
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"   if(jsonData.data.length > 0 ){",
+									"        tests[\" All user detail found\"] = true;",
+									"           for(var i=0; i< jsonData.data.length; i++ ){",
+									"            if(jsonData.data[i].user_bank_detail){",
+									"               tests['User bank detail found:'+i]=true;",
+									"                ",
+									"            }",
+									"             if(jsonData.data[i].salary_detail){",
+									"               tests['User salary detail found:'+i]=true;",
+									"                ",
+									"            }",
+									"           ",
+									"            if(jsonData.data[i].holdin_amt_detail){",
+									"               tests['User holding amt detail found:'+i]=true;",
+									"                ",
+									"            }",
+									"            if(jsonData.data[i].username === environment.name){",
+									"               tests['New Added User detail found:'+i]=true;",
+									"                ",
+									"            }",
+									"            ",
+									"            ",
+									"        }",
+									"      }",
+									"     ",
+									"   ",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_all_users_detail\",\n\"token\":\"{{admintoken}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get User payslip data: Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"   if(jsonData.data.user_payslip_history.length > 0 ){",
+									"        tests[\" Users payslip history found\"] = true;",
+									"           for(var i=0; i< jsonData.data.user_payslip_history.length; i++ ){",
+									"            if(jsonData.data.user_payslip_history[i].payslip_url){",
+									"               tests['User payslip url found:'+i]=true;",
+									"                ",
+									"            }",
+									"          ",
+									"            ",
+									"        }",
+									"      }",
+									"    ",
+									"      ",
+									"      if(jsonData.data.user_data_for_payslip){",
+									"          tests['User payslip data found'] = true;",
+									"          if(jsonData.data.user_data_for_payslip.leaves_allocated){",
+									"                 postman.setEnvironmentVariable(\"leaves_allocated\", jsonData.data.user_data_for_payslip.leaves_allocated);",
+									"             }",
+									"          ",
+									"           if(jsonData.data.user_data_for_payslip.days_present){",
+									"                 postman.setEnvironmentVariable(\"days_present\", jsonData.data.user_data_for_payslip.days_present);",
+									"             }",
+									"             if(jsonData.data.user_data_for_payslip.total_working_days){",
+									"                 postman.setEnvironmentVariable(\"total_working_days\", jsonData.data.user_data_for_payslip.total_working_days);",
+									"             }",
+									"             ",
+									"           if(jsonData.data.user_data_for_payslip.salary_detail){",
+									"          tests['User payslip salary detail'] = true;",
+									"             if(jsonData.data.user_data_for_payslip.salary_detail.Conveyance || jsonData.data.user_data_for_payslip.salary_detail.Conveyance === 0){",
+									"                 postman.setEnvironmentVariable(\"Conveyance\", jsonData.data.user_data_for_payslip.salary_detail.Conveyance);",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.Medical_Allowance || jsonData.data.user_data_for_payslip.salary_detail.Medical_Allowance === 0){",
+									"                postman.setEnvironmentVariable(\"medical_allowance\", jsonData.data.user_data_for_payslip.salary_detail.Medical_Allowance); ",
+									"             }",
+									"               if(jsonData.data.user_data_for_payslip.salary_detail.Special_Allowance || jsonData.data.user_data_for_payslip.salary_detail.Special_Allowance === 0){",
+									"                postman.setEnvironmentVariable(\"special_allowance\", jsonData.data.user_data_for_payslip.salary_detail.Special_Allowance); ",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.HRA || jsonData.data.user_data_for_payslip.salary_detail.HRA === 0){",
+									"                postman.setEnvironmentVariable(\"HRA\", jsonData.data.user_data_for_payslip.salary_detail.HRA); ",
+									"             }",
+									"               if(jsonData.data.user_data_for_payslip.salary_detail.Basic || jsonData.data.user_data_for_payslip.salary_detail.Basic === 0){",
+									"                postman.setEnvironmentVariable(\"Basic\", jsonData.data.user_data_for_payslip.salary_detail.Basic); ",
+									"             }",
+									"               if(jsonData.data.user_data_for_payslip.salary_detail.Arrears || jsonData.data.user_data_for_payslip.salary_detail.Arrears === 0){",
+									"                postman.setEnvironmentVariable(\"Arrears\", jsonData.data.user_data_for_payslip.salary_detail.Arrears); ",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.TDS || jsonData.data.user_data_for_payslip.salary_detail.TDS === 0){",
+									"                postman.setEnvironmentVariable(\"TDS\", jsonData.data.user_data_for_payslip.salary_detail.TDS); ",
+									"             }",
+									"               if(jsonData.data.user_data_for_payslip.salary_detail.Misc_Deductions || jsonData.data.user_data_for_payslip.salary_detail.Misc_Deductions === 0){",
+									"                postman.setEnvironmentVariable(\"Misc_Deductions\", jsonData.data.user_data_for_payslip.salary_detail.Misc_Deductions); ",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.Advance || jsonData.data.user_data_for_payslip.salary_detail.Advance === 0){",
+									"                postman.setEnvironmentVariable(\"Advance\", jsonData.data.user_data_for_payslip.salary_detail.Advance); ",
+									"             }",
+									"             if(jsonData.data.user_data_for_payslip.salary_detail.Loan || jsonData.data.user_data_for_payslip.salary_detail.Loan === 0){",
+									"                postman.setEnvironmentVariable(\"Loan\", jsonData.data.user_data_for_payslip.salary_detail.Loan); ",
+									"             }",
+									"             if(jsonData.data.user_data_for_payslip.salary_detail.EPF || jsonData.data.user_data_for_payslip.salary_detail.EPF === 0){",
+									"                postman.setEnvironmentVariable(\"EPF\", jsonData.data.user_data_for_payslip.salary_detail.EPF); ",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.misc_deduction2 || jsonData.data.user_data_for_payslip.salary_detail.misc_deduction2 === 0){",
+									"                postman.setEnvironmentVariable(\"misc_deduction2\", jsonData.data.user_data_for_payslip.salary_detail.misc_deduction2); ",
+									"             }",
+									"              if(jsonData.data.user_data_for_payslip.salary_detail.bonus || jsonData.data.user_data_for_payslip.salary_detail.bonus === 0){",
+									"                postman.setEnvironmentVariable(\"bonus\", jsonData.data.user_data_for_payslip.salary_detail.bonus); ",
+									"             }",
+									"          ",
+									"           }",
+									"    ",
+									"         ",
+									"         if(jsonData.data.user_data_for_payslip.total_earning || jsonData.data.user_data_for_payslip.total_earning === 0){",
+									"             tests['User total earning of month']=true;",
+									"              postman.setEnvironmentVariable(\"total_earning\", jsonData.data.user_data_for_payslip.total_earning); ",
+									"             ",
+									"         } ",
+									"         ",
+									"         ",
+									"         if(jsonData.data.user_data_for_payslip.total_deduction || jsonData.data.user_data_for_payslip.total_deduction === 0){",
+									"             tests['User total deduction of month']=true;",
+									"              postman.setEnvironmentVariable(\"total_deduction\", jsonData.data.user_data_for_payslip.total_deduction); ",
+									"             ",
+									"         } ",
+									"         ",
+									"         if(jsonData.data.user_data_for_payslip.net_salary || jsonData.data.user_data_for_payslip.net_salary === 0){",
+									"             tests['User net salary of month']=true;",
+									"              postman.setEnvironmentVariable(\"net_salary\", jsonData.data.user_data_for_payslip.net_salary); ",
+									"             ",
+									"         } ",
+									"         ",
+									"         ",
+									"         if(jsonData.data.user_data_for_payslip.paid_leaves || jsonData.data.user_data_for_payslip.paid_leaves === 0){",
+									"             tests['User paid leaves of month']=true;",
+									"              postman.setEnvironmentVariable(\"paid_leaves\", jsonData.data.user_data_for_payslip.paid_leaves); ",
+									"             ",
+									"         } ",
+									"       ",
+									"         ",
+									"         if(jsonData.data.user_data_for_payslip.unpaid_leaves){",
+									"             tests['User unpaid leaves of month']=true;",
+									"              postman.setEnvironmentVariable(\"unpaid_leaves\", jsonData.data.user_data_for_payslip.unpaid_leaves); ",
+									"             ",
+									"         } ",
+									"         ",
+									"          ",
+									"          if(jsonData.data.user_data_for_payslip.total_leave_taken){",
+									"             tests['User total leave taken of month']=true;",
+									"              postman.setEnvironmentVariable(\"total_leave_taken\", jsonData.data.user_data_for_payslip.total_leave_taken); ",
+									"             ",
+									"         } ",
+									"         ",
+									"          if(jsonData.data.user_data_for_payslip.leave_balance){",
+									"             tests['User leave balance of month']=true;",
+									"              postman.setEnvironmentVariable(\"leave_balance\", jsonData.data.user_data_for_payslip.leave_balance); ",
+									"             ",
+									"         } ",
+									"       ",
+									"         ",
+									"          if(jsonData.data.user_data_for_payslip.final_leave_balance || jsonData.data.user_data_for_payslip.final_leave_balance === 0){",
+									"             tests['User final leave balance of month']=true;",
+									"              postman.setEnvironmentVariable(\"final_leave_balance\", jsonData.data.user_data_for_payslip.final_leave_balance); ",
+									"             ",
+									"         } ",
+									"          ",
+									"      }",
+									"     ",
+									"      if(jsonData.data.employee_pending_leave.length > 0){",
+									"          tests[\"User previous month pending leave info\"] = true;",
+									"      }",
+									"    ",
+									"       if(jsonData.data.google_drive_emailid > 0){",
+									"         tests[\"google drive mail address connection found\"] = true;   ",
+									"      }",
+									"     ",
+									"       if(jsonData.data.employee_actual_salary){",
+									"           tests[\"user actual salary detail found\"] = true; ",
+									"           if(jsonData.data.employee_actual_salary.Special_Allowance === environment.special){",
+									"               tests[\"user actual salary Special Allowance matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Medical_Allowance === environment.medical){",
+									"               tests[\"user actual salary Medical_Allowance matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Conveyance === environment.conveyance){",
+									"               tests[\"user actual salary Conveyance Matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.HRA === environment.hra){",
+									"               tests[\"user actual salary HRA matched found\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Basic === environment.basic){",
+									"               tests[\"user actual salary Basic matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Arrears === environment.arrear){",
+									"               tests[\"user actual salary Arrear matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.TDS === environment.tds){",
+									"               tests[\"user actual salary TDS matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Misc_Deductions === environment.misc_deduction){",
+									"               tests[\"user actual salary Misc deduction matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.Loan === environment.loan){",
+									"               tests[\"user actual salary Loan matched\"] = true; ",
+									"           }",
+									"           if(jsonData.data.employee_actual_salary.EPF === environment.epf){",
+									"               tests[\"user actual salary EPF matched\"] = true; ",
+									"           }",
+									"      }",
+									"      ",
+									"     ",
+									"   ",
+									"} "
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"get_user_manage_payslips_data\",\n\"token\":\"{{admintoken}}\",\n\"month\":\"{{month}}\",\n\"year\":\"{{year}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee Payslip",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data && jsonData.error !== 1) {",
+									"if (jsonData.data.message ===\"Salary slip generated successfully\" ) {",
+									"    tests[\"Employee salary slip created\"] = true;",
+									"",
+									"} ",
+									"}",
+									"",
+									"",
+									"",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"create_employee_salary_slip\",\n\"advance\":\"{{Advance}}\",\n\"allocated_leaves\":\"{{leaves_allocated}}\",\n\"arrear\":\"{{Arrears}}\",\n\"basic\":\"{{Basic}}\",\n\"bonus\":\"{{bonus}}\",\n\"conveyance\":\"{{conveyance}}\",\n\"days_present\":\"{{days_present}}\",\n\"designation\":\"{{jobtitle}}\",\n\"epf\":\"{{EPF}}\",\n\"final_leave_balance\":\"{{final_leave_balance}}\",\n\"hra\":\"{{HRA}}\",\n\"joining_date\":\"{{dateofjoining}}\",\n\"leave_balance\":\"{{leave_balance}}\",\n\"loan\":\"{{Loan}}\",\n\"loyalty_bonus\":\"{{special_allowance}}\",\n\"medical_allowance\":\"{{medical_allowance}}\",\n\"misc_deduction\":\"{{Misc_Deductions}}\",\n\"misc_deduction_2\":\"{{misc_deduction2}}\",\n\"month\":\"{{month}}\",\n\"name\":\"{{name}}\",\n\"net_salary\":\"{{net_salary}}\",\n\"paid_leaves\":\"{{paid_leaves}}\",\n\"send_email\":\"0\",\n\"send_slack_msg\":\"0\",\n\"tds\":\"{{TDS}}\",\n\"token\":\"{{admintoken}}\",\n\"total_deduction\":\"{{total_deduction}}\",\n\"total_earning\":\"{{total_earning}}\",\n\"total_leave_taken\":\"{{total_leave_taken}}\",\n\"total_working_days\":\"{{total_working_days}}\",\n\"unpaid_leaves\":\"{{unpaid_leaves}}\",\n\"user_id\":\"{{userid}}\",\n\"year\":\"{{year}}\"}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User salary detail",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.data.message ===\"Salary slip deleted successfully\" ) {",
+									"    tests[\"User Salary slip deleted successfully\"] = true;",
+									"",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/sal_info/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"delete_salary\",\n\"salary_id\":\"{{last_salary_id}}\",\n\"token\":\"{{admintoken}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Employee data: Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"",
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.message && jsonData.error === 0) {",
+									"     if(jsonData.message === \"Employee removed successfully\"){",
+									"         tests['Employee Deleted']=true;",
+									"     }",
+									" }"
+								]
+							}
+						}
+					],
+					"request": {
+						"url": "{{url}}/API_HR/api.php",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\"action\":\"delete_employee\",\n\"token\":\"{{admintoken}}\",\n\"user_id\":\"{{userid}}\"\n}"
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
