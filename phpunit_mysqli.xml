@@ -15,6 +15,7 @@
                 <directory>./assets</directory>
                 <directory>./libs</directory>
                 <directory>./scripts</directory>
+                <directory>./attendance/sal_info/google-api</directory>
             </exclude>
         </whitelist>
     </filter>
