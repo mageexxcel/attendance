@@ -5,6 +5,7 @@
         <whitelist>
             <directory>./</directory>
             <exclude>
+                <directory>./attendance/sal_info/google-api</directory>
                 <directory>./node_modules</directory>
                 <directory>./assets</directory>
                 <directory>./libs</directory>
