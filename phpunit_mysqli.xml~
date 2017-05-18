@@ -3,7 +3,7 @@
 <phpunit>
    <filter>
         <whitelist>
-            <directory suffix=".php">./attendance</directory>
+            <directory>./</directory>
             <exclude>
                 <directory>./attendance/sal_info/google-api</directory>
                 <directory>./node_modules</directory>
