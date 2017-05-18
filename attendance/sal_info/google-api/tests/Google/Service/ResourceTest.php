@@ -23,17 +23,17 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 
-//class Test_Google_Service extends Google_Service
-//{
-//  public function __construct(Google_Client $client)
-//  {
-//    parent::__construct($client);
-//    $this->rootUrl = "https://test.example.com";
-//    $this->servicePath = "";
-//    $this->version = "v1beta1";
-//    $this->serviceName = "test";
-//  }
-//}
+class Test_Google_Service extends Google_Service
+{
+  public function __construct(Google_Client $client)
+  {
+    parent::__construct($client);
+    $this->rootUrl = "https://test.example.com";
+    $this->servicePath = "";
+    $this->version = "v1beta1";
+    $this->serviceName = "test";
+  }
+}
 
 class Test_MediaType_Stream extends Stream
 {

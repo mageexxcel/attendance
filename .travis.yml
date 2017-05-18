@@ -7,6 +7,7 @@ env:
   global:
     - MEMCACHE_HOST=127.0.0.1
     - MEMCACHE_PORT=11211
+    - DB=mysqli
   matrix:
     - GUZZLE_VERSION=~5.2
     - GUZZLE_VERSION=~6.0
@@ -20,10 +21,6 @@ php:
 
 sudo: false
 
-# optionally specify a list of environments, for example to test different RDBMS
-env:
-  - DB=mysqli
-  
 # optionally set up exclutions and allowed failures in the matrix
 matrix:
   exclude:
@@ -33,7 +30,8 @@ matrix:
     - php: 7.0
     - php: hhvm
 
-
+install:
+  - composer require guzzlehttp/guzzle:$GUZZLE_VERSION
 
 # use the $DB env variable to determine the phpunit.xml to use
 script: phpunit --configuration phpunit_$DB.xml --coverage-text
