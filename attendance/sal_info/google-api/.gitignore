@@ -4,3 +4,4 @@ composer.lock
 examples/testfile-small.txt
 examples/testfile.txt
 tests/.apiKey
+/tests
