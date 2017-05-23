@@ -3,7 +3,8 @@
 <phpunit>
    <filter>
         <whitelist>
-             <exclude>
+            <directory suffix=".php">./attendance/API_HR</directory>
+            <exclude>
                 <directory>./attendance/sal_info/google-api</directory>
                 <directory>./node_modules</directory>
                 <directory>./assets</directory>
@@ -14,9 +15,9 @@
     </filter>
    <testsuites>
          <testsuite name="HRAPI 1">
-            <directory>./attendance/attendance/API_HR</directory>
+            <directory>./attendance/API_HR</directory>
         </testsuite>
-    <!--    <testsuite name="HRAPI 2">
+       <!-- <testsuite name="HRAPI 2">
             <directory>./attendance/sal_info</directory>
         </testsuite> -->
     </testsuites>
