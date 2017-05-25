@@ -399,8 +399,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 //---------Applied leave messages to Hr channel-------------
     if (isset($_GET['leave'])) {
         $raw = array();
-        $ss = "SELECT leaves.*,user_profile.name FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%' OR applied_on LIKE '%$prev_month%'";
-        $sw = mysqli_query($link, $ss) or die(mysqli_error($link));
+        $ss = "SELECT leaves.*,user_profile.name,user_profile.user_Id,user_profile.slack_id FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%' OR applied_on LIKE '%$prev_month%'";
+       $sw = mysqli_query($link, $ss) or die(mysqli_error($link));
         while ($row = mysqli_fetch_assoc($sw)) {
             $raw[] = $row;
         }
@@ -420,6 +420,24 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 $msg2 = $msg2 . $vale['name'] . " had appplied for leave from " . $changefrom . " to " . $changeto . ". Reason : " . $vale['reason'] . " (" . $vale['status'] . ") \n";
             }
             if ($from3 == $current_date) {
+                $assign_machine = getAssignDeviceStatus($vale['user_Id'], $link);
+                if(sizeof($assign_machine) > 0){
+                   $c_id = get_channel_id($vale['slack_id'], $cid_array);
+                   $empmsg = "Hi ". $vale['name'] ."!!\n Please leave the ";
+                   $i=0;
+                   foreach($assign_machine as $vf){
+                       if($i > 0){
+                          $empmsg.= ", ".$vf['machine_name']." ".$vf['machine_type']." "; 
+                       }
+                       else{
+                         $empmsg.= $vf['machine_name']." ".$vf['machine_type']." ";  
+                       }
+                       $i++;
+                   }
+                   $empmsg.="assigned to you with HR or reporting senior before you take leave. Else you would be help liable for the safe keeping of your assigned device";
+                   send_slack_message($c_id , $token, $empmsg);
+                }
+                
                 $msg3 = $msg3 . $vale['name'] . " had appplied for leave from " . $changefrom . " to " . $changeto . ". Reason : " . $vale['reason'] . " (" . $vale['status'] . ") \n";
             }
         }
@@ -996,4 +1014,15 @@ function getSlackMsgSendStatus($email, $link) {
         $result = 1;
     }
     return $result;
+}
+
+function getAssignDeviceStatus($userid,$link) {
+    $rows = array();
+    $qry = "select ml.machine_type as machine_type ,ml.machine_name as machine_name ,up.name as user_name from machines_list ml Inner Join machines_user mu ON  ml.id = mu.machine_id Inner Join user_profile up On mu.user_id = up.user_Id where up.user_Id = ".$userid." AND (ml.machine_type = 'laptop' OR ml.machine_type = 'mobile phone')";
+    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    while ($row = mysqli_fetch_assoc($resl)) {
+        $rows[] = $row;
+    }
+    
+    return $rows;
 }

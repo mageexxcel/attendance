@@ -738,6 +738,19 @@ else if ($action == 'delete_employee') {
        $res = HR::deleteUser($userid);
     }
 }
+else if ($action == 'get_machine_count') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+       $res = HR::getMachineCount();
+    }
+}
 
 
 
