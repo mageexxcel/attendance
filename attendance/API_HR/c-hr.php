@@ -1285,8 +1285,8 @@ class HR extends DATABASE {
                 $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
                 $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
             }
-            
-            if($late_reason !=""){
+
+            if ($late_reason != "") {
                 $message_to_user.="\nLate Reason: $late_reason";
                 $message_to_hr.="\nLate Reason: $late_reason";
             }
@@ -1521,27 +1521,24 @@ class HR extends DATABASE {
                 $q = "UPDATE leaves set hr_comment='$hr_comment' WHERE id = $leaveid ";
                 $r_message = "Hr comment updated";
                 $slkmsg = "On applied leave of $userInfo_name from $from_date to $to_date \n Hr has commented \n $hr_comment";
-                
             }
             if (!empty($hr_approve)) {
                 $q = "UPDATE leaves set hr_approved='$hr_approve' WHERE id = $leaveid ";
-                 $r_message = "Hr approved leave ";
+                $r_message = "Hr approved leave ";
                 $slkmsg = "Hr has approved the applied leave of $userInfo_name from $from_date to $to_date";
-                if($hr_approve == "2"){
-                  $r_message = "Hr not approved leave ";
-                $slkmsg = "Hr has not approved the applied leave of $userInfo_name from $from_date to $to_date";   
+                if ($hr_approve == "2") {
+                    $r_message = "Hr not approved leave ";
+                    $slkmsg = "Hr has not approved the applied leave of $userInfo_name from $from_date to $to_date";
                 }
-               
             }
 
 
             try {
                 self::DBrunQuery($q);
                 $r_error = 0;
-               if(!empty($slkmsg)){
-                  $slackMessageStatus = self::sendSlackMessageToUser("D1HUPANG6", $slkmsg);  
+                if (!empty($slkmsg)) {
+                    $slackMessageStatus = self::sendSlackMessageToUser("D1HUPANG6", $slkmsg);
                 }
-                
             } catch (Exception $e) {
                 $r_error = 1;
                 $r_message = "Some error occured";
@@ -1550,9 +1547,9 @@ class HR extends DATABASE {
             $r_message = "No such leave found";
             $r_error = 1;
         }
-              
-              $r_data['message'] = $r_message;
-              $r_data['leaveid'] = $leaveid;
+
+        $r_data['message'] = $r_message;
+        $r_data['leaveid'] = $leaveid;
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_data;
@@ -2838,12 +2835,12 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getAllMachineDetail($sort = false, $status_sort=false) {
+    public static function getAllMachineDetail($sort = false, $status_sort = false) {
         if ($sort != false) {
             $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort'";
         }if ($status_sort != false) {
             $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort'";
-        }else {
+        } else {
             $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id ORDER BY machines_list.id DESC";
         }
         $runQuery = self::DBrunQuery($q);
@@ -3152,25 +3149,24 @@ class HR extends DATABASE {
             $r_message = "Variable Successfully Inserted";
             $r_data['message'] = $r_message;
         } if ($no_of_rows != 0) {
-            $p = json_decode($row1['value'],true);
-            $value = json_decode($data['value'],true);
+            $p = json_decode($row1['value'], true);
+            $value = json_decode($data['value'], true);
             $s = array_diff($p, $value);
-          
-            if(sizeof($s) > 0){
-                foreach($s as $v){
-                    $query="select * from machines_list where machine_type = '$v'"; 
+
+            if (sizeof($s) > 0) {
+                foreach ($s as $v) {
+                    $query = "select * from machines_list where machine_type = '$v'";
                     $run = self::DBrunQuery($query);
                     $n_rows = self::DBnumRows($run);
-                   if($n_rows > 0){
-                      $r_data['not_delete'][] = $v;
-                      array_push($value,$v);
+                    if ($n_rows > 0) {
+                        $r_data['not_delete'][] = $v;
+                        array_push($value, $v);
                     }
-                    
                 }
             }
-          $res = json_encode($value);
-          $q = "UPDATE config set value='$res' WHERE type ='" . $data['type'] . "'";
-          self::DBrunQuery($q);
+            $res = json_encode($value);
+            $q = "UPDATE config set value='$res' WHERE type ='" . $data['type'] . "'";
+            self::DBrunQuery($q);
 
             $r_error = 0;
             $r_message = "Variable updated successfully";
@@ -3182,7 +3178,8 @@ class HR extends DATABASE {
         $return['data'] = $r_data;
         return $return;
     }
-        public static function addMachineStatus($data) {
+
+    public static function addMachineStatus($data) {
         $r_error = 1;
         $not_deleted = "";
         $r_message = "";
@@ -3192,36 +3189,35 @@ class HR extends DATABASE {
             'color' => $data['color']
         );
         $q1 = "select * from machine_status where status ='" . trim($data['status']) . "'";
-       
+
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
-        
+
         $q2 = "select * from machine_status where color ='" . trim($data['color']) . "' AND status !='" . trim($data['status']) . "'";
         $runQuery2 = self::DBrunQuery($q2);
         $no_of_rows2 = self::DBnumRows($runQuery2);
-     if($no_of_rows2 == 0){
-           if ($no_of_rows == 0) {
-            $res = self::DBinsertQuery('machine_status', $ins);
-            $r_error = 0;
-            $r_message = "Variable Successfully Inserted";
-            $r_data['message'] = $r_message;
-        } if ($no_of_rows != 0) {
-            $q = "UPDATE machine_status set status='".$data['status']."', color='".$data['color']."'WHERE id ='" . $row1['id'] . "'";
-             self::DBrunQuery($q);
+        if ($no_of_rows2 == 0) {
+            if ($no_of_rows == 0) {
+                $res = self::DBinsertQuery('machine_status', $ins);
+                $r_error = 0;
+                $r_message = "Variable Successfully Inserted";
+                $r_data['message'] = $r_message;
+            } if ($no_of_rows != 0) {
+                $q = "UPDATE machine_status set status='" . $data['status'] . "', color='" . $data['color'] . "'WHERE id ='" . $row1['id'] . "'";
+                self::DBrunQuery($q);
 
+                $r_error = 0;
+                $r_message = "Variable updated successfully";
+                $r_data['message'] = $r_message;
+            }
+        } else {
             $r_error = 0;
-            $r_message = "Variable updated successfully";
+            $r_message = "Color already assigned to status";
             $r_data['message'] = $r_message;
         }
-     }
-     else{
-         $r_error = 0;
-            $r_message = "Color already assigned to status";
-            $r_data['message'] = $r_message; 
-     }
-        
-      
+
+
 
         $return = array();
         $return['error'] = $r_error;
@@ -3248,17 +3244,18 @@ class HR extends DATABASE {
 
         return $return;
     }
+
     public static function getMachineStatusList() {
-        
+
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $q1 = "select * from machine_status";
-        
+
         $runQuery = self::DBrunQuery($q1);
         $row = self::DBfetchRows($runQuery);
         if (sizeof($row) == 0) {
-            
+
             $r_message = "No machine status list found!";
         } else {
             $r_error = 0;
@@ -3272,45 +3269,80 @@ class HR extends DATABASE {
 
         return $return;
     }
+
     public static function deleteMachineStatus($data) {
-        
-         $r_error = 1;
+
+        $r_error = 1;
         $r_message = "";
-        
+
         $q = "select * from machines_list where status = '$data'";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-       if(sizeof($rows) > 0){
-           $r_message = "Machine status is in use"; 
+        if (sizeof($rows) > 0) {
+            $r_message = "Machine status is in use";
+        } else {
+
+            $q = "Delete from machine_status where status = '$data'";
+            $runQuery = self::DBrunQuery($q);
+
+            $r_error = 0;
+            $r_message = "Machine status removed successfully";
         }
-        else{
-          
-       $q = "Delete from machine_status where status = '$data'";
-        $runQuery = self::DBrunQuery($q);  
-        
-        $r_error = 0;
-        $r_message = "Machine status removed successfully";
-        
-        }
-        
+
 
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
         return $return;
     }
-     public static function deleteUser($data) {
-        
+
+    public static function deleteUser($data) {
+
         $r_error = 1;
         $r_message = "";
         $q = "Delete users,user_profile from users INNER JOIN user_profile ON users.id = user_profile.user_Id where users.id = '$data'";
-        $runQuery = self::DBrunQuery($q);  
-        
+        $runQuery = self::DBrunQuery($q);
+
         $r_error = 0;
         $r_message = "Employee removed successfully";
-      
+
         $return = array();
         $return['error'] = $r_error;
+        $return['message'] = $r_message;
+        return $return;
+    }
+
+    public static function getMachineCount() {
+
+        $r_error = 1;
+        $r_message = "";
+
+        $query = "SELECT * FROM machines_list";
+        $run = self::DBrunQuery($query);
+        $row = self::DBfetchRows($run);
+        $arr = array();
+        if (sizeof($row) > 0) {
+            foreach ($row as $val) {
+                $key = $val['machine_type'];
+                if (array_key_exists($key, $arr)) {
+                    $arr[$key] = $arr[$key] + 1;
+                } else {
+                    $arr[$key] = 1;
+                }
+            }
+        }
+        if (sizeof($arr) > 0) {
+            $r_error = 0;
+            $r_message = "Data found";
+        } else {
+            $r_error = 1;
+            $r_message = "No Data found";
+        }
+
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $arr;
         $return['message'] = $r_message;
         return $return;
     }
