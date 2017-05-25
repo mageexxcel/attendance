@@ -399,8 +399,8 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 //---------Applied leave messages to Hr channel-------------
     if (isset($_GET['leave'])) {
         $raw = array();
-        $ss = "SELECT leaves.*,user_profile.name FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%' OR applied_on LIKE '%$prev_month%'";
-        $sw = mysqli_query($link, $ss) or die(mysqli_error($link));
+        $ss = "SELECT leaves.*,user_profile.name,user_profile.user_Id,user_profile.slack_id FROM leaves LEFT JOIN user_profile ON leaves.user_Id = user_profile.user_Id WHERE applied_on LIKE '%$current_month%' OR applied_on LIKE '%$next_month%' OR applied_on LIKE '%$prev_month%'";
+       $sw = mysqli_query($link, $ss) or die(mysqli_error($link));
         while ($row = mysqli_fetch_assoc($sw)) {
             $raw[] = $row;
         }
