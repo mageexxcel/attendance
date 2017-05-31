@@ -3317,21 +3317,45 @@ class HR extends DATABASE {
         $r_error = 1;
         $r_message = "";
 
-        $query = "SELECT * FROM machines_list";
+        $query = "SELECT machines_list.*, machines_user.user_Id FROM machines_list LEFT JOIN machines_user ON machines_list.id = machines_user.machine_id";
         $run = self::DBrunQuery($query);
         $row = self::DBfetchRows($run);
-        $arr = array();
+        $arr_device = array();
         if (sizeof($row) > 0) {
             foreach ($row as $val) {
                 $key = $val['machine_type'];
-                if (array_key_exists($key, $arr)) {
-                    $arr[$key] = $arr[$key] + 1;
+                $key2 = $val['status'];
+                if (array_key_exists($key, $arr_device)) {
+                    $arr_device[$key]['total'] = $arr_device[$key]['total'] + 1;
+                    if (array_key_exists($key2, $arr_device[$key])) {
+                        $arr_device[$key][$key2] = $arr_device[$key][$key2] + 1;
+                    } else {
+                        $arr_device[$key][$key2] = 1;
+                    }
+                    if ($val['user_Id'] != "" || $val['user_Id'] != NULL) {
+                        $arr_device[$key]['Assigned'] = $arr_device[$key]['Assigned'] + 1;
+                    } else {
+                        $arr_device[$key]['Not_Assigned'] = $arr_device[$key]['Not_Assigned'] + 1;
+                    }
                 } else {
-                    $arr[$key] = 1;
+                    $arr_device[$key]['total'] = 1;
+                    if (array_key_exists($key2, $arr_device[$key])) {
+                        $arr_device[$key][$key2] = $arr_device[$key][$key2] + 1;
+                    } else {
+                        $arr_device[$key][$key2] = 1;
+                    }
+                    if ($val['user_Id'] != "" || $val['user_Id'] != NULL) {
+                        $arr_device[$key]['Assigned'] = $arr_device[$key]['Assigned'] + 1;
+                    } else {
+                        $arr_device[$key]['Not_Assigned'] = $arr_device[$key]['Not_Assigned'] + 1;
+                    }
                 }
+              
             }
         }
-        if (sizeof($arr) > 0) {
+
+
+        if (sizeof($arr_device) > 0) {
             $r_error = 0;
             $r_message = "Data found";
         } else {
@@ -3342,7 +3366,7 @@ class HR extends DATABASE {
 
         $return = array();
         $return['error'] = $r_error;
-        $return['data'] = $arr;
+        $return['data'] = $arr_device;
         $return['message'] = $r_message;
         return $return;
     }
