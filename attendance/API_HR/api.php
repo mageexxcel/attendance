@@ -744,7 +744,7 @@ else if ($action == 'get_machine_count') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
+   if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
