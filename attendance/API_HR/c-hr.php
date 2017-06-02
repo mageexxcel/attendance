@@ -3320,6 +3320,7 @@ class HR extends DATABASE {
         $query = "SELECT machines_list.*, machines_user.user_Id FROM machines_list LEFT JOIN machines_user ON machines_list.id = machines_user.machine_id";
         $run = self::DBrunQuery($query);
         $row = self::DBfetchRows($run);
+        
         $arr_device = array();
         if (sizeof($row) > 0) {
             foreach ($row as $val) {
@@ -3333,9 +3334,9 @@ class HR extends DATABASE {
                         $arr_device[$key][$key2] = 1;
                     }
                     if ($val['user_Id'] != "" || $val['user_Id'] != NULL) {
-                        $arr_device[$key]['Assigned'] = $arr_device[$key]['Assigned'] + 1;
+                        $arr_device[$key]['User_Assign'] = $arr_device[$key]['User_Assign'] + 1;
                     } else {
-                        $arr_device[$key]['Not_Assigned'] = $arr_device[$key]['Not_Assigned'] + 1;
+                        $arr_device[$key]['User_Not_Assign'] = $arr_device[$key]['User_Not_Assign'] + 1;
                     }
                 } else {
                     $arr_device[$key]['total'] = 1;
@@ -3345,9 +3346,9 @@ class HR extends DATABASE {
                         $arr_device[$key][$key2] = 1;
                     }
                     if ($val['user_Id'] != "" || $val['user_Id'] != NULL) {
-                        $arr_device[$key]['Assigned'] = $arr_device[$key]['Assigned'] + 1;
+                        $arr_device[$key]['User_Assign'] = $arr_device[$key]['User_Assign'] + 1;
                     } else {
-                        $arr_device[$key]['Not_Assigned'] = $arr_device[$key]['Not_Assigned'] + 1;
+                        $arr_device[$key]['User_Not_Assign'] = $arr_device[$key]['User_Not_Assign'] + 1;
                     }
                 }
               
