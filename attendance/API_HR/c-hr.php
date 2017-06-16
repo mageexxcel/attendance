@@ -1,11 +1,14 @@
 <?php
 
 require_once 'c-database.php';
+require_once 'c-roles.php';
 require_once 'c-jwt.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
 class HR extends DATABASE {
+
+    use Roles;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -158,6 +161,7 @@ class HR extends DATABASE {
 
     public static function getUserInfo($userid) {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
+        //$q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         //slack info if user
@@ -1120,24 +1124,34 @@ class HR extends DATABASE {
 
     ///----slacks fns
 
-    public static function sendSlackMessageToUser($channelid, $message) {
+    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false) {
         $return = false;
+       
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
         $message = str_replace("", "%20", $message);
 
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
+        
+       //  if ($auth_array != false || $channelid == "hr") {
+       //     $q = "select * from roles_notification where role_Id=" . $auth_array['role_id'] . " AND notification_Id =" . $auth_array['notification_id'];
+       //     $run = self::DBrunQuery($q);
+       //     $no_of_row = self::DBnumRows($run);
+       //     if ($no_of_row > 0 || $channelid == "hr") {
+                $url = "https://slack.com/api/chat.postMessage?token=" . self::$SLACK_token . "&attachments=" . urlencode($message) . "&channel=" . $channelid;
 
-        $url = "https://slack.com/api/chat.postMessage?token=" . self::$SLACK_token . "&attachments=" . urlencode($message) . "&channel=" . $channelid;
+                $html = self::getHtml($url);
+                if ($html === false) {
+                    echo $html;
+                } else {
+                    $fresult = json_decode($html, true);
+                    if (is_array($fresult) && isset($fresult['ok'])) {
+                        $return = true;
+                    }
+                }
+         //   }
+            
+       // }
 
-        $html = self::getHtml($url);
-        if ($html === false) {
-            echo $html;
-        } else {
-            $fresult = json_decode($html, true);
-            if (is_array($fresult) && isset($fresult['ok'])) {
-                $return = true;
-            }
-        }
 
         return $return;
     }
@@ -1251,7 +1265,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason) {
+    public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
@@ -1270,6 +1284,10 @@ class HR extends DATABASE {
         }
 
         if ($r_error == 0) {
+            if ($pending_id != false) {
+                $q1 = "UPDATE users_previous_month_time SET status = 'Leave applied for previous month pending time'  Where id = $pending_id";
+                self::DBrunQuery($q1);
+            }
             ////send  slack message to user && HR
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
@@ -1755,11 +1773,11 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function addUserWorkingHours($userid, $date, $working_hours, $reason) { //api call
+    public static function addUserWorkingHours($userid, $date, $working_hours, $reason, $pending_id = false) { //api call
         $insert = self::insertUserWorkingHours($userid, $date, $working_hours, $reason);
-
         $userInfo = self::getUserInfo($userid);
         $userInfo_name = $userInfo['name'];
+        $role_id = $userInfo['role_id'];
         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
         $beautyDate = date('d-M-Y', strtotime($date));
@@ -1769,6 +1787,11 @@ class HR extends DATABASE {
 
         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
         $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
+
+        if ($pending_id != false) {
+            $q = "UPDATE users_previous_month_time SET status = 'Time added to user working hours'  Where id = $pending_id";
+            self::DBrunQuery($q);
+        }
 
         $r_data = array();
         $return = array();
@@ -2124,7 +2147,7 @@ class HR extends DATABASE {
 
     public static function getDisabledUsersList() {
 
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Disabled' ";
+        $q = "SELECT users.*,user_profile.*,user_bank_details.bank_account_no as bank_no FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_bank_details ON users.id = user_bank_details.user_Id where users.status = 'Disabled'";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();
@@ -2674,7 +2697,13 @@ class HR extends DATABASE {
             self::DBrunQuery($q);
             $machine_id = mysqli_insert_id($mysqli);
             self::assignUserMachine($machine_id, $userid);
-
+            $message = "New machine with following detail added:\n";
+            $message.= "Machine Type=" . $m_type . "\n";
+            $message.= "Machine Name=" . $m_name . "\n";
+            $message.= "Machine Price=" . $m_price . "\n";
+            $message.= "Machine Serial no=" . $serial_no . "\n";
+            $message.= "Machine Waranty=" . $warranty . "\n";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = "hr", $message);
             $r_error = 0;
             $r_message = "Machine added Successfully !!";
         }
@@ -2689,70 +2718,62 @@ class HR extends DATABASE {
     public static function UpdateOfficeMachine($PARAMS) {
         $r_error = 1;
         $r_message = "";
+        $userid = "";
 
-
-        $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
-        if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
-            $m_type = trim($PARAMS['machine_type']);
-        }
-        if (isset($PARAMS['machine_name']) && $PARAMS['machine_name'] != '') {
-            $m_name = trim($PARAMS['machine_name']);
-        }
-        if (isset($PARAMS['machine_price']) && $PARAMS['machine_price'] != '') {
-            $m_price = trim($PARAMS['machine_price']);
-        }
-        if (isset($PARAMS['serial_no']) && $PARAMS['serial_no'] != '') {
-            $serial_no = trim($PARAMS['serial_no']);
-        }
-        if (isset($PARAMS['purchase_date']) && $PARAMS['purchase_date'] != '') {
-            $date_purchase = trim($PARAMS['purchase_date']);
-        }
-        if (isset($PARAMS['mac_address']) && $PARAMS['mac_address'] != '') {
-            $mac_addr = trim($PARAMS['mac_address']);
-        }
-        if (isset($PARAMS['operating_system']) && $PARAMS['operating_system'] != '') {
-            $os = trim($PARAMS['operating_system']);
-        }
-        if (isset($PARAMS['status']) && $PARAMS['status'] != '') {
-            $status = trim($PARAMS['status']);
-        }
-        if (isset($PARAMS['comment']) && $PARAMS['comment'] != '') {
-            $comment = trim($PARAMS['comment']);
-        }
         if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != '') {
             $userid = trim($PARAMS['user_id']);
         }
-        if (isset($PARAMS['warranty']) && $PARAMS['warranty'] != '') {
-            $warranty = trim($PARAMS['warranty']);
+
+        $data = array(
+            "machine_type" => $PARAMS['machine_type'],
+            "machine_name" => $PARAMS['machine_name'],
+            "machine_price" => $PARAMS['machine_price'],
+            "serial_number" => $PARAMS['serial_no'],
+            "mac_address" => $PARAMS['mac_address'],
+            "date_of_purchase" => $PARAMS['purchase_date'],
+            "operating_system" => $PARAMS['operating_system'],
+            "status" => $PARAMS['status'],
+            "comments" => $PARAMS['comment'],
+            "warranty_end_date" => $PARAMS['warranty'],
+            "bill_number" => $PARAMS['bill_no'],
+            "warranty_comment" => $PARAMS['warranty_comment'],
+            "repair_comment" => $PARAMS['repair_comment']
+        );
+        $machine_detail = self::getMachineDetail($PARAMS['id']);
+        self::assignUserMachine($PARAMS['id'], $userid);
+        $whereField = 'id';
+        $whereFieldVal = $PARAMS['id'];
+        foreach ($machine_detail['data'] as $key => $val) {
+            if (array_key_exists($key, $data)) {
+                if ($data[$key] != $machine_detail['data'][$key]) {
+                    $arr = array();
+                    $arr[$key] = $data[$key];
+                    $res = self::DBupdateBySingleWhere('machines_list', $whereField, $whereFieldVal, $arr);
+                    $msg[$key] = $data[$key];
+                }
+            }
         }
-        if (isset($PARAMS['bill_no']) && $PARAMS['bill_no'] != '') {
-            $bill_no = trim($PARAMS['bill_no']);
-        }
-        if (isset($PARAMS['warranty_comment']) && $PARAMS['warranty_comment'] != '') {
-            $warranty_comment = trim($PARAMS['warranty_comment']);
-        }
-        if (isset($PARAMS['repair_comment']) && $PARAMS['repair_comment'] != '') {
-            $repair_comment = trim($PARAMS['repair_comment']);
-        }
-
-
-        //check user name exists
-        $q = "select * from machines_list where id=" . $PARAMS['id'];
-
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRow($runQuery);
-        if ($row != false) {
-
-            $q1 = "UPDATE machines_list SET machine_type='$m_type', machine_name='$m_name', machine_price='$m_price', serial_number='$serial_no',mac_address='$mac_addr', date_of_purchase='$date_purchase', operating_system = '$os', status = '$status', comments = '$comment',warranty_end_date='$warranty', bill_number='$bill_no', warranty_comment='$warranty_comment', repair_comment='$repair_comment'  WHERE id =" . $PARAMS['id'];
-            $runQuery = self::DBrunQuery($q1);
-
-            self::assignUserMachine($PARAMS['id'], $userid);
+        if ($res == false) {
             $r_error = 0;
-            $r_message = "Machine successfully updated";
+            $r_message = "No fields updated into table";
+            $r_data['message'] = $r_message;
+        } else {
+
+            if ($data['send_slack_msg'] == "") {
+
+                if (sizeof($msg > 0)) {
+                    $message = "Machine ".$machine_detail['data']['machine_name']." updated with following detail: \n";
+                    foreach ($msg as $key => $valu) {
+                        $message = $message . "$key = " . $valu . "\n";
+                    }
+
+                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
+                }
+            }
+            $r_error = 0;
+            $r_message = "Successfully Updated into table";
+            $r_data['message'] = $r_message;
         }
-
-
-
 
         $return = array();
         $return['error'] = $r_error;
@@ -2761,13 +2782,13 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getMachineDetail($PARAMS) {
+    public static function getMachineDetail($id) {
         $r_error = 1;
         $row = array();
         //check user name exists
         // $q = "select * from machines_list where id=" . $PARAMS['id'];
 
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_list.id =" . $PARAMS['id'];
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_list.id = $id";
 
         $runQuery = self::DBrunQuery($q);
 
@@ -2791,6 +2812,10 @@ class HR extends DATABASE {
         if ($userid == "") {
             $return = self::removeMachineAssignToUser($machine_id);
         } else {
+            $userInfo = self::getUserInfo($userid);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $machine_info = self::getMachineDetail($machine_id);
             $date = date("Y-m-d");
             //check user name exists
             $q = "select * from machines_user where machine_id ='$machine_id'";
@@ -2803,6 +2828,9 @@ class HR extends DATABASE {
             }
             self::DBrunQuery($q);
             $r_error = 0;
+
+            $message = "Hi $userInfo_name !! \n You have been assigned  " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
             $r_message = "Machine assigned Successfully !!";
 
             $return = array();
@@ -2853,8 +2881,18 @@ class HR extends DATABASE {
     }
 
     public static function removeMachineAssignToUser($data) {
+        $machine_info = self::getMachineDetail($data);
+        if (!empty($machine_info['data']['user_Id'])) {
+            $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+        }
+
         $q = "Delete from machines_user where machine_id=$data";
         $runQuery = self::DBrunQuery($q);
+
         $return = array();
         $return['error'] = 0;
         $return['message'] = "User removed successfully";
@@ -2929,6 +2967,7 @@ class HR extends DATABASE {
                             $vv['ptime'][] = $te1;
                             $vv['ctime'][] = 0;
                             $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            $vv['message'][] = "On ".date("jS M",strtotime($f['date']))." Pending: ".$te1." Mins | Compensated : 0 Mins" ;
                         }
                         $vv['half'][] = date("m-d-Y", strtotime($f['date']));
                     }
@@ -2943,6 +2982,7 @@ class HR extends DATABASE {
                                 $vv['ptime'][] = $te1;
                                 $vv['ctime'][] = 0;
                                 $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                                $vv['message'][] = "On ".date("jS M",strtotime($f['date']))." Pending: ".$te1." Mins | Compensated : 0 Mins" ;
                             }
                         }
                     }
@@ -2953,6 +2993,7 @@ class HR extends DATABASE {
                             $vv['ctime'][] = $te1;
                             $vv['ptime'][] = 0;
                             $vv['entry_exit'][] = $f['entry_time'] . "--" . $f['exit_time'] . "--" . $f['date'];
+                            $vv['message'][] = "On ".date("jS M",strtotime($f['date']))." Pending: 0 Mins | Compensated : ".$te1." Mins" ;
                         }
                     }
                 }
@@ -2964,6 +3005,7 @@ class HR extends DATABASE {
         $pending = $vv['ptime'];
         $compensate = $vv['ctime'];
         $entry = $vv['entry_exit'];
+        $message = $vv['message'];
         $wdate = $vv['wdate'];
         $half = array();
         if (array_key_exists('half', $value)) {
@@ -2972,12 +3014,14 @@ class HR extends DATABASE {
         $to_compensate = 0;
         $index = 0;
         $rep = array();
+        $final = array();
         for ($i = 0; $i < sizeof($pending); $i++) {
             if ($pending[$i] != 0 || !empty($rep)) {
                 $at = array();
                 $at['pend'] = $pending[$i];
                 $at['comp'] = $compensate[$i];
                 $at['entry'] = $entry[$i];
+                $at['message'] = $message[$i];
                 $rep[] = $at;
             }
             $to_compensate = $pending[$i] + $to_compensate;
@@ -2989,14 +3033,17 @@ class HR extends DATABASE {
                 $rep = array();
             }
         }
+        $final['t_detail'] = $rep;
         if ($to_compensate >= 10) {
-            $rep['t-remain'] = $to_compensate;
+            $hour = floor($to_compensate/60);
+            $min = $to_compensate%60;
+            $final['t_remain'] = $hour.":".$min;
         }
 
         $return = array();
         $return['error'] = 0;
         $return['data'] = $rep;
-        return $return;
+        return $final;
     }
 
     public static function getData($date) {
@@ -3320,7 +3367,7 @@ class HR extends DATABASE {
         $query = "SELECT machines_list.*, machines_user.user_Id FROM machines_list LEFT JOIN machines_user ON machines_list.id = machines_user.machine_id";
         $run = self::DBrunQuery($query);
         $row = self::DBfetchRows($run);
-        
+
         $arr_device = array();
         if (sizeof($row) > 0) {
             foreach ($row as $val) {
@@ -3351,7 +3398,6 @@ class HR extends DATABASE {
                         $arr_device[$key]['User_Not_Assign'] = $arr_device[$key]['User_Not_Assign'] + 1;
                     }
                 }
-              
             }
         }
 
@@ -3371,6 +3417,104 @@ class HR extends DATABASE {
         $return['message'] = $r_message;
         return $return;
     }
+
+    public static function getAllUserPrevMonthTime($year, $month) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $format_array = array();
+
+        $q = "Select users.status,user_profile.name,users_previous_month_time.* from users Inner Join user_profile on users.id = user_profile.user_Id Inner Join users_previous_month_time on users.id = users_previous_month_time.user_Id where users_previous_month_time.year_and_month ='" . $year . "-" . $month . "' AND users.status='Enabled'";
+
+        $run = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($run);
+        
+        if(sizeof($rows) > 0){
+            foreach($rows as $val){
+                $hr_min = "";
+                $hr_min = explode(":",$val['extra_time']);
+                $val['pending_hour'] = $hr_min[0];
+                $val['pending_minute'] = $hr_min[1];
+                $date = $year."-".$month."-01";
+                $time_detail = self::userCompensateTimedetail($val['user_Id'],$date);
+                $val['time_detail'] = $time_detail;
+                $format_array[] = $val;
+            }
+        }
+        
+        $nextMonth = self::_getNextMonth($year, $month);
+        $previousMonth = self::_getPreviousMonth($year, $month);
+        $currentMonth = self::_getCurrentMonth($year, $month);
+
+        $r_data['nextMonth'] = $nextMonth;
+        $r_data['previousMonth'] = $previousMonth;
+        $r_data['month'] = $month;
+        $r_data['monthName'] = $currentMonth['monthName'];
+        $r_data['year'] = $year;
+        $r_data['user_list'] = $format_array;
+
+        if (sizeof($rows) > 0) {
+            $r_error = 0;
+            $r_message = "Data found";
+        } else {
+            $r_error = 1;
+            $r_message = "No Data found";
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        $return['message'] = $r_message;
+        return $return;
+    }
+
+    public static function getUserPrevMonthTime($userid, $year, $month) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $q = "Select * from users_previous_month_time where year_and_month ='" . $year . "-" . $month . "' AND user_Id=" . $userid;
+        $run = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($run);
+        $r_data['user_list'] = $rows;
+
+        if (sizeof($rows) > 0) {
+            $r_error = 0;
+            $r_message = "Data found";
+        } else {
+            $r_error = 1;
+            $r_message = "No Data found";
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        $return['message'] = $r_message;
+        return $return;
+    }
+    
+    public static function getUserRole($userid){
+        $userInfo = self::getUserInfo($userid);
+        $role_id = $userInfo['role_id'];
+        return $role_id;
+    }
+    public static function validateRoleAction($roleid,$action){
+        $result = false;
+        $get_all_action = self::getAllAction();
+        $action_id = "";
+        foreach($get_all_action as $val){
+            if(in_array($action, $val)){
+               $action_id = $val['id']; 
+            }
+        }
+     $q = "select * from roles_action where role_Id =$roleid AND action_Id = $action_id";
+     $run = self::DBrunQuery($q);
+     $no_of_row = self::DBnumRows($run);
+     
+     if($no_of_row > 0){
+         $result = true;
+     }
+        return $result;
+    }
+    
 
 }
 

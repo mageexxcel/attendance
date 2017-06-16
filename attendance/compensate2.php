@@ -152,7 +152,6 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 //--- Compensation time, previous month pending time and leave not applied slack notification--------------
     if (isset($_GET['pending'])) {
         //---------send notification of previous month pending time.--------
-        echo "<pre>";
         $qu = "SELECT users.*,user_profile.name,user_profile.work_email FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where status = 'Enabled' AND users.username != 'admin'";
         $wq = mysqli_query($link, $qu) or die(mysqli_error($link));
         while ($qs = mysqli_fetch_assoc($wq)) {
@@ -160,16 +159,16 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $previous_month_time = getUserPreviousMonthTime($qs['id'], $p_month, $link); //  get user previous month pending time.
             $ptime = 0;
             if ($previous_month_time > 0) {
-                $ptime = date('H:i', mktime(0, 540 + $previous_month_time));
+                $ptime = date('H:i', mktime(0, $previous_month_time));
                 $reason = reason;
                 $ui = getMonthWorkingDays($year = date('Y'), $month = date('m'), $link); // get working days of current month.
-                $employee_status = checkUserstatus($qs['id'], $current_date, $link); // check employee present on current date or not.
+               // $employee_status = checkUserstatus($qs['id'], $current_date, $link); // check employee present on current date or not.
 
-                $whour_already_updated = checkUserWorkingHours($qs['id'], $current_month, $reason, $link); // check employee pending time already updated or not
+                $whour_already_updated = checkUserWorkingHours($qs['id'], $prev_month, $link); // check employee pending time already updated or not
 
-                if ($employee_status == 1 && $whour_already_updated == 0) {
+                if ($whour_already_updated == 0) {
                     $pdate = $current_date;
-                    $qt = "INSERT INTO user_working_hours (user_Id,date,working_hours,reason) value (" . $qs['id'] . ", '$pdate', '$ptime', '$reason')";
+                    $qt = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value (" . $qs['id'] . ", '$ptime', '$prev_month', '$pdate')";
                     $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
                     $prev_mtime[$wmail] = $qs;
                     $prev_mtime[$wmail]['pending'] = $previous_month_time;
@@ -179,30 +178,30 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         }
 
 
-        if (sizeof($prev_mtime) > 0) {
-            foreach ($prev_mtime as $kk => $vao) {
-                $pmessage = "";
-                foreach ($fresult['members'] as $foo) {
-                    if ($kk == $foo['profile']['email'] && $kk != "") {
-                        $f = $foo['id'];
-                        //$f = "U0FJZ0KDM";
-                        $c_id = get_channel_id($f, $cid_array);
-                        $r = date('H:i', mktime(0, $to_compensate));
-                        $pmessage = $pmessage . "Hi " . $foo['real_name'] . " Your Working hour time for " . $pdate . " is increased to " . $vao['worktime'] . " \n";
-                        $pmessage = $pmessage . "Details: \n";
-                        $pmessage = $pmessage . "Previous Month Pending Time " . $vao['pending'] . " minutes \n";
-                        $pmessage = $pmessage . "Incase of issues, contact HR ";
-                        $slk_msg = getSlackMsgSendStatus($kk, $link);
-                        if ($slk_msg == 0) {
-                            send_slack_message($c_id, $token, $pmessage); // send slack notification to employee channel  
-                        }
-                        send_slack_message($c_id = hr_system, $token, $pmessage); // send slack notification to hr channel
-                        echo $pmessage;
-                        echo "<br>";
-                    }
-                }
-            }
-        }
+//        if (sizeof($prev_mtime) > 0) {
+//            foreach ($prev_mtime as $kk => $vao) {
+//                $pmessage = "";
+//                foreach ($fresult['members'] as $foo) {
+//                    if ($kk == $foo['profile']['email'] && $kk != "") {
+//                        $f = $foo['id'];
+//                        //$f = "U0FJZ0KDM";
+//                        $c_id = get_channel_id($f, $cid_array);
+//                        $r = date('H:i', mktime(0, $to_compensate));
+//                        $pmessage = $pmessage . "Hi " . $foo['real_name'] . " Your Working hour time for " . $pdate . " is increased to " . $vao['worktime'] . " \n";
+//                        $pmessage = $pmessage . "Details: \n";
+//                        $pmessage = $pmessage . "Previous Month Pending Time " . $vao['pending'] . " minutes \n";
+//                        $pmessage = $pmessage . "Incase of issues, contact HR ";
+//                        $slk_msg = getSlackMsgSendStatus($kk, $link);
+//                        if ($slk_msg == 0) {
+//                            send_slack_message($c_id, $token, $pmessage); // send slack notification to employee channel  
+//                        }
+//                        send_slack_message($c_id = hr_system, $token, $pmessage); // send slack notification to hr channel
+//                        echo $pmessage;
+//                        echo "<br>";
+//                    }
+//                }
+//            }
+//        }
         //-- end  send notification of previous month pending time ---------
         //---------get all working day of current month.--------     
 
@@ -973,10 +972,9 @@ function getUserHalfDay($userid, $date, $link) {
 }
 
 // check employee previous month working hour added or not
-function checkUserWorkingHours($uid, $date, $reason, $link) {
+function checkUserWorkingHours($uid, $p_date, $link) {
     $result = 0;
-    $qry = "select * from user_working_hours where user_Id = '$uid' AND date like '%$date%' AND reason= '$reason'";
-
+    $qry = "select * from users_previous_month_time where user_Id = '$uid' AND year_and_month like '%$p_date%'";
     $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
     if (mysqli_num_rows($resl) > 0) {
         $result = 1;
