@@ -19,10 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
-
 if (isset($_GET['userslack_id']) || $_GET['action'] == 'updatebandwidthstats' || $_GET['action'] == 'send_slack_msg' || $_GET['action'] == 'save_bandwidth_detail' || $_GET['action'] == 'get_bandwidth_detail' || $_GET['action'] == 'validate_unique_key') {
-    $PARAMS = $_GET;
+$PARAMS = $_GET;
 }
+
 $action = false;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
@@ -37,35 +37,12 @@ $res = array(
     'data' => array()
 );
 
-if ($action == 'updatebandwidthstats') {
-    $data = $PARAMS['data'];
-    $res = HR::updateBandwidthStats($data);
-}
-if ($action == 'send_slack_msg') {
-    $slack_userChannelid = $PARAMS['channel'];
-    $message = $PARAMS['message'];
-    $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
-}
-if ($action == 'save_bandwidth_detail') {
-    $data = $PARAMS['details'];
-
-    $data = json_decode($data, true);
-    $res = HR::saveBandwidthDetail($data);
-}
-if ($action == 'get_bandwidth_detail') {
-    $res = HR::getBandwidthDetail();
-}
-if ($action == 'validate_unique_key') {
-    $res = HR::validateUniqueKey($PARAMS);
-}
-
-
 $token = $PARAMS['token'];
 
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
     $token = $PARAMS['token'];
-    
+
     $validateToken = HR::validateToken($token);
     if ($validateToken != false) {
         //start -- check for token expiry
@@ -89,10 +66,51 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $ac
         }
         //end -- check for token expiry
     }
-    if ($validateToken == false) {
-        header("HTTP/1.1 401 Unauthorized");
-        exit;
-    }
+       if ($validateToken == false) {
+           header("HTTP/1.1 401 Unauthorized");
+           exit;
+       }
+}
+//if (!empty($action)) {
+//    $role_id = "";
+//    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+//    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+//    if ($slack_id != "") {
+//        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+//    }
+//     $userid = $loggedUserInfo['id'];
+//     $role_id = HR::getUserRole($userid);
+//     $valid = HR::validateRoleAction($role_id,$action);
+//     if($valid == false){
+//         $res['error'] = 1;
+//         $res['data']="You are not authorise for this action";
+//        echo json_encode($res);
+//        die;
+//     }
+//     
+//       
+//}
+
+if ($action == 'updatebandwidthstats') {
+    $data = $PARAMS['data'];
+    $res = HR::updateBandwidthStats($data);
+}
+if ($action == 'send_slack_msg') {
+    $slack_userChannelid = $PARAMS['channel'];
+    $message = $PARAMS['message'];
+    $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
+}
+if ($action == 'save_bandwidth_detail') {
+    $data = $PARAMS['details'];
+
+    $data = json_decode($data, true);
+    $res = HR::saveBandwidthDetail($data);
+}
+if ($action == 'get_bandwidth_detail') {
+    $res = HR::getBandwidthDetail();
+}
+if ($action == 'validate_unique_key') {
+    $res = HR::validateUniqueKey($PARAMS);
 }
 if ($action == 'login') {
     $username = $password = '';
@@ -153,16 +171,15 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    
+
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
-           $date = $PARAMS['date'];
+        $date = $PARAMS['date'];
         $time = $PARAMS['time'];
         $res = HR::updateDayWorkingHours($date, $time);
     }
-    
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
 } else if ($action == "apply_leave") {
@@ -183,9 +200,7 @@ if ($action == 'login') {
         $leave_type = $PARAMS['leave_type'];
         $late_reason = $PARAMS['late_reason'];
 
-
-
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type,$late_reason);
+        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
     } else {
         $res['error'] = 1;
         $res['data']['message'] = "userid not found";
@@ -204,8 +219,11 @@ if ($action == 'login') {
         $no_of_days = $PARAMS['no_of_days'];
         $reason = $PARAMS['reason'];
         $day_status = $PARAMS['day_status'];
-
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
+        if ($PARAMS['pending_id']) {
+            $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type = "", $late_reason = "", $PARAMS['pending_id']);
+        } else {
+            $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
+        }
     }
 } else if ($action == 'get_all_leaves') {
 
@@ -259,7 +277,6 @@ if ($action == 'login') {
         $userid = $PARAMS['userid'];
         $res = HR::geManagedUserWorkingHours($userid);
     }
-    
 } else if ($action == 'add_user_working_hours') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
@@ -270,11 +287,15 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
-        $userid = $PARAMS['userid'];
+          $userid = $PARAMS['userid'];
         $date = $PARAMS['date'];
         $working_hours = $PARAMS['working_hours'];
         $reason = $PARAMS['reason'];
-        $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
+        if (isset($PARAMS['pending_id'])) {
+            $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason, $PARAMS['pending_id']);
+        } else {
+            $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
+        }
     }
 } else if ($action == "get_all_leaves_summary") {
     $year = $PARAMS['year'];
@@ -545,7 +566,8 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-        $res = HR::getMachineDetail($PARAMS);
+        $id = $PARAMS['id'];
+        $res = HR::getMachineDetail($id);
     }
 } else if ($action == 'remove_machine_detail') {
 
@@ -588,11 +610,11 @@ if ($action == 'login') {
         $res = HR::getUserMachine($userid);
     }
 } else if ($action == 'get_machines_detail') {
-    
+
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
     //check for guest so that he can't update
-    if($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
@@ -601,9 +623,8 @@ if ($action == 'login') {
             $res = HR::getAllMachineDetail($sort);
         }if (isset($PARAMS['status_sort']) && $PARAMS['status_sort'] != "") {
             $status_sort = trim($PARAMS['status_sort']);
-            $res = HR::getAllMachineDetail($sort=false,$status_sort);
-        }
-        else {
+            $res = HR::getAllMachineDetail($sort = false, $status_sort);
+        } else {
             $res = HR::getAllMachineDetail();
         }
     }
@@ -621,7 +642,7 @@ if ($action == 'login') {
         $res = HR::userCompensateTimedetail($userid, $date);
     }
 } else if ($action == 'add_machine_type') {
- 
+
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -629,11 +650,11 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-  
+
         $res = HR::addMachineType($PARAMS);
     }
-}else if ($action == 'add_machine_status') {
- 
+} else if ($action == 'add_machine_status') {
+
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -641,7 +662,7 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission";
     } else {
-     $res = HR::addMachineStatus($PARAMS);
+        $res = HR::addMachineStatus($PARAMS);
     }
 } else if ($action == 'get_machine_type_list') {
 
@@ -654,7 +675,7 @@ if ($action == 'login') {
     } else {
         $res = HR::getMachineTypeList();
     }
-}else if ($action == 'get_machine_status_list') {
+} else if ($action == 'get_machine_status_list') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -664,8 +685,7 @@ if ($action == 'login') {
     } else {
         $res = HR::getMachineStatusList();
     }
-}
-else if ($action == 'delete_machine_status') {
+} else if ($action == 'delete_machine_status') {
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -675,8 +695,7 @@ else if ($action == 'delete_machine_status') {
     } else {
         $res = HR::deleteMachineStatus($PARAMS['status']);
     }
-}
-else if ($action == 'send_request_for_doc') {
+} else if ($action == 'send_request_for_doc') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -691,8 +710,7 @@ else if ($action == 'send_request_for_doc') {
         $comment = $PARAMS['comment'];
         $res = HR::leaveDocRequest($leaveid, $doc_request, $comment);
     }
-}
-else if ($action == 'add_extra_leave_day') {
+} else if ($action == 'add_extra_leave_day') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -706,25 +724,23 @@ else if ($action == 'add_extra_leave_day') {
         $extra_day = $PARAMS['extra_day'];
         $res = HR::addExtraLeaveDay($leaveid, $extra_day);
     }
-}
-else if ($action == 'add_hr_comment') {
- 
+} else if ($action == 'add_hr_comment') {
+
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-     if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to update";
     } else {
-       
+
         $leaveid = $PARAMS['leaveid'];
         $hr_comment = $PARAMS['hr_comment'];
         $hr_approve = $PARAMS['hr_approve'];
-        $res = HR::addHrComment($leaveid, $hr_comment,$hr_approve);
+        $res = HR::addHrComment($leaveid, $hr_comment, $hr_approve);
     }
-}
-else if ($action == 'delete_employee') {
+} else if ($action == 'delete_employee') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -735,23 +751,104 @@ else if ($action == 'delete_employee') {
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
         $userid = $PARAMS['user_id'];
-       $res = HR::deleteUser($userid);
+        $res = HR::deleteUser($userid);
     }
-}
-else if ($action == 'get_machine_count') {
+} else if ($action == 'get_machine_count') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-   if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest') {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
-       $res = HR::getMachineCount();
+        $res = HR::getMachineCount();
+    }
+} else if ($action == 'get_all_user_previous_month_time') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        $year = $PARAMS['year'];
+        $month = $PARAMS['month'];
+        $res = HR::getAllUserPrevMonthTime($year, $month);
+    }
+} else if ($action == 'get_user_previous_month_time') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        $userid = $PARAMS['user_id'];
+        $year = $PARAMS['year'];
+        $month = $PARAMS['month'];
+        $res = HR::getUserPrevMonthTime($userid, $year, $month);
+    }
+} else if ($action == 'add_roles') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        $name = $PARAMS['name'];
+        $description = $PARAMS['description'];
+        $res = HR::AddNewRole($name, $description);
+    }
+} else if ($action == 'update_role') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        //$PARAMS['role_id'] = 1;
+        //$PARAMS['notification_id'] = 1002;
+        $res = HR::updateRole($PARAMS);
+    }
+} else if ($action == 'list_all_roles') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        $res = HR::listAllRole();
+    }
+} else if ($action == 'assign_user_role') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest') {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete user";
+    } else {
+        $userid = $PARAMS['user_id'];
+        $roleid = $PARAMS['role_id'];
+        $res = HR::assignUserRole($userid, $roleid);
     }
 }
-
 
 
 
