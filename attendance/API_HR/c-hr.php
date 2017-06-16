@@ -160,7 +160,8 @@ class HR extends DATABASE {
     }
 
     public static function getUserInfo($userid) {
-        $q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
+        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
+        //$q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         //slack info if user
@@ -1784,7 +1785,7 @@ class HR extends DATABASE {
         $message_to_user = "Hi $userInfo_name !!  \n Your working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
         $message_to_hr = "Hi HR !!  \n $userInfo_name working hours is updated for date $beautyDate to $working_hours Hours \n Reason - $reason ";
 
-        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user, array('notification_id' => self::$NOTIFICATION_add_user_working_hours, 'role_id' => $role_id));
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
         $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
 
         if ($pending_id != false) {
