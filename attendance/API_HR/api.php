@@ -800,7 +800,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
@@ -814,7 +814,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
@@ -828,7 +828,7 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
@@ -840,13 +840,26 @@ if ($action == 'login') {
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
     //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest') {
+    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
         $res['error'] = 1;
         $res['data']['message'] = "You don't have permission to delete user";
     } else {
         $userid = $PARAMS['user_id'];
         $roleid = $PARAMS['role_id'];
         $res = HR::assignUserRole($userid, $roleid);
+    }
+} else if ($action == 'delete_role') {
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+    //check for guest so that he can't update
+    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
+        $res['error'] = 1;
+        $res['data']['message'] = "You don't have permission to delete role";
+    } else {
+        $roleid = $PARAMS['role_id'];
+        $res = HR::deleteRole($roleid);
     }
 }
 

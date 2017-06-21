@@ -162,6 +162,17 @@ class HR extends DATABASE {
     public static function getUserInfo($userid) {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
         //$q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
+        // $q = "SELECT 
+        //         users.*,
+        //         user_profile.*,
+        //         roles.id as role_id,
+        //         roles.name as role_name 
+        //         FROM users 
+        //         LEFT JOIN user_profile ON users.id = user_profile.user_Id 
+        //         LEFT JOIN user_role ON users.id = user_role.user_Id 
+        //         LEFT JOIN roles ON user_role.role_Id = roles.id 
+        //         where 
+        //         users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         //slack info if user
@@ -171,7 +182,17 @@ class HR extends DATABASE {
     }
 
     public static function getEnabledUsersList() {
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
+        $q = "SELECT 
+                users.*,
+                user_profile.*,
+                roles.id as role_id,
+                roles.name as role_name  
+                FROM users 
+                LEFT JOIN user_profile ON users.id = user_profile.user_Id
+                LEFT JOIN user_role ON users.id = user_role.user_Id 
+                LEFT JOIN roles ON user_role.role_Id = roles.id 
+                where 
+                users.status = 'Enabled' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();

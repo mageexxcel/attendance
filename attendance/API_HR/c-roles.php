@@ -160,12 +160,12 @@ trait Roles {
             );
             self::DBinsertQuery($table, $ins);
             $r_error = 0;
-            $r_message = "role added";
+            $r_message = "Role updated!!";
         } else {
             $q = "DELETE FROM " . $table . " WHERE role_Id = $role AND $search = $pid";
             self::DBrunQuery($q);
             $r_error = 0;
-            $r_message = "Role deleted";
+            $r_message = "Role updated!!";
         } 
         }
         else{
@@ -236,7 +236,7 @@ trait Roles {
                 
             }
         }
-       $result['users_list'] = self::getEnabledUsersList();
+       $result['users_list'] = self::getEnabledUsersListWithoutPass();
 
          $return = array();
         $return['error'] = 0;
@@ -286,16 +286,58 @@ trait Roles {
                 'user_Id' => $userid,
                 'role_Id' => $roleid
             );
-            self::DBinsertQuery('roles', $ins);
+            self::DBinsertQuery('user_role', $ins);
             $r_error = 0;
-            $r_message = "User role assigned";
+            $r_message = "User role assigned!!";
         } else {
-            $r_error = 1;
-            $r_message = "User role already assigned";
+            self::DBrunQuery( "UPDATE user_role SET role_Id = '$roleid' WHERE user_Id = $userid " );
+            $r_error = 0;
+            $r_message = "User role changed!!";
         }
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
+        return $return;
+    }
+
+    // delete role pages
+    public static function deleteRolePages($id) {
+        $q = "DELETE FROM roles_pages WHERE role_Id=$id";
+        $run = self::DBrunQuery($q);
+        return true;
+    }
+
+    // delete role actions
+    public static function deleteRoleActions($id) {
+        $q = "DELETE FROM roles_action WHERE role_Id=$id";
+        $run = self::DBrunQuery($q);
+        return true;
+    }
+
+    // delete role notifications
+    public static function deleteRoleNotifications($id) {
+        $q = "DELETE FROM roles_notification WHERE role_Id=$id";
+        $run = self::DBrunQuery($q);
+        return true;
+    }
+
+    // delete role users
+    public static function deleteRoleUsers($id) {
+        $q = "DELETE FROM user_role WHERE role_Id=$id";
+        $run = self::DBrunQuery($q);
+        return true;
+    }
+
+    // delete role
+    public static function deleteRole($id) {
+        // remove all linked pages, actions, notification & users;
+        self::deleteRolePages( $id );
+        self::deleteRoleActions( $id );
+        self::deleteRoleNotifications( $id );
+        $run = self::DBrunQuery( "DELETE FROM roles WHERE id=$id" );
+        $return = array();
+        $return['error'] = 0;
+        $return['message'] = 'Role deleted!!';
         return $return;
     }
     
