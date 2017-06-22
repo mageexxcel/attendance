@@ -278,21 +278,31 @@ trait Roles {
     public static function assignUserRole($userid,$roleid) {
         $r_error = 1;
         $r_message = "";
-        $q = "SELECT * FROM user_role WHERE user_Id =".$userid;
-        $runQuery = self::DBrunQuery($q);
-        $no_of_rows = self::DBnumRows($runQuery);
-        if ($no_of_rows == 0) {
-            $ins = array(
-                'user_Id' => $userid,
-                'role_Id' => $roleid
-            );
-            self::DBinsertQuery('user_role', $ins);
+
+        if( $roleid == 0 ){
+            // remove user role
+            $q = "DELETE FROM user_role WHERE user_Id=$userid";
+            $run = self::DBrunQuery($q);
             $r_error = 0;
-            $r_message = "User role assigned!!";
-        } else {
-            self::DBrunQuery( "UPDATE user_role SET role_Id = '$roleid' WHERE user_Id = $userid " );
-            $r_error = 0;
-            $r_message = "User role changed!!";
+            $r_message = "User Role removed!!";
+        }else{
+            // change user role
+            $q = "SELECT * FROM user_role WHERE user_Id =".$userid;
+            $runQuery = self::DBrunQuery($q);
+            $no_of_rows = self::DBnumRows($runQuery);
+            if ($no_of_rows == 0) {
+                $ins = array(
+                    'user_Id' => $userid,
+                    'role_Id' => $roleid
+                );
+                self::DBinsertQuery('user_role', $ins);
+                $r_error = 0;
+                $r_message = "User role assigned!!";
+            } else {
+                self::DBrunQuery( "UPDATE user_role SET role_Id = '$roleid' WHERE user_Id = $userid " );
+                $r_error = 0;
+                $r_message = "User role changed!!";
+            }
         }
         $return = array();
         $return['error'] = $r_error;
