@@ -334,6 +334,7 @@ trait Roles {
         self::deleteRolePages( $id );
         self::deleteRoleActions( $id );
         self::deleteRoleNotifications( $id );
+        self::deleteRoleUsers( $id );
         $run = self::DBrunQuery( "DELETE FROM roles WHERE id=$id" );
         $return = array();
         $return['error'] = 0;
