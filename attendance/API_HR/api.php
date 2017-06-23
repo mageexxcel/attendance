@@ -3,6 +3,8 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
 
 require_once 'c-hr.php';
 
@@ -19,8 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
-if (isset($_GET['userslack_id']) || $_GET['action'] == 'updatebandwidthstats' || $_GET['action'] == 'send_slack_msg' || $_GET['action'] == 'save_bandwidth_detail' || $_GET['action'] == 'get_bandwidth_detail' || $_GET['action'] == 'validate_unique_key') {
-$PARAMS = $_GET;
+
+// this is added by arun to remove warning on 23 june 2017
+$GET_action = "";
+if( isset($_GET['action']) ){
+    $GET_action = $_GET['action'];
+}
+
+if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' || $GET_action == 'validate_unique_key') {
+    $PARAMS = $_GET;
 }
 
 $action = false;
@@ -38,6 +47,11 @@ $res = array(
 );
 
 $token = $PARAMS['token'];
+
+
+
+
+
 
 //validate a token
 if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
@@ -90,6 +104,40 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $ac
 //     
 //       
 //}
+
+
+//--------------------------------------------------
+// start - added by arun june 2017 --- check on the basis of new roles implementation
+// if( !empty($token) ){
+
+// $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+// $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+// //print_r($loggedUserInfo);
+
+// $loggedUserInfo_emp_id = $loggedUserInfo['id'];
+// //if( $loggedUserInfo_emp_id == 343 ){ // uncomment this line after testing for meraj user
+//     $is_user_valid_action = HR::is_user_valid_action( $action, $loggedUserInfo_emp_id );
+//     if( $is_user_valid_action == true ){
+//         echo "valid actions";
+//     }else{
+//         $res['error'] = 1;
+//         $res['data']['message'] = "$actions - You are not authorized to perform this action!!";
+//         echo json_encode($res);
+//         die;
+//     }
+// //}
+// }
+
+// end - added by arun june 2017 --- check on the basis of new roles implementation
+//--------------------------------------------------
+
+
+
+//--------------------------------------------------
+//--------------------------------------------------
+//--------------------------------------------------
+//--------------------------------------------------
 
 if ($action == 'updatebandwidthstats') {
     $data = $PARAMS['data'];

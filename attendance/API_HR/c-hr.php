@@ -160,19 +160,19 @@ class HR extends DATABASE {
     }
 
     public static function getUserInfo($userid) {
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
-        //$q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
-        // $q = "SELECT 
-        //         users.*,
-        //         user_profile.*,
-        //         roles.id as role_id,
-        //         roles.name as role_name 
-        //         FROM users 
-        //         LEFT JOIN user_profile ON users.id = user_profile.user_Id 
-        //         LEFT JOIN user_role ON users.id = user_role.user_Id 
-        //         LEFT JOIN roles ON user_role.role_Id = roles.id 
-        //         where 
-        //         users.id = $userid ";
+        // $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
+        // $q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
+        $q = "SELECT 
+                users.*,
+                user_profile.*,
+                roles.id as role_id,
+                roles.name as role_name 
+                FROM users 
+                LEFT JOIN user_profile ON users.id = user_profile.user_Id 
+                LEFT JOIN user_role ON users.id = user_role.user_Id 
+                LEFT JOIN roles ON user_role.role_Id = roles.id 
+                where 
+                users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         //slack info if user
@@ -1201,7 +1201,7 @@ class HR extends DATABASE {
         $allSlackUsers = self::getSlackUsersList();
         if (sizeof($allSlackUsers) > 0) {
             foreach ($allSlackUsers as $sl) {
-                if ($sl['profile']['email'] == $emailid) {
+                if ( isset($sl['profile'] ) && $sl['profile']['email'] == $emailid) {
                     $return = $sl;
                     break;
                 }
@@ -3513,13 +3513,17 @@ class HR extends DATABASE {
     }
     
     public static function getUserRole($userid){
+        $return = false;
         $userInfo = self::getUserInfo($userid);
-        $role_id = $userInfo['role_id'];
-        return $role_id;
+        if( isset( $userInfo['role_id'] ) && !empty( $userInfo['role_id']) ){
+            $roleCompleteDetails = self::getRoleCompleteDetails( $userInfo['role_id'] );
+            $return = $roleCompleteDetails;
+        }
+        return $return;
     }
     public static function validateRoleAction($roleid,$action){
         $result = false;
-        $get_all_action = self::getAllAction();
+        $get_all_action = self::getAllActions();
         $action_id = "";
         foreach($get_all_action as $val){
             if(in_array($action, $val)){
@@ -3534,6 +3538,54 @@ class HR extends DATABASE {
          $result = true;
      }
         return $result;
+    }
+
+    // check page is valid for current user id
+    public static function is_user_valid_page( $page_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_pages = $user_role_details['role_pages'];
+        if( sizeof( $role_pages ) > 0 ){
+            foreach( $role_pages as $page ){
+                if( $page_name == $page['page_name'] ){
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;;
+    }
+
+    // check action is valid for current user id
+    public static function is_user_valid_action( $action_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_actions = $user_role_details['role_actions'];
+        if( sizeof( $role_actions ) > 0 ){
+            foreach( $role_actions as $action ){
+                if( $action_name == $action['action_name'] ){
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;;
+    }
+
+    // check notification is valid for current user id
+    public static function is_user_valid_notification( $notification_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_notifications = $user_role_details['role_notifications'];
+        if( sizeof( $role_notifications ) > 0 ){
+            foreach( $role_notifications as $notification ){
+                if( $notification_name == $notification['notification_name'] ){
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;;
     }
     
 

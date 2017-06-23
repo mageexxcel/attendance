@@ -46,6 +46,11 @@ trait Roles {
     static $NOTIFICATION_update_leave_status = 1002;
     static $NOTIFICATION_add_user_working_hours = 1003;
 
+
+    /////IMPORTANT
+    /////name cannot be change since they are used in api calling from frontend
+    /////IMPORTANT
+
     public static function getAllPages() {
         $array = array(
             array(
@@ -62,7 +67,7 @@ trait Roles {
         return $array;
     }
 
-    public static function getAllAction() {
+    public static function getAllActions() {
 
         $array = array(
             array(
@@ -86,7 +91,7 @@ trait Roles {
         return $array;
     }
 
-    public static function getAllNotification() {
+    public static function getAllNotifications() {
         $array = array(
             array(
                 'id' => self::$NOTIFICATION_apply_leave,
@@ -102,6 +107,42 @@ trait Roles {
             )
         );
         return $array;
+    }
+
+    // get page by id
+    public static function getPageById( $id ){
+        $return = false;
+        $all = self::getAllPages();
+        foreach( $all as $item ){
+            if( $item['id'] == $id ){
+                $return = $item;
+            }
+        }
+        return $return;
+    }
+
+    // get action by id
+    public static function getActionById( $id ){
+        $return = false;
+        $all = self::getAllActions();
+        foreach( $all as $item ){
+            if( $item['id'] == $id ){
+                $return = $item;
+            }
+        }
+        return $return;
+    }
+
+    // get notification by id
+    public static function getNotificationById( $id ){
+        $return = false;
+        $all = self::getAllNotifications();
+        foreach( $all as $item ){
+            if( $item['id'] == $id ){
+                $return = $item;
+            }
+        }
+        return $return;
     }
 
     public static function AddNewRole($name, $description) {
@@ -182,8 +223,8 @@ trait Roles {
 
         $result = array();
         $allpages = self::getAllPages();
-        $allaction = self::getAllAction();
-        $allnotification = self::getAllNotification();
+        $allaction = self::getAllActions();
+        $allnotification = self::getAllNotifications();
         $result['default_pages'] = $allpages;
         $result['default_actions'] = $allaction;
         $result['default_notifications'] = $allnotification;
@@ -244,24 +285,45 @@ trait Roles {
         return $return;
     }
 
-    public static function getRolePages($id) {
-        $q = "select * from roles_pages where role_Id=$id";
+    public static function getRolePages($roleid) {
+        $q = "select * from roles_pages where role_Id=$roleid";
         $run = self::DBrunQuery($q);
         $rows = self::DBfetchRows($run);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $page = self::getActionById( $row['page_Id'] );
+                $row['page_name'] = $page['name'];
+                $rows[$key] = $row;
+            }
+        }
         return $rows;
     }
 
-    public static function getRoleActions($id) {
-        $q = "select * from roles_action where role_Id=$id";
+    public static function getRoleActions($roleid) {
+        $q = "select * from roles_action where role_Id=$roleid";
         $run = self::DBrunQuery($q);
         $rows = self::DBfetchRows($run);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $action = self::getActionById( $row['action_Id'] );
+                $row['action_name'] = $action['name'];
+                $rows[$key] = $row;
+            }
+        }
         return $rows;
     }
 
-    public static function getRoleNotifications($id) {
-        $q = "select * from roles_notification where role_Id=$id ";
+    public static function getRoleNotifications($roleid) {
+        $q = "select * from roles_notification where role_Id=$roleid ";
         $run = self::DBrunQuery($q);
         $rows = self::DBfetchRows($run);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $notification = self::getActionById( $row['notification_Id'] );
+                $row['notification_name'] = $notification['name'];
+                $rows[$key] = $row;
+            }
+        }
         return $rows;
     }
 
@@ -350,6 +412,25 @@ trait Roles {
         $return['error'] = 0;
         $return['message'] = 'Role deleted!!';
         return $return;
+    }
+
+    // get role complete details e,g pages, actions, notifications etc
+    public static function getRoleCompleteDetails( $roleid ){
+        $return = false;
+        $q = "SELECT * FROM roles WHERE id=$roleid";
+        $run = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($run);        
+        if( sizeof($rows) > 0 ){
+            $role = $rows[0];
+            $pages = self::getRolePages( $roleid );
+            $actions = self::getRoleActions( $roleid );
+            $notifications = self::getRoleNotifications( $roleid );
+            $role['role_pages'] = $pages;
+            $role['role_actions'] = $actions;
+            $role['role_notifications'] = $notifications;
+            $return =  $role;
+        }
+        return $return; 
     }
     
     
