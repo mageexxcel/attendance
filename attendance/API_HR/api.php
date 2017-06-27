@@ -110,24 +110,57 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $ac
 // start - added by arun june 2017 --- check on the basis of new roles implementation
 // if( !empty($token) ){
 
-// $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-// $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+$IS_SUPER_ADMIN = false;  // can do every thing. this is the person whose type=Admin in users table itself.
 
-// //print_r($loggedUserInfo);
+$actions_without_tokens = array(
+    'login',
+    'forgot_password',
+    'get_days_between_leaves'
+);
 
-// $loggedUserInfo_emp_id = $loggedUserInfo['id'];
-// //if( $loggedUserInfo_emp_id == 343 ){ // uncomment this line after testing for meraj user
-//     $is_user_valid_action = HR::is_user_valid_action( $action, $loggedUserInfo_emp_id );
-//     if( $is_user_valid_action == true ){
-//         echo "valid actions";
-//     }else{
-//         $res['error'] = 1;
-//         $res['data']['message'] = "$actions - You are not authorized to perform this action!!";
-//         echo json_encode($res);
-//         die;
-//     }
-// //}
-// }
+// implement only for actions which required token
+
+if( in_array( $action, $actions_without_tokens ) ){
+    // these are the actions which not required token, so need to check for role
+}else{
+
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+
+
+    if( strtolower($loggedUserInfo['role']) == 'admin' ){
+        $IS_SUPER_ADMIN = true;
+    }
+
+    // echo '<pre>';
+    // print_r( $loggedUserInfo );
+    // echo '<pre>';
+    
+
+    if( $IS_SUPER_ADMIN === true ){
+        // this is the admin on existing role basis, have access to all. type = "Admin" defined in users table
+    }else{
+
+    //print_r($loggedUserInfo);
+
+    $loggedUserInfo_emp_id = $loggedUserInfo['id'];
+    //if( $loggedUserInfo_emp_id == 343 ){ // uncomment this line after testing for meraj user
+        $is_user_valid_action = HR::is_user_valid_action( $action, $loggedUserInfo_emp_id );
+        if( $is_user_valid_action == true ){
+            
+        }else{
+            // header("HTTP/1.1 401 Unauthorized");
+            // exit;
+            // send 401 unathoried request, this will show an alert message and redirect to home page
+
+            $res['error'] = 1;
+            $res['data']['message'] = "$action - You are not authorized to perform this action!!";
+            echo json_encode($res);
+            die;
+        }
+    //}
+    }
+}
 
 // end - added by arun june 2017 --- check on the basis of new roles implementation
 //--------------------------------------------------
@@ -176,7 +209,7 @@ if ($action == 'login') {
     $res = HR::forgotPassword($username);
 } else if ($action == 'logout') {
     $res = HR::logout($PARAMS['token']);
-} else if ($action == 'month_attendance') {
+} else if ($action == 'month_attendance') { // set A
     $userid = $PARAMS['userid'];
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
@@ -189,10 +222,7 @@ if ($action == 'login') {
     $userid = $PARAMS['userid'];
     $date = $PARAMS['date'];
     $res = HR::getUserDaySummary($userid, $date);
-} else if ($action == "get_enable_user") {
-
-    $res = HR::getEnabledUsersListWithoutPass();
-} else if ($action == 'update_user_day_summary') {
+} else if ($action == 'update_user_day_summary') { // set A
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -209,10 +239,6 @@ if ($action == 'login') {
         $reason = $PARAMS['reason'];
         $res = HR::insertUserInOutTimeOfDay($userid, $date, $entry_time, $exit_time, $reason);
     }
-} else if ($action == "working_hours_summary") {
-    $year = $PARAMS['year'];
-    $month = $PARAMS['month'];
-    $res = HR::getWorkingHoursSummary($year, $month);
 } else if ($action == 'update_day_working_hours') {
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
@@ -228,9 +254,7 @@ if ($action == 'login') {
         $time = $PARAMS['time'];
         $res = HR::updateDayWorkingHours($date, $time);
     }
-} else if ($action == "get_holidays_list") {
-    $res = HR::API_getYearHolidays();
-} else if ($action == "apply_leave") {
+} else if ($action == "apply_leave") { // set A
     if ($slack_id == "") {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -253,7 +277,7 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "userid not found";
     }
-} else if ($action == "admin_user_apply_leave") { //admin apply leave on behalf of user.
+} else if ($action == "admin_user_apply_leave") { // set A //admin apply leave on behalf of user.
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -273,14 +297,14 @@ if ($action == 'login') {
             $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
         }
     }
-} else if ($action == 'get_all_leaves') {
+} else if ($action == 'get_all_leaves') { // set A
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
 
     $res = HR::getAllLeaves();
-} else if ($action == 'change_leave_status') {
+} else if ($action == 'change_leave_status') { // set A
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -295,7 +319,9 @@ if ($action == 'login') {
         $messagetouser = $PARAMS['messagetouser'];
         $res = HR::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
     }
-} else if ($action == "get_my_leaves") {
+}
+// EMPLOYEE GENRIC ACTIONS
+else if ($action == "get_my_leaves") { // set A
     if ($slack_id == "") {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -311,11 +337,10 @@ if ($action == 'login') {
         $res['error'] = 1;
         $res['data']['message'] = "userid not found";
     }
-} else if ($action == "get_days_between_leaves") {
-    $start_date = $PARAMS['start_date'];
-    $end_date = $PARAMS['end_date'];
-    $res = HR::getDaysBetweenLeaves($start_date, $end_date);
-} else if ($action == "get_managed_user_working_hours") {
+} 
+ 
+
+else if ($action == "get_managed_user_working_hours") { // set A
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
     if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
@@ -324,26 +349,6 @@ if ($action == 'login') {
     } else {
         $userid = $PARAMS['userid'];
         $res = HR::geManagedUserWorkingHours($userid);
-    }
-} else if ($action == 'add_user_working_hours') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to update";
-    } else {
-          $userid = $PARAMS['userid'];
-        $date = $PARAMS['date'];
-        $working_hours = $PARAMS['working_hours'];
-        $reason = $PARAMS['reason'];
-        if (isset($PARAMS['pending_id'])) {
-            $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason, $PARAMS['pending_id']);
-        } else {
-            $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
-        }
     }
 } else if ($action == "get_all_leaves_summary") {
     $year = $PARAMS['year'];
@@ -367,7 +372,7 @@ if ($action == 'login') {
         $google_access_token = $PARAMS['google_access_token'];
         $res = HR::updateGooglepaySlipDriveAccessToken($google_access_token);
     }
-} else if ($action == 'add_new_employee') {
+} else if ($action == 'add_new_employee') { // set A
 
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
@@ -380,31 +385,7 @@ if ($action == 'login') {
     } else {
         $res = HR::addNewEmployee($PARAMS);
     }
-} else if ($action == 'change_employee_status') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission";
-    } else {
-        $res = HR::changeEmployeeStatus($PARAMS);
-    }
-} else if ($action == 'show_disabled_users') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission";
-    } else {
-        $res = HR::getDisabledUsersList();
-    }
-} else if ($action == 'update_new_password') {  // only employee can update his password
+}   else if ($action == 'update_new_password') { // set A  // only employee can update his password
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
@@ -842,73 +823,64 @@ if ($action == 'login') {
         $month = $PARAMS['month'];
         $res = HR::getUserPrevMonthTime($userid, $year, $month);
     }
-} else if ($action == 'add_roles') {
+}
 
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
 
-    //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to delete user";
+// GENERIC ACTIONS - No token required - no need to define constants
+else if ($action == "get_days_between_leaves") {
+    $start_date = $PARAMS['start_date'];
+    $end_date = $PARAMS['end_date'];
+    $res = HR::getDaysBetweenLeaves($start_date, $end_date);
+}
+
+// actions defined as constants DONE
+else if ($action == 'change_employee_status') {
+    $res = HR::changeEmployeeStatus($PARAMS);
+}
+else if ($action == 'add_user_working_hours') {    
+    $userid = $PARAMS['userid'];
+    $date = $PARAMS['date'];
+    $working_hours = $PARAMS['working_hours'];
+    $reason = $PARAMS['reason'];
+    if (isset($PARAMS['pending_id'])) {
+        $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason, $PARAMS['pending_id']);
     } else {
-        $name = $PARAMS['name'];
-        $description = $PARAMS['description'];
-        $res = HR::AddNewRole($name, $description);
-    }
-} else if ($action == 'update_role') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to delete user";
-    } else {
-        //$PARAMS['role_id'] = 1;
-        //$PARAMS['notification_id'] = 1002;
-        $res = HR::updateRole($PARAMS);
-    }
-} else if ($action == 'list_all_roles') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to delete user";
-    } else {
-        $res = HR::listAllRole();
-    }
-} else if ($action == 'assign_user_role') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to delete user";
-    } else {
-        $userid = $PARAMS['user_id'];
-        $roleid = $PARAMS['role_id'];
-        $res = HR::assignUserRole($userid, $roleid);
-    }
-} else if ($action == 'delete_role') {
-
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-
-    //check for guest so that he can't update
-    if ($loggedUserInfo['role'] == 'Guest' && strtolower($loggedUserInfo['role']) != 'admin' ) {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to delete role";
-    } else {
-        $roleid = $PARAMS['role_id'];
-        $res = HR::deleteRole($roleid);
-    }
+        $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
+    }    
+} 
+else if ($action == "get_holidays_list") {
+    $res = HR::API_getYearHolidays();
+} 
+else if ($action == 'show_disabled_users') {
+    $res = HR::getDisabledUsersList();
+}
+else if ($action == "working_hours_summary") {
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::getWorkingHoursSummary($year, $month);
+} 
+else if ($action == "get_enable_user") {
+    $res = HR::getEnabledUsersListWithoutPass();
+} 
+else if ($action == 'add_roles') {    
+    $name = $PARAMS['name'];
+    $description = $PARAMS['description'];
+    $res = HR::AddNewRole($name, $description);
+} 
+else if ($action == 'update_role') {
+    $res = HR::updateRole($PARAMS);
+}
+else if ($action == 'list_all_roles') {
+    $res = HR::listAllRole();
+} 
+else if ($action == 'assign_user_role') {
+    $userid = $PARAMS['user_id'];
+    $roleid = $PARAMS['role_id'];
+    $res = HR::assignUserRole($userid, $roleid);    
+}
+else if ($action == 'delete_role') {
+    $roleid = $PARAMS['role_id'];
+    $res = HR::deleteRole($roleid);
 }
 
 

@@ -130,6 +130,13 @@ class HR extends DATABASE {
                     "login_date_time" => date('d-M-Y H:i:s')
                 );
 
+                // start - get user role and then role pages
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
+                    $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
+                }
+                // end - get user role and then role pages
+
                 $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
 
                 self::insertToken($userInfo['user_Id'], $jwtToken);
@@ -168,9 +175,9 @@ class HR extends DATABASE {
                 roles.id as role_id,
                 roles.name as role_name 
                 FROM users 
-                LEFT JOIN user_profile ON users.id = user_profile.user_Id 
-                LEFT JOIN user_role ON users.id = user_role.user_Id 
-                LEFT JOIN roles ON user_role.role_Id = roles.id 
+                LEFT JOIN user_profile ON users.id = user_profile.user_id 
+                LEFT JOIN user_roles ON users.id = user_roles.user_id
+                LEFT JOIN roles ON user_roles.role_id = roles.id 
                 where 
                 users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
@@ -188,9 +195,9 @@ class HR extends DATABASE {
                 roles.id as role_id,
                 roles.name as role_name  
                 FROM users 
-                LEFT JOIN user_profile ON users.id = user_profile.user_Id
-                LEFT JOIN user_role ON users.id = user_role.user_Id 
-                LEFT JOIN roles ON user_role.role_Id = roles.id 
+                LEFT JOIN user_profile ON users.id = user_profile.user_id
+                LEFT JOIN user_roles ON users.id = user_roles.user_id
+                LEFT JOIN roles ON user_roles.role_id = roles.id 
                 where 
                 users.status = 'Enabled' ";
         $runQuery = self::DBrunQuery($q);
@@ -972,10 +979,6 @@ class HR extends DATABASE {
         $r_data = array();
 
         $userDayPunchingDetails = self::getUserDayPunchingDetails($userid, $date);
-
-        // echo '<pre>';
-        // print_r( $userDayPunchingDetails );
-        //
 
         $r_data['name'] = $userInfo['name'];
         $r_data['profileImage'] = '';
@@ -3513,6 +3516,7 @@ class HR extends DATABASE {
     }
     
     public static function getUserRole($userid){
+        // this has complete information of role - pages, actions, noitfications
         $return = false;
         $userInfo = self::getUserInfo($userid);
         if( isset( $userInfo['role_id'] ) && !empty( $userInfo['role_id']) ){
@@ -3520,24 +3524,6 @@ class HR extends DATABASE {
             $return = $roleCompleteDetails;
         }
         return $return;
-    }
-    public static function validateRoleAction($roleid,$action){
-        $result = false;
-        $get_all_action = self::getAllActions();
-        $action_id = "";
-        foreach($get_all_action as $val){
-            if(in_array($action, $val)){
-               $action_id = $val['id']; 
-            }
-        }
-     $q = "select * from roles_action where role_Id =$roleid AND action_Id = $action_id";
-     $run = self::DBrunQuery($q);
-     $no_of_row = self::DBnumRows($run);
-     
-     if($no_of_row > 0){
-         $result = true;
-     }
-        return $result;
     }
 
     // check page is valid for current user id
