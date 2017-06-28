@@ -54,12 +54,35 @@ trait Roles {
     static $ACTION_admin_user_apply_leave = 215;
     static $ACTION_update_new_password = 216;
     static $ACTION_get_managed_user_working_hours = 217;
+    static $ACTION_get_user_previous_month_time = 218;
+    static $ACTION_get_all_user_previous_month_time = 219;
+    static $ACTION_update_day_working_hours = 220;
+    static $ACTION_delete_employee = 221;
+    static $ACTION_add_hr_comment = 222;
+    static $ACTION_add_extra_leave_day = 222;
+    static $ACTION_send_request_for_doc = 223;
+    static $ACTION_update_user_entry_exit_time = 224;
+    static $ACTION_save_google_payslip_drive_access_token = 225;
 
     static $ACTION_delete_role = 401;
     static $ACTION_assign_user_role = 402;
     static $ACTION_list_all_roles = 403;
     static $ACTION_update_role = 404;
     static $ACTION_add_roles = 405;
+
+    static $ACTION_get_machine_count = 501;
+    static $ACTION_get_machine_status_list = 502;
+    static $ACTION_add_machine_status = 503;
+    static $ACTION_add_machine_type = 504;
+    static $ACTION_get_machine_type_list = 505;
+    static $ACTION_delete_machine_status = 506;
+    static $ACTION_add_office_machine = 507;
+    static $ACTION_update_office_machine = 508;
+    static $ACTION_get_machine = 509;
+    static $ACTION_get_machines_detail = 510;
+    static $ACTION_remove_machine_detail = 511;
+    static $ACTION_assign_user_machine = 512;
+    static $ACTION_get_user_machine = 513;
 
 
     //notification
@@ -123,33 +146,57 @@ trait Roles {
             array( 'id' => self::$ACTION_admin_user_apply_leave, 'name' => 'admin_user_apply_leave' ),
             array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
             array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
+            array( 'id' => self::$ACTION_get_user_previous_month_time, 'name' => 'get_user_previous_month_time' ),
+            array( 'id' => self::$ACTION_get_all_user_previous_month_time, 'name' => 'get_all_user_previous_month_time' ),
+            array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
+            array( 'id' => self::$ACTION_delete_employee, 'name' => 'delete_employee' ),
+            array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
+            array( 'id' => self::$ACTION_add_extra_leave_day, 'name' => 'add_extra_leave_day' ),
+            array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
+            array( 'id' => self::$ACTION_update_user_entry_exit_time, 'name' => 'update_user_entry_exit_time' ),
+            array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
             
             array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
             array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
             array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
             array( 'id' => self::$ACTION_update_role, 'name' => 'update_role' ),
             array( 'id' => self::$ACTION_add_roles, 'name' => 'add_roles' ),
+
+            array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+            array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+            array( 'id' => self::$ACTION_add_machine_status, 'name' => 'add_machine_status' ),
+            array( 'id' => self::$ACTION_add_machine_type, 'name' => 'add_machine_type' ),
+            array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+            array( 'id' => self::$ACTION_delete_machine_status, 'name' => 'delete_machine_status' ),
+            array( 'id' => self::$ACTION_add_office_machine, 'name' => 'add_office_machine' ),
+            array( 'id' => self::$ACTION_update_office_machine, 'name' => 'update_office_machine' ),
+            array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
+            array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+            array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
+            array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
+            array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
         );
 
         return $array;
     }
 
     public static function getAllNotifications() {
-        $array = array(
-            array(
-                'id' => self::$NOTIFICATION_apply_leave,
-                'name' => 'applyLeave',
-            ),
-            array(
-                'id' => self::$NOTIFICATION_update_leave_status,
-                'name' => 'updateLeaveStatus'
-            ),
-            array(
-                'id' => self::$NOTIFICATION_add_user_working_hours,
-                'name' => 'addUserWorkingHours'
-            )
-        );
-        return $array;
+        return array(); // since this is not implemented no need to show for now
+        // $array = array(
+        //     array(
+        //         'id' => self::$NOTIFICATION_apply_leave,
+        //         'name' => 'applyLeave',
+        //     ),
+        //     array(
+        //         'id' => self::$NOTIFICATION_update_leave_status,
+        //         'name' => 'updateLeaveStatus'
+        //     ),
+        //     array(
+        //         'id' => self::$NOTIFICATION_add_user_working_hours,
+        //         'name' => 'addUserWorkingHours'
+        //     )
+        // );
+        // return $array;
     }
 
     // get page by id
