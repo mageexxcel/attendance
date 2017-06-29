@@ -33,6 +33,9 @@ trait Roles {
     static $PAGE_upload_policy_documents = 126;
     static $PAGE_add_variables = 127;
     static $PAGE_mail_templates = 128;
+    static $PAGE_login = 129;
+
+    
     
     
     
@@ -63,6 +66,23 @@ trait Roles {
     static $ACTION_send_request_for_doc = 223;
     static $ACTION_update_user_entry_exit_time = 224;
     static $ACTION_save_google_payslip_drive_access_token = 225;
+    static $ACTION_attendance_summary = 226;
+    static $ACTION_user_day_summary = 227;
+    static $ACTION_get_all_leaves_summary = 228;
+    static $ACTION_get_users_leaves_summary = 229;
+    static $ACTION_get_user_role_from_slack_id = 230;
+    static $ACTION_get_all_not_approved_leave_of_user = 231;
+    static $ACTION_approve_decline_leave_of_user = 232;
+    static $ACTION_cancel_applied_leave = 233;
+    static $ACTION_cancel_applied_leave_admin = 234;
+    static $ACTION_get_all_leaves_of_user = 235;
+    static $ACTION_get_user_current_status = 236;
+    static $ACTION_get_role_from_slackid = 237;
+    static $ACTION_updatebandwidthstats = 238;
+    static $ACTION_save_bandwidth_detail = 239;
+    static $ACTION_get_bandwidth_detail = 240;
+    static $ACTION_validate_unique_key = 241;
+    static $ACTION_send_slack_msg = 242;
 
     static $ACTION_delete_role = 401;
     static $ACTION_assign_user_role = 402;
@@ -84,6 +104,17 @@ trait Roles {
     static $ACTION_assign_user_machine = 512;
     static $ACTION_get_user_machine = 513;
 
+    //actions not required token
+    static $ACTION_login = 601;
+    static $ACTION_logout = 602;
+    static $ACTION_forgot_password = 603;
+    static $ACTION_get_days_between_leaves = 604;
+
+    //lunch actions
+    static $ACTION_get_lunch_stats = 7001;
+    static $ACTION_get_lunch_break_detail = 7002;
+    static $ACTION_lunch_break = 7003;
+
 
     //notification
     static $NOTIFICATION_apply_leave = 1001;
@@ -95,7 +126,7 @@ trait Roles {
     /////name cannot be change since they are used in api calling from frontend
     /////IMPORTANT
 
-    public static function getAllPages() {
+   public static function getAllPages() {
         $array = array(
             array( 'id' => self::$PAGE_inventory_system, 'name' => 'inventory_system' ),
             array( 'id' => self::$PAGE_manage_payslips, 'name' => 'manage_payslips' ),
@@ -120,7 +151,10 @@ trait Roles {
             array( 'id' => self::$PAGE_policy_documents, 'name' => 'policy_documents' ),
             array( 'id' => self::$PAGE_upload_policy_documents, 'name' => 'upload_policy_documents' ),
             array( 'id' => self::$PAGE_add_variables, 'name' => 'add_variables' ),
-            array( 'id' => self::$PAGE_mail_templates, 'name' => 'mail_templates' )
+            array( 'id' => self::$PAGE_mail_templates, 'name' => 'mail_templates' ),
+            array( 'id' => self::$PAGE_home, 'name' => 'home' ),
+            array( 'id' => self::$PAGE_login, 'name' => 'login' ),
+            array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
         );
 
         return $array;
@@ -155,6 +189,18 @@ trait Roles {
             array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
             array( 'id' => self::$ACTION_update_user_entry_exit_time, 'name' => 'update_user_entry_exit_time' ),
             array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
+            array( 'id' => self::$ACTION_attendance_summary, 'name' => 'attendance_summary' ),
+            array( 'id' => self::$ACTION_user_day_summary, 'name' => 'user_day_summary' ),
+            array( 'id' => self::$ACTION_get_all_leaves_summary, 'name' => 'get_all_leaves_summary' ),
+            array( 'id' => self::$ACTION_get_users_leaves_summary, 'name' => 'get_users_leaves_summary' ),
+            array( 'id' => self::$ACTION_get_user_role_from_slack_id, 'name' => 'get_user_role_from_slack_id' ),
+            array( 'id' => self::$ACTION_get_all_not_approved_leave_of_user, 'name' => 'get_all_not_approved_leave_of_user' ),
+            array( 'id' => self::$ACTION_approve_decline_leave_of_user, 'name' => 'approve_decline_leave_of_user' ),
+            array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
+            array( 'id' => self::$ACTION_cancel_applied_leave_admin, 'name' => 'cancel_applied_leave_admin' ),
+            array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
+            array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
+            array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
             
             array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
             array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
@@ -175,6 +221,10 @@ trait Roles {
             array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
             array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
             array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
+            
+            array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
+            array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
+            array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
         );
 
         return $array;
@@ -197,6 +247,21 @@ trait Roles {
         //     )
         // );
         // return $array;
+    }
+
+    public static function getActionsNotRequiredToken(){
+        $array = array(
+            array( 'id' => self::$ACTION_login, 'name' => 'login' ),
+            array( 'id' => self::$ACTION_logout, 'name' => 'logout' ),
+            array( 'id' => self::$ACTION_forgot_password, 'name' => 'forgot_password' ),
+            array( 'id' => self::$ACTION_get_days_between_leaves, 'name' => 'get_days_between_leaves' ),
+            array( 'id' => self::$ACTION_updatebandwidthstats, 'name' => 'updatebandwidthstats' ),
+            array( 'id' => self::$ACTION_send_slack_msg, 'name' => 'send_slack_msg' ),
+            array( 'id' => self::$ACTION_save_bandwidth_detail, 'name' => 'save_bandwidth_detail' ),
+            array( 'id' => self::$ACTION_get_bandwidth_detail, 'name' => 'get_bandwidth_detail' ),
+            array( 'id' => self::$ACTION_validate_unique_key, 'name' => 'validate_unique_key' ),
+        );
+        return $array;
     }
 
     // get page by id
@@ -376,11 +441,19 @@ trait Roles {
     }
 
     public static function getGenericPagesForAllRoles( $roleid ){
-        return array(
-            'login',
-            'logout',
-            'home'
-        );
+        $return = array();
+        $allPages = self::getAllPages();
+        foreach( $allPages as $page ){
+            $pid = $page['id'];
+            if( $pid == self::$PAGE_login || $pid == self::$PAGE_home || $pid == self::$PAGE_logout ){
+                $new_page = array(
+                    'page_id' =>  $page['id'],
+                    'page_name' => $page['name']
+                );
+                $return[] = $new_page;
+            }
+        }
+        return $return;
     }
 
     public static function getRolePagesForApiToken( $roleid ){
@@ -388,7 +461,8 @@ trait Roles {
         $rolePages = self::getRolePages( $roleid );
         if( $rolePages != false ){
             foreach( $rolePages as $rp ){
-                $return[] = $rp['page_name'];
+                //$return[] = $rp['page_name'];
+                $return[] = $rp;
             }
         }
         return $return;

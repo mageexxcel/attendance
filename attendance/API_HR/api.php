@@ -1,10 +1,15 @@
 <?php
+$SHOW_ERROR = false;
+if( $SHOW_ERROR ){
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1); 
+} else{
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
 
-error_reporting(0);
-ini_set('display_errors', 0);
 
-// error_reporting(E_ALL);
-// ini_set('display_errors', 1);
+
 
 require_once 'c-hr.php';
 
@@ -48,13 +53,20 @@ $res = array(
 
 $token = $PARAMS['token'];
 
+// start -- check if action required token
+$DO_TOKEN_VERIFICATION = true;
+$actionsNotRequiredToken = HR::getActionsNotRequiredToken();
 
-
-
-
+foreach( $actionsNotRequiredToken as $ac ){
+    if( $ac['name'] == $action ){
+        $DO_TOKEN_VERIFICATION = false;
+    }
+}
+// end -- check if action required token
 
 //validate a token
-if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
+//if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
+if ( $DO_TOKEN_VERIFICATION == true ) {
     $token = $PARAMS['token'];
 
     $validateToken = HR::validateToken($token);
@@ -112,20 +124,22 @@ if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $ac
 
 $IS_SUPER_ADMIN = false;  // can do every thing. this is the person whose type=Admin in users table itself.
 
-$actions_without_tokens = array(
-    'login',
-    'forgot_password',
-    'get_days_between_leaves'
-);
+
+
 
 // implement only for actions which required token
 
-if( in_array( $action, $actions_without_tokens ) ){
+if( $DO_TOKEN_VERIFICATION == false  ){
+    //echo "action :: $action <br>";
     // these are the actions which not required token, so need to check for role
 }else{
-
+    // loggedUserInfo : this variable is compulsory since it is used in most of the actions
     $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
     $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+    if ( $slack_id != "" ) { // these are called from slack rtm
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
+    // dont do any change in above lines
 
 
     if( strtolower($loggedUserInfo['role']) == 'admin' ){
@@ -163,284 +177,32 @@ if( in_array( $action, $actions_without_tokens ) ){
 }
 
 // end - added by arun june 2017 --- check on the basis of new roles implementation
-//--------------------------------------------------
-
-
-
-//--------------------------------------------------
-//--------------------------------------------------
-//--------------------------------------------------
-//--------------------------------------------------
-
-if ($action == 'updatebandwidthstats') {
-    $data = $PARAMS['data'];
-    $res = HR::updateBandwidthStats($data);
-}
-if ($action == 'send_slack_msg') {
-    $slack_userChannelid = $PARAMS['channel'];
-    $message = $PARAMS['message'];
-    $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
-}
-if ($action == 'save_bandwidth_detail') {
-    $data = $PARAMS['details'];
-
-    $data = json_decode($data, true);
-    $res = HR::saveBandwidthDetail($data);
-}
-if ($action == 'get_bandwidth_detail') {
-    $res = HR::getBandwidthDetail();
-}
-if ($action == 'validate_unique_key') {
-    $res = HR::validateUniqueKey($PARAMS);
-}
-if ($action == 'login') {
-    $username = $password = '';
-
-    if (isset($PARAMS['username']) && isset($PARAMS['password'])) {
-        $username = $PARAMS['username'];
-        $password = md5($PARAMS['password']);
-    }
-    $res = HR::login($username, $password);
-} else if ($action == 'forgot_password') {
-    $username = '';
-    if (isset($PARAMS['username'])) {
-        $username = $PARAMS['username'];
-    }
-    $res = HR::forgotPassword($username);
-} else if ($action == 'logout') {
-    $res = HR::logout($PARAMS['token']);
-} else if ($action == 'month_attendance') { // set A
-    $userid = $PARAMS['userid'];
-    $year = $PARAMS['year'];
-    $month = $PARAMS['month'];
-    $res = HR::getUserMonthAttendaceComplete($userid, $year, $month);
-} else if ($action == "attendance_summary") {
-    $year = $PARAMS['year'];
-    $month = $PARAMS['month'];
-    $res = HR::getMonthAttendaceSummary($year, $month);
-} else if ($action == "user_day_summary") {
-    $userid = $PARAMS['userid'];
-    $date = $PARAMS['date'];
-    $res = HR::getUserDaySummary($userid, $date);
-}  else if ($action == "apply_leave") { // set A
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
-    if (isset($loggedUserInfo['id'])) {
-        $userid = $loggedUserInfo['id'];
-        $from_date = $PARAMS['from_date'];
-        $to_date = $PARAMS['to_date'];
-        $no_of_days = $PARAMS['no_of_days'];
-        $reason = $PARAMS['reason'];
-        $day_status = $PARAMS['day_status'];
-        $leave_type = $PARAMS['leave_type'];
-        $late_reason = $PARAMS['late_reason'];
-
-        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
-    } else {
-        $res['error'] = 1;
-        $res['data']['message'] = "userid not found";
-    }
-} 
-// EMPLOYEE GENRIC ACTIONS
-else if ($action == "get_my_leaves") { // set A
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
-    if (isset($loggedUserInfo['id'])) {
-        $userid = $loggedUserInfo['id'];
-        $res = HR::getMyLeaves($userid);
-    } else {
-        $res['error'] = 1;
-        $res['data']['message'] = "userid not found";
-    }
-} 
- 
-
-else if ($action == "get_all_leaves_summary") {
-    $year = $PARAMS['year'];
-    $month = $PARAMS['month'];
-    $res = HR::getAllUsersPendingLeavesSummary($year, $month);
-} else if ($action == "get_users_leaves_summary") { // get leave summery of an employee
-    $userid = $PARAMS['user_id'];
-    $year = $PARAMS['year'];
-    $month = $PARAMS['month'];
-    $res = HR::getUsersPendingLeavesSummary($userid, $year, $month);
-}else if ($action == 'get_user_role_from_slack_id') {  // get user role using slack id
-    if ($slack_id == "") {
-        $res['error'] = 1;
-        $res['data']['message'] = "Please provide user slack id!!";
-    } else {
-        $res = HR::getUserInfofromSlack($slack_id);
-    }
-} else if ($action == 'get_all_not_approved_leave_of_user') {  // get all not approved leave of user access by admin and hr
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
-
-    //check for admin and hr so that they can only access it 
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to access this!!";
-    } else {
-        $userid = $PARAMS['user_id'];
-        $res = HR::getAllNotApprovedleaveUser($userid);
-    }
-} else if ($action == 'approve_decline_leave_of_user') {  // change status of user leaves
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
-
-    //check for employee so that he can only update his password
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['error'] = 1;
-        $res['data']['message'] = "You don't have permission to access this!!";
-    } else {
-        $leave_id = $PARAMS['leave_id'];
-        $leave_status = $PARAMS['leave_status'];
-        $res = HR::ApproveDeclineUserLeave($leave_id, $leave_status);
-    }
-} elseif ($action == 'cancel_applied_leave') { // action to cancel employee applied leaves
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-        $PARAMS['user_id'] = $loggedUserInfo['id'];
-    }
-
-    if (strtolower($loggedUserInfo['role']) == 'guest') {
-        $res['data']['message'] = 'You are not authorise for this operation';
-    } else {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = HR::cancelAppliedLeave($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
-    }
-} elseif ($action == 'cancel_applied_leave_admin') { // action to cancel employee applied leaves
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-
-        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-            $res['data']['message'] = 'You are not authorise for this operation';
-        } else {
-            $PARAMS['role'] = strtolower($loggedUserInfo['role']);
-            if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-                $res = HR::cancelAppliedLeave($PARAMS);
-            } else {
-                $res['data']['message'] = 'Please give user_id ';
-            }
-        }
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == 'get_role_from_slackid') {
-    if ($slack_id != "") {
-        $res = HR::getUserInfofromSlack($slack_id);
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == 'get_all_leaves_of_user') {
-
-    $userid = $PARAMS['user_id'];
-    if ($userid != "") {
-        $res = HR::getUsersLeaves($userid);
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == 'get_user_current_status') { // action to cancel employee applied leaves
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-
-        if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-            $res['data']['message'] = 'You are not authorise for this operation';
-        } else {
-            $res = HR::getAllUserCurrentStatus();
-        }
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == "lunch_break") {
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-        $PARAMS['user_id'] = $loggedUserInfo['id'];
-        $res = HR::lunchBreak($PARAMS);
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == "get_lunch_break_detail") {
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-        $userid = $loggedUserInfo['id'];
-        if (!isset($PARAMS['month']) && $PARAMS['month'] == "") {
-            $month = date('Y-m');
-        } else {
-            $month = $PARAMS['month'];
-        }
-        $res = HR::getlunchBreakDetail($userid, $month);
-    } else {
-        $res['data']['message'] = 'Please give user_slackid ';
-    }
-} elseif ($action == 'get_lunch_stats') { // action to cancel employee applied leaves
-    if ($slack_id == "") {
-        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-        $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
-    }
-    if ($slack_id != "") {
-        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
-    }
-
-    if (strtolower($loggedUserInfo['role']) != 'hr' && strtolower($loggedUserInfo['role']) != 'admin') {
-        $res['data']['message'] = 'You are not authorise for this operation';
-    } else {
-
-        if (isset($PARAMS['date']) && $PARAMS['date'] != "") {
-            $date = $PARAMS['date'];
-        } else {
-            $date = date("Y-m-d");
-        }
-
-        $res = HR::getAllUserLunchDetail($date);
-    }
-}      
-
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-// GENERIC ACTIONS - No token required - no need to define constants
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-else if ($action == "get_days_between_leaves") {
-    $start_date = $PARAMS['start_date'];
-    $end_date = $PARAMS['end_date'];
-    $res = HR::getDaysBetweenLeaves($start_date, $end_date);
-}
-
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 // actions defined as constants DONE
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
-else if ($action == 'save_google_payslip_drive_access_token') {
+if ($action == 'login') {   //added in getActionsNotRequiredToken
+    $username = $password = '';
+    if (isset($PARAMS['username']) && isset($PARAMS['password'])) {
+        $username = $PARAMS['username'];
+        $password = md5($PARAMS['password']);
+    }
+    $res = HR::login($username, $password);
+} else if ($action == 'logout') {   //added in getActionsNotRequiredToken
+    $res = HR::logout($PARAMS['token']);
+} else if ($action == 'forgot_password') { //added in getActionsNotRequiredToken
+    $username = '';
+    if (isset($PARAMS['username'])) {
+        $username = $PARAMS['username'];
+    }
+    $res = HR::forgotPassword($username);
+} else if ($action == "get_days_between_leaves") {  //added in getActionsNotRequiredToken
+    $start_date = $PARAMS['start_date'];
+    $end_date = $PARAMS['end_date'];
+    $res = HR::getDaysBetweenLeaves($start_date, $end_date);
+} else if ($action == 'save_google_payslip_drive_access_token') {
     $google_access_token = $PARAMS['google_access_token'];
     $res = HR::updateGooglepaySlipDriveAccessToken($google_access_token);
 } else if ($action == 'get_all_leaves') {
@@ -594,7 +356,131 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'delete_role') {
     $roleid = $PARAMS['role_id'];
     $res = HR::deleteRole($roleid);
+} else if ($action == 'month_attendance') {
+    $userid = $PARAMS['userid'];
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::getUserMonthAttendaceComplete($userid, $year, $month);
+} else if ($action == "attendance_summary") {
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::getMonthAttendaceSummary($year, $month);
+} else if ($action == "user_day_summary") {
+    $userid = $PARAMS['userid'];
+    $date = $PARAMS['date'];
+    $res = HR::getUserDaySummary($userid, $date);
+} else if ($action == "apply_leave") {
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
+    if (isset($loggedUserInfo['id'])) {
+        $userid = $loggedUserInfo['id'];
+        $from_date = $PARAMS['from_date'];
+        $to_date = $PARAMS['to_date'];
+        $no_of_days = $PARAMS['no_of_days'];
+        $reason = $PARAMS['reason'];
+        $day_status = $PARAMS['day_status'];
+        $leave_type = $PARAMS['leave_type'];
+        $late_reason = $PARAMS['late_reason'];
+        $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
+    } else {
+        $res['error'] = 1;
+        $res['data']['message'] = "userid not found";
+    }
+} else if ($action == "get_my_leaves") {
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
+    if (isset($loggedUserInfo['id'])) {
+        $userid = $loggedUserInfo['id'];
+        $res = HR::getMyLeaves($userid);
+    } else {
+        $res['error'] = 1;
+        $res['data']['message'] = "userid not found";
+    }
+} else if ($action == "get_all_leaves_summary") {
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::getAllUsersPendingLeavesSummary($year, $month);
+} else if ($action == "get_users_leaves_summary") {
+    $userid = $PARAMS['user_id'];
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::getUsersPendingLeavesSummary($userid, $year, $month);
+} else if ($action == 'get_user_role_from_slack_id') {
+    if ($slack_id == "") {
+        $res['error'] = 1;
+        $res['data']['message'] = "Please provide user slack id!!";
+    } else {
+        $res = HR::getUserInfofromSlack($slack_id);
+    }
+} else if ($action == 'get_all_not_approved_leave_of_user') {    
+    $userid = $PARAMS['user_id'];
+    $res = HR::getAllNotApprovedleaveUser($userid);    
+} else if ($action == 'approve_decline_leave_of_user') {  
+    $leave_id = $PARAMS['leave_id'];
+    $leave_status = $PARAMS['leave_status'];
+    $res = HR::ApproveDeclineUserLeave($leave_id, $leave_status);    
+} elseif ($action == 'cancel_applied_leave') { // action to cancel employee applied leaves    
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $res = HR::cancelAppliedLeave($PARAMS);
+    } else {
+        $res['data']['message'] = 'Please give user_id ';
+    }    
+} elseif ($action == 'cancel_applied_leave_admin') { // action to cancel employee applied leaves
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $res = HR::cancelAppliedLeave($PARAMS);
+    } else {
+        $res['data']['message'] = 'Please give user_id ';
+    }
+} elseif ($action == 'get_all_leaves_of_user') {
+    $userid = $PARAMS['user_id'];
+    if ($userid != "") {
+        $res = HR::getUsersLeaves($userid);
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
+} elseif ($action == 'get_lunch_stats') {
+    if (isset($PARAMS['date']) && $PARAMS['date'] != "") {
+        $date = $PARAMS['date'];
+    } else {
+        $date = date("Y-m-d");
+    }
+    $res = HR::getAllUserLunchDetail($date);    
+} elseif ($action == "get_lunch_break_detail") {
+    $userid = $loggedUserInfo['id'];
+    if (!isset($PARAMS['month']) && $PARAMS['month'] == "") {
+        $month = date('Y-m');
+    } else {
+        $month = $PARAMS['month'];
+    }
+    $res = HR::getlunchBreakDetail($userid, $month);    
+} elseif ($action == "lunch_break") {
+    $PARAMS['user_id'] = $loggedUserInfo['id'];
+    $res = HR::lunchBreak($PARAMS);    
+} elseif ($action == 'get_user_current_status') {
+    $res = HR::getAllUserCurrentStatus();
+} elseif ($action == 'get_role_from_slackid') {
+    if ($slack_id != "") {
+        $res = HR::getUserInfofromSlack($slack_id);
+    } else {
+        $res['data']['message'] = 'Please give user_slackid ';
+    }
+} else if ($action == 'updatebandwidthstats') {
+    $data = $PARAMS['data'];
+    $res = HR::updateBandwidthStats($data);
+} else if ($action == 'send_slack_msg') {
+    $slack_userChannelid = $PARAMS['channel'];
+    $message = $PARAMS['message'];
+    $res = HR::sendSlackMessageToUser($slack_userChannelid, $message);
+} else if ($action == 'save_bandwidth_detail') {
+    $data = $PARAMS['details'];
+    $data = json_decode($data, true);
+    $res = HR::saveBandwidthDetail($data);
+} else if ($action == 'get_bandwidth_detail') {
+    $res = HR::getBandwidthDetail();
+} else if ($action == 'validate_unique_key') {
+    $res = HR::validateUniqueKey($PARAMS);
 }
-
 echo json_encode($res);
 ?>
