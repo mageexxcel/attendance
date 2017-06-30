@@ -2321,7 +2321,6 @@ class HR extends DATABASE {
         $userid = $data['user_id'];
         $leave_start_date = date('Y-m-d', strtotime($data['date']));
         $current_date = date("Y-m-d");
-
         if ((strtotime($current_date) < strtotime($leave_start_date)) || isset($data['role'])) {
             $q = "SELECT * FROM leaves WHERE user_Id= $userid  AND from_date= '$leave_start_date' AND (status = 'Approved' OR status = 'Pending')";
 

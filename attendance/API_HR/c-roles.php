@@ -73,7 +73,7 @@ trait Roles {
     static $ACTION_get_user_role_from_slack_id = 230;
     static $ACTION_get_all_not_approved_leave_of_user = 231;
     static $ACTION_approve_decline_leave_of_user = 232;
-    static $ACTION_cancel_applied_leave = 233;
+    //static $ACTION_cancel_applied_leave = 233;  // since this is also user in sal_info/api.php
     static $ACTION_cancel_applied_leave_admin = 234;
     static $ACTION_get_all_leaves_of_user = 235;
     static $ACTION_get_user_current_status = 236;
@@ -82,7 +82,16 @@ trait Roles {
     static $ACTION_save_bandwidth_detail = 239;
     static $ACTION_get_bandwidth_detail = 240;
     static $ACTION_validate_unique_key = 241;
-    static $ACTION_send_slack_msg = 242;
+    static $ACTION_send_slack_msg = 242;    
+    static $ACTION_get_all_users_detail = 243;
+    
+    static $ACTION_get_all_clients = 301;
+    static $ACTION_get_client_detail = 302;
+    static $ACTION_create_new_client = 303;
+    static $ACTION_update_client_details = 304;
+    static $ACTION_create_client_invoice = 305;
+    static $ACTION_delete_invoice = 306;
+    
 
     static $ACTION_delete_role = 401;
     static $ACTION_assign_user_role = 402;
@@ -110,10 +119,51 @@ trait Roles {
     static $ACTION_forgot_password = 603;
     static $ACTION_get_days_between_leaves = 604;
 
+    //template actions
+    static $ACTION_get_template_variable = 701;
+    static $ACTION_create_template_variable = 702;
+    static $ACTION_update_template_variable = 703;
+    static $ACTION_delete_template_variable = 704;
+    static $ACTION_get_email_template = 705;
+    static $ACTION_create_email_template = 706;
+    static $ACTION_update_email_template = 707;
+    static $ACTION_delete_email_template = 708;
+    static $ACTION_get_email_template_byId = 709;
+
+    //team actions
+    static $ACTION_add_team_list = 801;
+    static $ACTION_get_team_list = 802;
+    static $ACTION_get_team_users_detail = 803;
+
+    //policy documents
+    static $ACTION_get_user_policy_document = 901;
+    static $ACTION_update_user_policy_document = 902;
+    static $ACTION_get_policy_document = 903;
+    static $ACTION_save_policy_document = 904;
+
     //lunch actions
     static $ACTION_get_lunch_stats = 7001;
     static $ACTION_get_lunch_break_detail = 7002;
     static $ACTION_lunch_break = 7003;
+
+    // profile, employee, salary .bank
+    static $ACTION_get_user_profile_detail = 8001;
+    static $ACTION_update_user_profile_detail = 8002;
+    static $ACTION_update_user_bank_detail = 8003;
+    static $ACTION_create_user_salary = 8004;
+    static $ACTION_create_employee_salary_slip = 8005;
+    static $ACTION_get_user_manage_payslips_data = 8006;
+    static $ACTION_get_user_document = 8007;
+    static $ACTION_delete_user_document = 8008;
+    static $ACTION_delete_salary = 8009;
+    static $ACTION_send_payslips_to_employees = 8010;
+    static $ACTION_send_employee_email = 8011;
+    static $ACTION_cancel_applied_leave = 8012;
+    static $ACTION_create_pdf = 8013;
+    static $ACTION_update_read_document = 8014;
+
+
+    
 
 
     //notification
@@ -201,6 +251,32 @@ trait Roles {
             array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
             array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
+            array( 'id' => self::$ACTION_get_all_users_detail, 'name' => 'get_all_users_detail' ),
+            
+            array( 'id' => self::$ACTION_get_all_clients, 'name' => 'get_all_clients' ),
+            array( 'id' => self::$ACTION_get_client_detail, 'name' => 'get_client_detail' ),
+            array( 'id' => self::$ACTION_create_new_client, 'name' => 'create_new_client' ),
+            array( 'id' => self::$ACTION_update_client_details, 'name' => 'update_client_details' ),
+            array( 'id' => self::$ACTION_create_client_invoice, 'name' => 'create_client_invoice' ),
+            array( 'id' => self::$ACTION_delete_invoice, 'name' => 'delete_invoice' ),
+            
+            array( 'id' => self::$ACTION_get_template_variable, 'name' => 'get_template_variable' ),
+            array( 'id' => self::$ACTION_create_template_variable, 'name' => 'create_template_variable' ),
+            array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),
+            array( 'id' => self::$ACTION_delete_template_variable, 'name' => 'delete_template_variable' ),
+            array( 'id' => self::$ACTION_get_email_template, 'name' => 'get_email_template' ),
+            array( 'id' => self::$ACTION_create_email_template, 'name' => 'create_email_template' ),
+            array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
+            array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
+            array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
+            
+            array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
+            array( 'id' => self::$ACTION_get_team_list, 'name' => 'get_team_list' ),
+            array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
+            
+            array( 'id' => self::$ACTION_update_user_policy_document, 'name' => 'update_user_policy_document' ),
+            array( 'id' => self::$ACTION_get_policy_document, 'name' => 'get_policy_document' ),
+            array( 'id' => self::$ACTION_save_policy_document, 'name' => 'save_policy_document' ),
             
             array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
             array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
@@ -225,6 +301,21 @@ trait Roles {
             array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
             array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
+
+            array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
+            array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
+            array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
+            array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
+            array( 'id' => self::$ACTION_create_employee_salary_slip,'name' => 'create_employee_salary_slip' ),
+            array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
+            array( 'id' => self::$ACTION_get_user_document,'name' => 'get_user_document' ),
+            array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
+            array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+            array( 'id' => self::$ACTION_send_payslips_to_employees,'name' => 'send_payslips_to_employees' ),
+            array( 'id' => self::$ACTION_send_employee_email,'name' => 'send_employee_email' ),
+            array( 'id' => self::$ACTION_cancel_applied_leave,'name' => 'cancel_applied_leave' ),
+            array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
+            array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
         );
 
         return $array;
@@ -260,6 +351,7 @@ trait Roles {
             array( 'id' => self::$ACTION_save_bandwidth_detail, 'name' => 'save_bandwidth_detail' ),
             array( 'id' => self::$ACTION_get_bandwidth_detail, 'name' => 'get_bandwidth_detail' ),
             array( 'id' => self::$ACTION_validate_unique_key, 'name' => 'validate_unique_key' ),
+            array( 'id' => self::$ACTION_get_user_policy_document, 'name' => 'get_user_policy_document' ),
         );
         return $array;
     }
