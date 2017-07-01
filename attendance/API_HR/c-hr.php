@@ -131,10 +131,17 @@ class HR extends DATABASE {
                 );
 
                 // start - get user role and then role pages
-                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
-                if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
-                    $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
+                if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
+                    $u['role_pages'] = self::getRolePagesForSuperAdmin();
+                }else{
+                    $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                    if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
+                        $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
+                    }
                 }
+
+                // echo '<pre>';
+                // print_r( $u) ;              
                 // end - get user role and then role pages
 
                 $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);

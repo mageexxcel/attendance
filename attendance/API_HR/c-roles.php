@@ -34,6 +34,7 @@ trait Roles {
     static $PAGE_add_variables = 127;
     static $PAGE_mail_templates = 128;
     static $PAGE_login = 129;
+    static $PAGE_manage_roles = 130;
 
     
     
@@ -205,6 +206,7 @@ trait Roles {
             array( 'id' => self::$PAGE_home, 'name' => 'home' ),
             array( 'id' => self::$PAGE_login, 'name' => 'login' ),
             array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
+            array( 'id' => self::$PAGE_manage_roles, 'name' => 'manage_roles' ),
         );
 
         return $array;
@@ -557,6 +559,24 @@ trait Roles {
                 $return[] = $rp;
             }
         }
+        return $return;
+    }
+
+    public static function getRolePagesForSuperAdmin ( ){
+        $return = self::getGenericPagesForAllRoles();
+        $allPages = self::getAllPages( );   
+
+        foreach( $allPages as $page ){
+            // $pid = $page['id'];
+            // if( $pid == self::$PAGE_login || $pid == self::$PAGE_home || $pid == self::$PAGE_logout ){
+                $new_page = array(
+                    'page_id' =>  $page['id'],
+                    'page_name' => $page['name']
+                );
+                $return[] = $new_page;
+            //}
+        }
+        
         return $return;
     }
 
