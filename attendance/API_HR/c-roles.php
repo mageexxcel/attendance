@@ -35,6 +35,7 @@ trait Roles {
     static $PAGE_mail_templates = 128;
     static $PAGE_login = 129;
     static $PAGE_manage_roles = 130;
+    static $PAGE_manage_user_pending_hours = 131;
 
     
     
@@ -207,6 +208,7 @@ trait Roles {
             array( 'id' => self::$PAGE_login, 'name' => 'login' ),
             array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
             array( 'id' => self::$PAGE_manage_roles, 'name' => 'manage_roles' ),
+            array( 'id' => self::$PAGE_manage_user_pending_hours, 'name' => 'manage_user_pending_hours' ),
         );
 
         return $array;

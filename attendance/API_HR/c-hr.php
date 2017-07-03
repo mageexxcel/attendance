@@ -3579,6 +3579,52 @@ class HR extends DATABASE {
         }
         return $return;;
     }
+
+    // get employee next working date , starts from today onwards
+    public static function getEmployeeNextWorkingDate( $userid ){
+        $return = false;
+        $currentDate = date('Y-m-d');        
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $currentDateDate = date('d');
+
+        $monthDetails = self::getUserMonthAttendace($userid, $currentYear, $currentMonth );
+        // check if there is no working day left in current month
+        $tempArray = array();
+        foreach( $monthDetails as $md ){
+            $md_date = $md['date'];
+            if( $md_date * 1 >= $currentDateDate * 1 && $md['day_type'] == 'WORKING_DAY' ){
+                $tempArray[] = $md;
+            }
+        }
+        // if temp array is empty, means to get working day from next month date 
+        if( sizeof( $tempArray) == 0 ){
+            $nextMonth = self::_getNextMonth($currentYear, $currentMonth);
+            $monthDetails = self::getUserMonthAttendace($userid, $nextMonth['year'], $nextMonth['month'] );
+            foreach( $monthDetails as $md ){
+                $md_date = $md['date'];
+                if( $md['day_type'] == 'WORKING_DAY' ){
+                    $tempArray[] = $md;
+                }
+            }
+        }
+        $return = $tempArray[0];
+        return $return;
+    }
+
+    // get employee last present day of the month
+    public static function getEmployeeLastPresentDay( $userid, $year, $month ){
+        $return = false;
+        $monthDetails = self::getUserMonthAttendace($userid, $year, $month );
+        $monthDetails = array_reverse($monthDetails);
+        foreach( $monthDetails as $md ){
+            if( $md['day_type'] == 'WORKING_DAY' ){
+                $return = $md;
+                break;
+            }
+        }
+        return $return;
+    }
     
 
 }

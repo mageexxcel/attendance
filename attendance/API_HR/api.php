@@ -207,14 +207,43 @@ if ($action == 'login') {   //added in getActionsNotRequiredToken
     $res = HR::updateGooglepaySlipDriveAccessToken($google_access_token);
 } else if ($action == 'get_all_leaves') {
     $res = HR::getAllLeaves();
-} else if ($action == "admin_user_apply_leave") {   
+} else if ($action == "admin_user_apply_leave") {
+
+    $from_date = $to_date = $no_of_days = $reason = $day_status = '';
+
     $userid = $PARAMS['user_id'];
-    $from_date = $PARAMS['from_date'];
-    $to_date = $PARAMS['to_date'];
-    $no_of_days = $PARAMS['no_of_days'];
-    $reason = $PARAMS['reason'];
-    $day_status = $PARAMS['day_status'];
+    if( isset($PARAMS['from_date']) ){
+        $from_date = $PARAMS['from_date'];    
+    }
+    if( isset($PARAMS['to_date']) ){
+        $to_date = $PARAMS['to_date'];    
+    }
+    if( isset($PARAMS['no_of_days']) ){
+        $no_of_days = $PARAMS['no_of_days'];    
+    }
+    if( isset($PARAMS['reason']) ){
+        $reason = $PARAMS['reason'];    
+    }
+    if( isset($PARAMS['day_status']) ){
+        $day_status = $PARAMS['day_status'];    
+    }
+    
     if ($PARAMS['pending_id']) {
+
+        $currentDate = date('Y-m-d');        
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $currentDateDate = date('d');
+
+        $previousMonth = HR::_getPreviousMonth( $currentYear, $currentMonth );
+
+        $reason = 'Previous month pending time is applied as leave!!';
+
+        if( $from_date == '' ){
+            $employeeLastPresentDay = HR::getEmployeeLastPresentDay( $userid, $previousMonth['year'], $previousMonth['month'] );
+            $from_date = $employeeLastPresentDay['full_date'];
+            $to_date = $employeeLastPresentDay['full_date'];
+        }
         $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type = "", $late_reason = "", $PARAMS['pending_id']);
     } else {
         $res = HR::applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status);
@@ -327,6 +356,11 @@ else if ($action == 'add_hr_comment') {
     $working_hours = $PARAMS['working_hours'];
     $reason = $PARAMS['reason'];
     if (isset($PARAMS['pending_id'])) {
+        // below date and changes done by arun on 3 july 2017
+        // this is case from when manually manipulating pending hours of users from manage_user_pending_hours page
+        $userNextWorkingDate = HR::getEmployeeNextWorkingDate( $userid );
+        $date = $userNextWorkingDate['full_date'];
+        $reason = 'Previous month pending time merged!!';
         $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason, $PARAMS['pending_id']);
     } else {
         $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
