@@ -160,11 +160,15 @@ class HR extends DATABASE {
             //start - check if policy docs are read
             $u['is_policy_documents_read_by_user'] = 1;
             $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
-            if( $is_policy_documents_read_by_user == true ){
+            if( $is_policy_documents_read_by_user == false ){
                 $u['is_policy_documents_read_by_user'] = 0;
                 $u['role_pages'] = self::getGenericPagesForAllRoles('');
             }
             //end - check if policy docs are read
+
+            // echo '<pre>';
+            // print_r( $u );
+
             $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
             self::insertToken($userInfo['user_Id'], $jwtToken);
         }
