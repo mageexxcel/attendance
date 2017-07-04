@@ -175,6 +175,9 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
 } else if ($action == 'update_user_policy_document') { // action to update user policy document
     $PARAMS['user_id'] = $user_id;
     $res = Salary::updateUserPolicyDocument($PARAMS);
+    // update user token when he read doc
+    $newToken = HR::refreshToken( $token );
+    $res['data']['new_token'] = $newToken;
 } else if ($action == 'get_policy_document') { //action to get policy document
     $res = Salary::getPolicyDocument();
 } else if ($action == 'save_policy_document') {    //action to save policy document

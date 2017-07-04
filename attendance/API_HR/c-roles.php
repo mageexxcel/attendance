@@ -541,7 +541,7 @@ trait Roles {
         $allPages = self::getAllPages();
         foreach( $allPages as $page ){
             $pid = $page['id'];
-            if( $pid == self::$PAGE_login || $pid == self::$PAGE_home || $pid == self::$PAGE_logout ){
+            if( $pid == self::$PAGE_login || $pid == self::$PAGE_home || $pid == self::$PAGE_logout || $pid == self::$PAGE_policy_documents ){
                 $new_page = array(
                     'page_id' =>  $page['id'],
                     'page_name' => $page['name']

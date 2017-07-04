@@ -90,6 +90,89 @@ class HR extends DATABASE {
         return true;
     }
 
+    //START -- added by arun on 4 july2017
+    public static function isValidTokenAgainstTime( $token ){
+        $return = true;
+        $tokenInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+        $tokenInfo = json_decode(json_encode($tokenInfo), true);
+        if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
+            $token_start_time = $tokenInfo['login_time'];
+            $current_time = time();
+            $time_diff = $current_time - $token_start_time;
+            $mins = $time_diff / 60;
+            if ($mins > 60) { //if 60 mins more
+                $return = false;
+            } 
+        } else {
+            $return = false;
+        }
+        return $return;
+    }
+    
+    public static function refreshToken( $oldToken ){
+        $return = $oldToken;
+        if( self::isValidTokenAgainstTime( $oldToken ) ){
+            $loggedUserInfo = JWT::decode($oldToken, HR::JWT_SECRET_KEY);
+            $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+            $loggedUserInfo_userid = $loggedUserInfo['id'];
+            $return = self::generateUserToken( $loggedUserInfo_userid );
+        }
+        return $return;
+    }
+
+    public static function generateUserToken( $userid ){
+        $jwtToken = '';
+        $userInfo = self::getUserInfo($userid);
+        if ($userInfo == false) {
+            
+        } else {
+            $userProfileImage = '';
+            try {
+                $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
+            } catch (Exception $e) {
+                
+            }
+            $u = array(
+                "id" => $userInfo['user_Id'],
+                "username" => $userInfo['username'],
+                "role" => $userInfo['type'],
+                "name" => $userInfo['name'],
+                "jobtitle" => $userInfo['jobtitle'],
+                "profileImage" => $userProfileImage,
+                "login_time" => time(),
+                "login_date_time" => date('d-M-Y H:i:s')
+            );
+
+            // start - get user role and then role pages
+            if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
+                $u['role_pages'] = self::getRolePagesForSuperAdmin();
+            }else{
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
+                    $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
+                }
+            }
+
+            // echo '<pre>';
+            // print_r( $u) ;              
+            // end - get user role and then role pages
+
+            //start - check if policy docs are read
+            $u['is_policy_documents_read_by_user'] = 1;
+            $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
+            if( $is_policy_documents_read_by_user == true ){
+                $u['is_policy_documents_read_by_user'] = 0;
+                $u['role_pages'] = self::getGenericPagesForAllRoles('');
+            }
+            //end - check if policy docs are read
+            $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
+            self::insertToken($userInfo['user_Id'], $jwtToken);
+        }
+        return $jwtToken;
+    }
+
+    //END  -- added by arun on 4 july2017
+
     public static function login($username, $password) {
         $r_error = 1;
         $r_message = "";
@@ -104,14 +187,10 @@ class HR extends DATABASE {
             $r_message = "Invalid Login";
         } else {
             $userid = $row['id'];
+            ////------
             $userInfo = self::getUserInfo($userid);
 
-            $userProfileImage = '';
-            try {
-                $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
-            } catch (Exception $e) {
-                
-            }
+            
 
             if ($userInfo == false) {
                 $r_message = "Invalid Login";
@@ -119,32 +198,7 @@ class HR extends DATABASE {
                 $r_error = 0;
                 $r_message = "Success Login";
 
-                $u = array(
-                    "id" => $userInfo['user_Id'],
-                    "username" => $userInfo['username'],
-                    "role" => $userInfo['type'],
-                    "name" => $userInfo['name'],
-                    "jobtitle" => $userInfo['jobtitle'],
-                    "profileImage" => $userProfileImage,
-                    "login_time" => time(),
-                    "login_date_time" => date('d-M-Y H:i:s')
-                );
-
-                // start - get user role and then role pages
-                if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
-                    $u['role_pages'] = self::getRolePagesForSuperAdmin();
-                }else{
-                    $roleInfo = self::getUserRole( $userInfo['user_Id'] );
-                    if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
-                        $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
-                    }
-                }
-
-                // echo '<pre>';
-                // print_r( $u) ;              
-                // end - get user role and then role pages
-
-                $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
+                $jwtToken = self::generateUserToken( $userInfo['user_Id'] );
 
                 self::insertToken($userInfo['user_Id'], $jwtToken);
                 $r_data = array(
@@ -3624,6 +3678,58 @@ class HR extends DATABASE {
             }
         }
         return $return;
+    }
+
+
+    //policy documents
+    public static function is_policy_documents_read_by_user( $userid ){
+        $return = true;
+        $allDocuments = self::NEW_getUserPolicyDocument( $userid );
+        if( is_array($allDocuments) ){
+            foreach( $allDocuments as $doc ){
+                if( $doc['read'] != 1 ){
+                    $return = false;
+                }
+            }
+        }
+        return $return;
+    }
+
+    public static function NEW_getUserPolicyDocument($userid) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q1 = "SELECT * FROM user_profile where user_Id = $userid";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+
+        $ar0 = json_decode($row1['policy_document'], true);
+
+        $q2 = "SELECT * FROM config where type ='policy_document'";
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRow($runQuery2);
+
+        $ar1 = json_decode($row2['value'], true);
+        $arr = array();
+        if (empty($ar0)) {
+            foreach ($ar1 as $v2) {
+                $v2['read'] = 0;
+                $arr[] = $v2;
+            }
+        }
+        if (!empty($ar0)) {
+            foreach ($ar1 as $v3) {
+                if (in_array($v3['name'], $ar0)) {
+                    $v3['read'] = 1;
+                    $arr[] = $v3;
+                } else {
+                    $v3['read'] = 0;
+                    $arr[] = $v3;
+                }
+            }
+        }
+        return $arr;
     }
     
 
