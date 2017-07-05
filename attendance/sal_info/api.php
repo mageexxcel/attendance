@@ -109,33 +109,6 @@ if ($userinfo['type'] == admin) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 // actions defined as constants DONE
@@ -245,6 +218,8 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $res['data']['message'] = 'Please give invoice_id ';
     }
 } else if ($action == 'get_user_profile_detail') { //action to get employee profile detail
+    $res = Salary::getUserDetailInfo($user_id);
+} else if ($action == 'get_user_profile_detail_by_id') { //action to get employee profile detail
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::getUserDetailInfo($user_id);
@@ -252,6 +227,9 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $res['data']['message'] = 'Please give user_id ';
     }
 } else if ($action == 'update_user_profile_detail') {  //action to update employee profile detail.
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::UpdateUserInfo($PARAMS);
+} else if ($action == 'update_user_profile_detail_by_id') {  //action to update employee profile detail.
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::UpdateUserInfo($PARAMS);
@@ -259,6 +237,9 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $res['data']['message'] = 'Please give user_id ';
     }
 } else if ($action == 'update_user_bank_detail') { //action to update employee bank details
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::UpdateUserBankInfo($PARAMS);
+} else if ($action == 'update_user_bank_detail_by_id') { //action to update employee bank details
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::UpdateUserBankInfo($PARAMS);
@@ -309,6 +290,8 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $res['data']['message'] = 'Please give user_id ';
     }    
 } else if ($action == 'get_user_document') {   //action to get employee document detail
+    $res = Salary::getUserDocumentDetail($user_id);
+} else if ($action == 'get_user_document_by_id') {   //action to get employee document detail
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::getUserDocumentDetail($user_id);
@@ -366,6 +349,72 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     } else {
         $res['data']['message'] = 'Please  give the user id';
     }
+}
+
+
+else if( $action == 'get_user_salary_info' ){
+    $res['data'] = $userinfo;
+    $userSalaryInfo = Salary::getSalaryInfo($user_id);
+    $res3 = Salary::getHoldingDetail($user_id);
+    $res4 = Salary::getUserPayslipInfo($user_id);
+    $i = 0;
+    foreach ($userSalaryInfo as $val) {
+
+        $res2 = Salary::getSalaryDetail($val['id']);
+
+        $res2['test'] = $val;
+        $res2['date'] = $val['applicable_from'];
+        $res['data']['salary_details'][] = $res2;
+
+        $i++;
+    }
+    $res['data']['holding_details'] = $res3;
+    $res['data']['payslip_history'] = $res4;
+}
+
+else if( $action == 'get_user_salary_info_by_id' ){
+
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $userid = $PARAMS['user_id'];
+        $userinfo = Salary::getUserDetail($userid);
+        if (sizeof($userinfo) <= 0) {
+            $res['error'][] = 'The given user id member not found';
+        } else {
+            $res['data'] = $userinfo;
+            $res3 = Salary::getHoldingDetail($userid);
+            $res = Salary::getSalaryInfo($userid);
+            $res4 = Salary::getUserPayslipInfo($userid);
+            $i = 0;
+            $res['data']['salary_details'] = array();
+            foreach ($res as $val) {
+                $res2 = Salary::getSalaryDetail($val['id']);
+                $res2['test'] = $val;
+                $res2['date'] = $val['applicable_from'];
+                $res['data']['salary_details'][] = $res2;
+                $i++;
+            }
+            $res['data']['holding_details'] = $res3;
+            $res['data']['payslip_history'] = $res4;
+            
+            $joining_date = $res['data']['date_of_joining'];
+            $current_date = date("Y-m-d");
+            $endDate = strtotime($current_date);
+            $startDate = strtotime($joining_date);
+            
+            $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
+            
+            // arun you have to work on this to enable this for hr role
+            // if($loginuserinfo['type'] == "hr" &&  $numberOfMonths > 8 ){
+                
+            //     $res['data'] = array();
+            //     $res['data']['message'] = "You are not authorise to view this user data";
+            //  }
+             
+        }
+    } else {
+        $res['error'][] = 'The given user id number';
+    }
+    
 }
 
 

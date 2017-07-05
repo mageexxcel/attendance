@@ -5,12 +5,11 @@
 trait Roles {
 
     //pages
-    static $PAGE_inventory_system = 101;
-    static $PAGE_manage_payslips = 102;
-    static $PAGE_home = 103;
-    static $PAGE_monthly_attendance = 104;
-    static $PAGE_manage_working_hours = 105;
-    static $PAGE_logout = 106;
+    static $PAGE_home = 101;
+    static $PAGE_monthly_attendance = 102;
+    static $PAGE_inventory_system = 103;
+    static $PAGE_manage_payslips = 104;    
+    static $PAGE_manage_working_hours = 105;    
     static $PAGE_holidays = 107;
     static $PAGE_team_view = 108;
     static $PAGE_apply_leave = 109;
@@ -36,6 +35,7 @@ trait Roles {
     static $PAGE_login = 129;
     static $PAGE_manage_roles = 130;
     static $PAGE_manage_user_pending_hours = 131;
+    static $PAGE_logout = 132;
 
     
     
@@ -163,6 +163,14 @@ trait Roles {
     static $ACTION_cancel_applied_leave = 8012;
     static $ACTION_create_pdf = 8013;
     static $ACTION_update_read_document = 8014;
+    static $ACTION_get_user_salary_info = 8015;
+    static $ACTION_get_user_profile_detail_by_id = 8016;
+    static $ACTION_update_user_profile_detail_by_id = 8017;
+    static $ACTION_update_user_bank_detail_by_id = 8018;
+    static $ACTION_get_user_document_by_id = 8019;
+    static $ACTION_get_user_salary_info_by_id = 8020;
+
+
 
 
     
@@ -307,12 +315,16 @@ trait Roles {
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
 
             array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
+            array( 'id' => self::$ACTION_get_user_profile_detail_by_id,'name' => 'get_user_profile_detail_by_id' ),
             array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
+            array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
             array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
+            array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
             array( 'id' => self::$ACTION_create_employee_salary_slip,'name' => 'create_employee_salary_slip' ),
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
             array( 'id' => self::$ACTION_get_user_document,'name' => 'get_user_document' ),
+            array( 'id' => self::$ACTION_get_user_document_by_id,'name' => 'get_user_document_by_id' ),
             array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
             array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
             array( 'id' => self::$ACTION_send_payslips_to_employees,'name' => 'send_payslips_to_employees' ),
@@ -320,6 +332,8 @@ trait Roles {
             array( 'id' => self::$ACTION_cancel_applied_leave,'name' => 'cancel_applied_leave' ),
             array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
+            array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
+            array( 'id' => self::$ACTION_get_user_salary_info_by_id,'name' => 'get_user_salary_info_by_id' ),
         );
 
         return $array;
@@ -552,6 +566,18 @@ trait Roles {
         return $return;
     }
 
+    public static function sortPages ( $pages ){
+        function sortPagesOrder( $a, $b ){
+            if ($a['page_id'] == $b['page_id']) {
+                return 0;
+            }
+            return ($a['page_id'] < $b['page_id']) ? -1 : 1;
+        }
+
+        usort($pages, "sortPagesOrder");
+        return $pages;
+    }
+
     public static function getRolePagesForApiToken( $roleid ){
         $return = self::getGenericPagesForAllRoles();
         $rolePages = self::getRolePages( $roleid );
@@ -561,7 +587,7 @@ trait Roles {
                 $return[] = $rp;
             }
         }
-        return $return;
+        return self::sortPages($return);
     }
 
     public static function getRolePagesForSuperAdmin ( ){
@@ -578,8 +604,7 @@ trait Roles {
                 $return[] = $new_page;
             //}
         }
-        
-        return $return;
+        return self::sortPages($return);
     }
 
     public static function getRolePages($roleid) {
