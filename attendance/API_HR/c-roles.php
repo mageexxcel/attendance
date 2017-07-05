@@ -180,9 +180,10 @@ trait Roles {
 
    public static function getAllPages() {
         $array = array(
-            array( 'id' => self::$PAGE_inventory_system, 'name' => 'inventory_system' ),
-            array( 'id' => self::$PAGE_manage_payslips, 'name' => 'manage_payslips' ),
+            array( 'id' => self::$PAGE_home, 'name' => 'home' ),
             array( 'id' => self::$PAGE_monthly_attendance, 'name' => 'monthly_attendance' ),
+            array( 'id' => self::$PAGE_inventory_system, 'name' => 'inventory_system' ),
+            array( 'id' => self::$PAGE_manage_payslips, 'name' => 'manage_payslips' ),            
             array( 'id' => self::$PAGE_manage_working_hours, 'name' => 'manage_working_hours' ),
             array( 'id' => self::$PAGE_holidays, 'name' => 'holidays' ),
             array( 'id' => self::$PAGE_team_view, 'name' => 'team_view' ),
@@ -203,8 +204,7 @@ trait Roles {
             array( 'id' => self::$PAGE_policy_documents, 'name' => 'policy_documents' ),
             array( 'id' => self::$PAGE_upload_policy_documents, 'name' => 'upload_policy_documents' ),
             array( 'id' => self::$PAGE_add_variables, 'name' => 'add_variables' ),
-            array( 'id' => self::$PAGE_mail_templates, 'name' => 'mail_templates' ),
-            array( 'id' => self::$PAGE_home, 'name' => 'home' ),
+            array( 'id' => self::$PAGE_mail_templates, 'name' => 'mail_templates' ),            
             array( 'id' => self::$PAGE_login, 'name' => 'login' ),
             array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
             array( 'id' => self::$PAGE_manage_roles, 'name' => 'manage_roles' ),
@@ -541,7 +541,7 @@ trait Roles {
         $allPages = self::getAllPages();
         foreach( $allPages as $page ){
             $pid = $page['id'];
-            if( $pid == self::$PAGE_login || $pid == self::$PAGE_home || $pid == self::$PAGE_logout || $pid == self::$PAGE_policy_documents ){
+            if( $pid == self::$PAGE_login || $pid == self::$PAGE_logout || $pid == self::$PAGE_policy_documents ){
                 $new_page = array(
                     'page_id' =>  $page['id'],
                     'page_name' => $page['name']

@@ -159,10 +159,14 @@ class HR extends DATABASE {
 
             //start - check if policy docs are read
             $u['is_policy_documents_read_by_user'] = 1;
-            $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
-            if( $is_policy_documents_read_by_user == false ){
-                $u['is_policy_documents_read_by_user'] = 0;
-                $u['role_pages'] = self::getGenericPagesForAllRoles('');
+            if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
+                
+            }else{
+                $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
+                if( $is_policy_documents_read_by_user == false ){
+                    $u['is_policy_documents_read_by_user'] = 0;
+                    $u['role_pages'] = self::getGenericPagesForAllRoles('');
+                }
             }
             //end - check if policy docs are read
 
