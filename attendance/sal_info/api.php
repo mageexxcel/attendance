@@ -353,6 +353,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
 
 
 else if( $action == 'get_user_salary_info' ){
+    $res['error'] = 0;
     $res['data'] = $userinfo;
     $userSalaryInfo = Salary::getSalaryInfo($user_id);
     $res3 = Salary::getHoldingDetail($user_id);
@@ -378,15 +379,18 @@ else if( $action == 'get_user_salary_info_by_id' ){
         $userid = $PARAMS['user_id'];
         $userinfo = Salary::getUserDetail($userid);
         if (sizeof($userinfo) <= 0) {
-            $res['error'][] = 'The given user id member not found';
+            $res['error'] = 1;
+            $res['message'] = 'The given user id member not found';
+            //$res['error'][] = 'The given user id member not found';
         } else {
+            $res['error'] = 0;
             $res['data'] = $userinfo;
             $res3 = Salary::getHoldingDetail($userid);
-            $res = Salary::getSalaryInfo($userid);
+            $resData = Salary::getSalaryInfo($userid);
             $res4 = Salary::getUserPayslipInfo($userid);
             $i = 0;
             $res['data']['salary_details'] = array();
-            foreach ($res as $val) {
+            foreach ($resData as $val) {
                 $res2 = Salary::getSalaryDetail($val['id']);
                 $res2['test'] = $val;
                 $res2['date'] = $val['applicable_from'];
@@ -412,7 +416,9 @@ else if( $action == 'get_user_salary_info_by_id' ){
              
         }
     } else {
-        $res['error'][] = 'The given user id number';
+        $res['error'] = 1;
+        $res['message'] = 'The given user id member not found';
+        //$res['error'][] = 'The given user id number';
     }
     
 }
