@@ -189,7 +189,15 @@ trait Roles {
    public static function getAllPages() {
         $array = array(
             array( 'id' => self::$PAGE_home, 'name' => 'home' ),
-            array( 'id' => self::$PAGE_monthly_attendance, 'name' => 'monthly_attendance' ),
+            array( 
+                'id' => self::$PAGE_monthly_attendance, 
+                'name' => 'monthly_attendance',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
+                    array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
+                    array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
+                )
+            ),
             array( 'id' => self::$PAGE_inventory_system, 'name' => 'inventory_system' ),
             array( 'id' => self::$PAGE_manage_payslips, 'name' => 'manage_payslips' ),            
             array( 'id' => self::$PAGE_manage_working_hours, 'name' => 'manage_working_hours' ),
