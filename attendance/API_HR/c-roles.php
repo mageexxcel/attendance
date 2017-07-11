@@ -188,7 +188,16 @@ trait Roles {
 
    public static function getAllPages() {
         $array = array(
-            array( 'id' => self::$PAGE_home, 'name' => 'home' ),
+            array( 
+                'id' => self::$PAGE_home,
+                'name' => 'home',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_month_attendance, 'name' => 'month_attendance' ),
+                    array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
+                    array( 'id' => self::$ACTION_user_day_summary, 'name' => 'user_day_summary' ),
+                )
+            ),
+
             array( 
                 'id' => self::$PAGE_monthly_attendance, 
                 'name' => 'monthly_attendance',
@@ -198,150 +207,398 @@ trait Roles {
                     array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
                 )
             ),
-            array( 'id' => self::$PAGE_inventory_system, 'name' => 'inventory_system' ),
-            array( 'id' => self::$PAGE_manage_payslips, 'name' => 'manage_payslips' ),            
-            array( 'id' => self::$PAGE_manage_working_hours, 'name' => 'manage_working_hours' ),
-            array( 'id' => self::$PAGE_holidays, 'name' => 'holidays' ),
-            array( 'id' => self::$PAGE_team_view, 'name' => 'team_view' ),
+            array( 
+                'id' => self::$PAGE_inventory_system, 
+                'name' => 'inventory_system',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+                    array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+                    array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+                    array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+                    array( 'id' => self::$ACTION_add_machine_status, 'name' => 'add_machine_status' ),
+                    array( 'id' => self::$ACTION_add_machine_type, 'name' => 'add_machine_type' ),
+                    array( 'id' => self::$ACTION_delete_machine_status, 'name' => 'delete_machine_status' ),
+                    array( 'id' => self::$ACTION_add_office_machine, 'name' => 'add_office_machine' ),
+                    array( 'id' => self::$ACTION_update_office_machine, 'name' => 'update_office_machine' ),
+                    array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
+                    array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
+                )
+            ),
+                       
+            
+            array( 
+                'id' => self::$PAGE_manage_working_hours,
+                'name' => 'manage_working_hours',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
+                    array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_holidays, 
+                'name' => 'holidays',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_holidays_list, 'name' => 'get_holidays_list' ),
+                )
+            ),
+            
+            array( 
+                'id' => self::$PAGE_team_view, 
+                'name' => 'team_view',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
+                    array( 'id' => self::$ACTION_get_team_list, 'name' => 'get_team_list' ),
+                    array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
+                )
+            ),
+            
             array( 'id' => self::$PAGE_apply_leave, 'name' => 'apply_leave' ),
-            array( 'id' => self::$PAGE_manage_leaves, 'name' => 'manage_leaves' ),
-            array( 'id' => self::$PAGE_my_leaves, 'name' => 'my_leaves' ),
-            array( 'id' => self::$PAGE_disabled_employes, 'name' => 'disabled_employes' ),
-            array( 'id' => self::$PAGE_manage_user_working_hours, 'name' => 'manage_user_working_hours' ),
-            array( 'id' => self::$PAGE_leaves_summary, 'name' => 'leaves_summary' ),
-            array( 'id' => self::$PAGE_salary, 'name' => 'salary' ),
+            
+            array( 
+                'id' => self::$PAGE_my_leaves,
+                'name' => 'my_leaves',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_my_leaves, 'name' => 'get_my_leaves' ),
+                    array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
+                )
+            ),
+            
+            array( 
+                'id' => self::$PAGE_disabled_employes,
+                'name' => 'disabled_employes',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_show_disabled_users, 'name' => 'show_disabled_users' ),
+                )
+            ),
+            
+            
+            
+            array( 
+                'id' => self::$PAGE_leaves_summary,
+                'name' => 'leaves_summary',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_all_leaves_summary, 'name' => 'get_all_leaves_summary' ),
+                )
+            ),
+            
+            array( 
+                'id' => self::$PAGE_salary,
+                'name' => 'salary' ,
+                'actions_list' => array(
+                    
+                )
+            ),
+            
             array( 'id' => self::$PAGE_manage_salary, 'name' => 'manage_salary' ),
-            array( 'id' => self::$PAGE_my_profile, 'name' => 'my_profile' ),
-            array( 'id' => self::$PAGE_my_inventory, 'name' => 'my_inventory' ),
-            array( 'id' => self::$PAGE_manage_users, 'name' => 'manage_users' ),
-            array( 'id' => self::$PAGE_manage_clients, 'name' => 'manage_clients' ),
+            array( 
+                'id' => self::$PAGE_my_profile, 
+                'name' => 'my_profile',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
+                    array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
+                    array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
+                    array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
+                    array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
+                    array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+                )
+            ),
+            
+            array( 
+                'id' => self::$PAGE_my_inventory,
+                'name' => 'my_inventory',
+                'actions_list' => array(
+
+                )
+            ),
+            
+
+
+            
             array( 'id' => self::$PAGE_uploadAttendance, 'name' => 'uploadAttendance' ),
-            array( 'id' => self::$PAGE_view_salary, 'name' => 'view_salary' ),
-            array( 'id' => self::$PAGE_policy_documents, 'name' => 'policy_documents' ),
-            array( 'id' => self::$PAGE_upload_policy_documents, 'name' => 'upload_policy_documents' ),
-            array( 'id' => self::$PAGE_add_variables, 'name' => 'add_variables' ),
-            array( 'id' => self::$PAGE_mail_templates, 'name' => 'mail_templates' ),            
+            array( 
+                'id' => self::$PAGE_view_salary,
+                'name' => 'view_salary',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_all_users_detail, 'name' => 'get_all_users_detail' ),
+                )
+            ),
+            
+            array( 
+                'id' => self::$PAGE_policy_documents,
+                'name' => 'policy_documents',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_user_policy_document, 'name' => 'get_user_policy_document' ),
+                )
+            ),
+            
+            
+           
+                      
             array( 'id' => self::$PAGE_login, 'name' => 'login' ),
             array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
-            array( 'id' => self::$PAGE_manage_roles, 'name' => 'manage_roles' ),
-            array( 'id' => self::$PAGE_manage_user_pending_hours, 'name' => 'manage_user_pending_hours' ),
+            array( 
+                'id' => self::$PAGE_manage_roles,
+                'name' => 'manage_roles',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
+                    array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
+                    array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
+                    array( 'id' => self::$ACTION_update_role, 'name' => 'update_role' ),
+                    array( 'id' => self::$ACTION_add_roles, 'name' => 'add_roles' ),
+                )
+            ),
+            
+
+
+            array( 
+                'id' => self::$PAGE_manage_clients,
+                'name' => 'manage_clients',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_all_clients, 'name' => 'get_all_clients' ),
+                    array( 'id' => self::$ACTION_get_client_detail, 'name' => 'get_client_detail' ),
+                    array( 'id' => self::$ACTION_create_new_client, 'name' => 'create_new_client' ),
+                    array( 'id' => self::$ACTION_update_client_details, 'name' => 'update_client_details' ),
+                    array( 'id' => self::$ACTION_create_client_invoice, 'name' => 'create_client_invoice' ),
+                    array( 'id' => self::$ACTION_delete_invoice, 'name' => 'delete_invoice' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_manage_leaves, 
+                'name' => 'manage_leaves',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_all_leaves, 'name' => 'get_all_leaves' ),
+                    array( 'id' => self::$ACTION_change_leave_status, 'name' => 'change_leave_status' ),
+                    array( 'id' => self::$ACTION_add_extra_leave_day, 'name' => 'add_extra_leave_day' ),
+                    array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_mail_templates,
+                'name' => 'mail_templates',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),                    
+                    array( 'id' => self::$ACTION_get_email_template, 'name' => 'get_email_template' ),
+                    array( 'id' => self::$ACTION_create_email_template, 'name' => 'create_email_template' ),
+                    array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
+                    array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
+                    array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
+                    array( 'id' => self::$ACTION_send_employee_email,'name' => 'send_employee_email' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_add_variables,
+                'name' => 'add_variables',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_template_variable, 'name' => 'get_template_variable' ),
+                    array( 'id' => self::$ACTION_create_template_variable, 'name' => 'create_template_variable' ),
+                    array( 'id' => self::$ACTION_delete_template_variable, 'name' => 'delete_template_variable' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_upload_policy_documents,
+                'name' => 'upload_policy_documents',
+                'actions_list' =>  array(
+                    array( 'id' => self::$ACTION_save_policy_document, 'name' => 'save_policy_document' ),
+                    array( 'id' => self::$ACTION_get_policy_document, 'name' => 'get_policy_document' ),
+                    array( 'id' => self::$ACTION_update_user_policy_document, 'name' => 'update_user_policy_document' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_manage_users, 
+                'name' => 'manage_users',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
+                    array( 'id' => self::$ACTION_get_user_profile_detail_by_id,'name' => 'get_user_profile_detail_by_id' ),
+                    array( 'id' => self::$ACTION_get_user_document_by_id,'name' => 'get_user_document_by_id' ),
+                    array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
+                    array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
+                )
+            ),
+
+            array(
+                'id' => self::$PAGE_manage_user_pending_hours,
+                'name' => 'manage_user_pending_hours',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_admin_user_apply_leave, 'name' => 'admin_user_apply_leave' ),
+                    array( 'id' => self::$ACTION_get_all_user_previous_month_time, 'name' => 'get_all_user_previous_month_time' ),
+                )
+            ),
+
+            array( 
+                'id' => self::$PAGE_manage_payslips,
+                'name' => 'manage_payslips',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_create_employee_salary_slip,'name' => 'create_employee_salary_slip' ),
+                    array( 'id' => self::$ACTION_send_payslips_to_employees,'name' => 'send_payslips_to_employees' ),
+                    array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
+                    array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
+                    array( 'id' => self::$ACTION_get_user_salary_info_by_id,'name' => 'get_user_salary_info_by_id' ),
+                )
+            ), 
+            array(
+                'id' => self::$PAGE_documents,
+                'name' => 'documents',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_get_user_document,'name' => 'get_user_document' ),
+                )
+            ),
+            array(
+                'id' => self::$PAGE_manage_user_working_hours,
+                'name' => 'manage_user_working_hours',
+                'actions_list' => array(
+                    array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
+                    array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
+                )
+            ),
         );
 
         return $array;
     }
 
     public static function getAllActions() {
+        $array = array();
+        $allPages = self::getAllPages();
+        foreach( $allPages as $page ){
+            if( isset( $page['actions_list']) ){
+                foreach( $page['actions_list'] as $action ){
+                    $array[] = $action;
+                }
+            }
+        }
 
-        $array = array(
-            array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
-            array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
-            array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
+        return $array;
+
+        $array = array(            
+            
+            // start - missing
+            
             array( 'id' => self::$ACTION_get_user_worktime_detail, 'name' => 'get_user_worktime_detail' ),
-            array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
-            array( 'id' => self::$ACTION_change_leave_status, 'name' => 'change_leave_status' ),
-            array( 'id' => self::$ACTION_get_my_leaves, 'name' => 'get_my_leaves' ),
-            array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
-            array( 'id' => self::$ACTION_month_attendance, 'name' => 'month_attendance' ),
-            array( 'id' => self::$ACTION_get_all_leaves, 'name' => 'get_all_leaves' ),
+            
+            
             array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
-            array( 'id' => self::$ACTION_show_disabled_users, 'name' => 'show_disabled_users' ),
             array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
-            array( 'id' => self::$ACTION_get_holidays_list, 'name' => 'get_holidays_list' ),
-            array( 'id' => self::$ACTION_admin_user_apply_leave, 'name' => 'admin_user_apply_leave' ),
-            array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
-            array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
+            
+            // end - missing
+            
             array( 'id' => self::$ACTION_get_user_previous_month_time, 'name' => 'get_user_previous_month_time' ),
-            array( 'id' => self::$ACTION_get_all_user_previous_month_time, 'name' => 'get_all_user_previous_month_time' ),
-            array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
+            
+            
             array( 'id' => self::$ACTION_delete_employee, 'name' => 'delete_employee' ),
             array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
-            array( 'id' => self::$ACTION_add_extra_leave_day, 'name' => 'add_extra_leave_day' ),
-            array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
+            
             array( 'id' => self::$ACTION_update_user_entry_exit_time, 'name' => 'update_user_entry_exit_time' ),
-            array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
+            
             array( 'id' => self::$ACTION_attendance_summary, 'name' => 'attendance_summary' ),
-            array( 'id' => self::$ACTION_user_day_summary, 'name' => 'user_day_summary' ),
-            array( 'id' => self::$ACTION_get_all_leaves_summary, 'name' => 'get_all_leaves_summary' ),
+            
+            
             array( 'id' => self::$ACTION_get_users_leaves_summary, 'name' => 'get_users_leaves_summary' ),
             array( 'id' => self::$ACTION_get_user_role_from_slack_id, 'name' => 'get_user_role_from_slack_id' ),
             array( 'id' => self::$ACTION_get_all_not_approved_leave_of_user, 'name' => 'get_all_not_approved_leave_of_user' ),
             array( 'id' => self::$ACTION_approve_decline_leave_of_user, 'name' => 'approve_decline_leave_of_user' ),
-            array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
+            
             array( 'id' => self::$ACTION_cancel_applied_leave_admin, 'name' => 'cancel_applied_leave_admin' ),
             array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
             array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
-            array( 'id' => self::$ACTION_get_all_users_detail, 'name' => 'get_all_users_detail' ),
-            
-            array( 'id' => self::$ACTION_get_all_clients, 'name' => 'get_all_clients' ),
-            array( 'id' => self::$ACTION_get_client_detail, 'name' => 'get_client_detail' ),
-            array( 'id' => self::$ACTION_create_new_client, 'name' => 'create_new_client' ),
-            array( 'id' => self::$ACTION_update_client_details, 'name' => 'update_client_details' ),
-            array( 'id' => self::$ACTION_create_client_invoice, 'name' => 'create_client_invoice' ),
-            array( 'id' => self::$ACTION_delete_invoice, 'name' => 'delete_invoice' ),
-            
-            array( 'id' => self::$ACTION_get_template_variable, 'name' => 'get_template_variable' ),
-            array( 'id' => self::$ACTION_create_template_variable, 'name' => 'create_template_variable' ),
-            array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),
-            array( 'id' => self::$ACTION_delete_template_variable, 'name' => 'delete_template_variable' ),
-            array( 'id' => self::$ACTION_get_email_template, 'name' => 'get_email_template' ),
-            array( 'id' => self::$ACTION_create_email_template, 'name' => 'create_email_template' ),
-            array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
-            array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
-            array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
-            
-            array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
-            array( 'id' => self::$ACTION_get_team_list, 'name' => 'get_team_list' ),
-            array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
-            
-            array( 'id' => self::$ACTION_update_user_policy_document, 'name' => 'update_user_policy_document' ),
-            array( 'id' => self::$ACTION_get_policy_document, 'name' => 'get_policy_document' ),
-            array( 'id' => self::$ACTION_save_policy_document, 'name' => 'save_policy_document' ),
-            
-            array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
-            array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
-            array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
-            array( 'id' => self::$ACTION_update_role, 'name' => 'update_role' ),
-            array( 'id' => self::$ACTION_add_roles, 'name' => 'add_roles' ),
-
-            array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
-            array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
-            array( 'id' => self::$ACTION_add_machine_status, 'name' => 'add_machine_status' ),
-            array( 'id' => self::$ACTION_add_machine_type, 'name' => 'add_machine_type' ),
-            array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
-            array( 'id' => self::$ACTION_delete_machine_status, 'name' => 'delete_machine_status' ),
-            array( 'id' => self::$ACTION_add_office_machine, 'name' => 'add_office_machine' ),
-            array( 'id' => self::$ACTION_update_office_machine, 'name' => 'update_office_machine' ),
             array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
-            array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
-            array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
-            array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
-            array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
-            
+            array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),            
             array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
             array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
-
-            array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
-            array( 'id' => self::$ACTION_get_user_profile_detail_by_id,'name' => 'get_user_profile_detail_by_id' ),
-            array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
             array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
-            array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
             array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
-            array( 'id' => self::$ACTION_create_employee_salary_slip,'name' => 'create_employee_salary_slip' ),
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
-            array( 'id' => self::$ACTION_get_user_document,'name' => 'get_user_document' ),
-            array( 'id' => self::$ACTION_get_user_document_by_id,'name' => 'get_user_document_by_id' ),
-            array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
-            array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
-            array( 'id' => self::$ACTION_send_payslips_to_employees,'name' => 'send_payslips_to_employees' ),
-            array( 'id' => self::$ACTION_send_employee_email,'name' => 'send_employee_email' ),
-            array( 'id' => self::$ACTION_cancel_applied_leave,'name' => 'cancel_applied_leave' ),
+            
+            
             array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
-            array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
-            array( 'id' => self::$ACTION_get_user_salary_info_by_id,'name' => 'get_user_salary_info_by_id' ),
+
+            // below aree added in pages
+            // array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
+            // array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
+            // array( 'id' => self::$ACTION_user_day_summary, 'name' => 'user_day_summary' ),
+            // array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
+            // array( 'id' => self::$ACTION_month_attendance, 'name' => 'month_attendance' ),
+            // array( 'id' => self::$ACTION_cancel_applied_leave,'name' => 'cancel_applied_leave' ),
+            // array( 'id' => self::$ACTION_get_all_user_previous_month_time, 'name' => 'get_all_user_previous_month_time' ),
+            // array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
+            // array( 'id' => self::$ACTION_get_all_leaves_summary, 'name' => 'get_all_leaves_summary' ),
+            // array( 'id' => self::$ACTION_get_user_document,'name' => 'get_user_document' ),
+            // array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
+            // array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
+            // array( 'id' => self::$ACTION_get_all_users_detail, 'name' => 'get_all_users_detail' ),
+            // array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+            // array( 'id' => self::$ACTION_get_user_salary_info_by_id,'name' => 'get_user_salary_info_by_id' ),
+            // array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
+            // array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
+            // array( 'id' => self::$ACTION_delete_machine_status, 'name' => 'delete_machine_status' ),
+            // array( 'id' => self::$ACTION_add_office_machine, 'name' => 'add_office_machine' ),
+            // array( 'id' => self::$ACTION_update_office_machine, 'name' => 'update_office_machine' ),
+            // array( 'id' => self::$ACTION_add_machine_status, 'name' => 'add_machine_status' ),
+            // array( 'id' => self::$ACTION_add_machine_type, 'name' => 'add_machine_type' ),
+            // array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
+            // array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
+            // array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
+            // array( 'id' => self::$ACTION_send_employee_email,'name' => 'send_employee_email' ),
+            // array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
+            // array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
+            // array( 'id' => self::$ACTION_send_payslips_to_employees,'name' => 'send_payslips_to_employees' ),
+            // array( 'id' => self::$ACTION_create_employee_salary_slip,'name' => 'create_employee_salary_slip' ),
+            // array( 'id' => self::$ACTION_get_my_leaves, 'name' => 'get_my_leaves' ),
+            // array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
+            // array( 'id' => self::$ACTION_get_holidays_list, 'name' => 'get_holidays_list' ),
+            // array( 'id' => self::$ACTION_show_disabled_users, 'name' => 'show_disabled_users' ),
+            // array( 'id' => self::$ACTION_get_all_leaves, 'name' => 'get_all_leaves' ),
+            // array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
+            // array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
+            // array( 'id' => self::$ACTION_get_user_document_by_id,'name' => 'get_user_document_by_id' ),
+            // array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
+            // array( 'id' => self::$ACTION_get_user_profile_detail_by_id,'name' => 'get_user_profile_detail_by_id' ),
+            // array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+            // array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+            // array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+            // array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+            // array( 'id' => self::$ACTION_get_all_clients, 'name' => 'get_all_clients' ),
+            // array( 'id' => self::$ACTION_get_client_detail, 'name' => 'get_client_detail' ),
+            // array( 'id' => self::$ACTION_create_new_client, 'name' => 'create_new_client' ),
+            // array( 'id' => self::$ACTION_update_client_details, 'name' => 'update_client_details' ),
+            // array( 'id' => self::$ACTION_create_client_invoice, 'name' => 'create_client_invoice' ),
+            // array( 'id' => self::$ACTION_delete_invoice, 'name' => 'delete_invoice' ),
+            
+            // array( 'id' => self::$ACTION_get_template_variable, 'name' => 'get_template_variable' ),
+            // array( 'id' => self::$ACTION_create_template_variable, 'name' => 'create_template_variable' ),
+            // array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),
+            // array( 'id' => self::$ACTION_delete_template_variable, 'name' => 'delete_template_variable' ),
+            // array( 'id' => self::$ACTION_get_email_template, 'name' => 'get_email_template' ),
+            // array( 'id' => self::$ACTION_create_email_template, 'name' => 'create_email_template' ),
+            // array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
+            // array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
+            // array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
+            
+            // array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
+            // array( 'id' => self::$ACTION_get_team_list, 'name' => 'get_team_list' ),
+            // array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
+            
+            // array( 'id' => self::$ACTION_update_user_policy_document, 'name' => 'update_user_policy_document' ),
+            // array( 'id' => self::$ACTION_get_policy_document, 'name' => 'get_policy_document' ),
+            // array( 'id' => self::$ACTION_save_policy_document, 'name' => 'save_policy_document' ),
+            
+            // array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
+            // array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
+            // array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
+            // array( 'id' => self::$ACTION_update_role, 'name' => 'update_role' ),
+            // array( 'id' => self::$ACTION_add_roles, 'name' => 'add_roles' ),
+            // array( 'id' => self::$ACTION_add_extra_leave_day, 'name' => 'add_extra_leave_day' ),
+            // array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
+            // array( 'id' => self::$ACTION_change_leave_status, 'name' => 'change_leave_status' ),
+            //array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
         );
 
         return $array;
@@ -442,12 +699,72 @@ trait Roles {
         return $return;
     }
 
+
+    public static function addRoleAction( $roleid, $actionid ){ // this will add roleid & actionid combination
+        $q = "SELECT * FROM roles_actions WHERE role_id = $roleid AND action_id = $actionid";
+        //echo $q;
+        $runQuery = self::DBrunQuery($q);
+        $no_of_rows = self::DBnumRows($runQuery);
+        //echo $no_of_rows.'<br>';
+        if ($no_of_rows == 0) {
+            $ins = array(
+                'role_id' => $roleid,
+                'action_id' => $actionid
+            );
+            // echo '<pre>';
+            // print_r( $ins );
+            self::DBinsertQuery('roles_actions', $ins);
+        }
+    }
+
+    public static function removeRoleAction( $roleid, $actionid ){ // this will add roleid & actionid combination
+        $q = "DELETE FROM roles_actions WHERE role_id = $roleid AND action_id = $actionid";
+        self::DBrunQuery($q);
+    }
+
+    public static function addPageActions( $roleid, $pageid ){
+        $allPages = self::getAllPages();
+        $selectedPage = false;
+        foreach( $allPages as $page ){
+            if( $page['id']  == $pageid ){
+                $selectedPage = $page;
+                break;
+            }
+        }
+        if( $selectedPage != false && isset( $selectedPage['actions_list']) ){
+            $actionsToAdd = $selectedPage['actions_list'];
+            foreach( $actionsToAdd as $ac ){
+                self::addRoleAction( $roleid, $ac['id'] );
+            }
+        }
+    }
+
+    public static function removePageActions( $roleid, $pageid ){
+
+        $allPages = self::getAllPages();
+        $selectedPage = false;
+        foreach( $allPages as $page ){
+            if( $page['id']  == $pageid ){
+                $selectedPage = $page;
+                break;
+            }
+        }
+        if( $selectedPage != false && isset( $selectedPage['actions_list']) ){
+            $actionsToRemove = $selectedPage['actions_list'];
+            foreach( $actionsToRemove as $ac ){
+                self::removeRoleAction( $roleid, $ac['id'] );
+            }
+        }
+
+    }
+
     public static function updateRole($data) {
         $r_error = 1;
         $r_message = "";
         $table = "";
         $search = "";
         $role = $data['role_id'];
+        $roleid = $role;
         if (isset($data['page_id']) && $data['page_id'] !="") {
             $table = "roles_pages";
             $search = "page_id";
@@ -473,11 +790,18 @@ trait Roles {
                 $search => $pid
             );
             self::DBinsertQuery($table, $ins);
+            // added by arun - if is page then also add page actions
+            if( $table == 'roles_pages' ){
+                self::addPageActions( $roleid, $pid );
+            }
             $r_error = 0;
             $r_message = "Role updated!!";
         } else {
             $q = "DELETE FROM " . $table . " WHERE role_id = $role AND $search = $pid";
             self::DBrunQuery($q);
+            if( $table == 'roles_pages' ){
+                self::removePageActions( $roleid, $pid );
+            }
             $r_error = 0;
             $r_message = "Role updated!!";
         } 
@@ -519,6 +843,24 @@ trait Roles {
                        
                     }
                      $v1['is_assigned'] = $p;
+                     // start added by arun 
+                     $updatedActionsList = array();
+                     if( isset($v1['actions_list']) ){
+                        $updatedActionsList = $v1['actions_list'];
+                        foreach( $updatedActionsList as $key => $ual ){
+                            $is_assigned = 0;
+                            foreach ($role_action as $u2) {                                
+                                if ($u2['action_id'] == $ual['id']) {
+                                    $is_assigned = 1;
+                                }                               
+                            }
+                            $ual['is_assigned'] = $is_assigned;
+                            $updatedActionsList[$key] = $ual;
+                        }
+                     }
+                     // end =---------
+                     $v1['actions_list'] = $updatedActionsList;
+
                   $val['role_pages'][] =  $v1;
                 }
                 foreach ($allaction as $v2) {
