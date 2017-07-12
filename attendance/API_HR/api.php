@@ -250,14 +250,17 @@ if ($action == 'login') {   //added in getActionsNotRequiredToken
     }
 } else if ($action == 'update_new_password') {
     $res = HR::updatePassoword($PARAMS);
-} else if ($action == 'update_user_entry_exit_time') {    
-    $userid = $loggedUserInfo['id'];
-    $date = $PARAMS['date'];
-    $entry_time = $PARAMS['entry_time'];
-    $exit_time = $PARAMS['exit_time'];
-    $reason = $PARAMS['reason'];
-    $res = HR::insertUserInOutTimeOfDay($userid, $date, $entry_time, $exit_time, $reason, $isadmin = false);    
-} else if ($action == 'get_user_worktime_detail') {
+} 
+// this is not required since functionality is stopped to update time by employee itself, also removed from front end - 12 july 2017
+// else if ($action == 'update_user_entry_exit_time') {    
+//     $userid = $loggedUserInfo['id'];
+//     $date = $PARAMS['date'];
+//     $entry_time = $PARAMS['entry_time'];
+//     $exit_time = $PARAMS['exit_time'];
+//     $reason = $PARAMS['reason'];
+//     $res = HR::insertUserInOutTimeOfDay($userid, $date, $entry_time, $exit_time, $reason, $isadmin = false);    
+// } 
+else if ($action == 'get_user_worktime_detail') {
     $userid = $PARAMS['user_id'];
     $date = $PARAMS['date'];
     $res = HR::userCompensateTimedetail($userid, $date);    
