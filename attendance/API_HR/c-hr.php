@@ -1358,6 +1358,53 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function manipulatingPendingTimeWhenLeaveIsApplied( $pending_id, $leavesNumDays ){
+        $q = "Select * from users_previous_month_time where id = $pending_id";
+        $run = self::DBrunQuery($q);
+        $row = self::DBfetchRow($run);
+
+        $newPendingHour = '00';
+        $newPendingMinutes = '00';
+
+        if( $row != false ){
+            $pendingTime = $row['extra_time'];
+            $pendingTimeExplode = explode(":",$pendingTime);
+            $pending_hour = $pendingTimeExplode[0];
+            $pending_minute = $pendingTimeExplode[1];
+
+            if( $leavesNumDays === '0.5' ){
+                $newPendingHour = ($pending_hour * 1) - 4; // less 4 hrs as half day
+            }else{
+                $newPendingHour = ($pending_hour * 1) - ( $leavesNumDays * 9 );
+            }            
+
+            if( $newPendingHour > 0 ){
+                if( $newPendingHour < 10 ){
+                    $newPendingHour = '0'.$newPendingHour;
+                }                
+            }else {            
+                $newPendingHour = '00';
+            }
+            if( $pending_minute > 0 ){
+                $newPendingMinutes = $pending_minute;
+            }
+
+            if( $pending_hour == '00' ){
+                $newPendingMinutes = '00';
+            }
+        }
+        
+        $newPendingTime = $newPendingHour.':'.$newPendingMinutes;
+
+        // update new time pending time to db
+        if( $newPendingTime != '00:00' ){            
+            $q1 = "UPDATE users_previous_month_time SET extra_time = '$newPendingTime'  Where id = $pending_id";
+            self::DBrunQuery($q1);
+            return false; // means set status_merged will be 0
+        }
+        return true; // means set status_merged to 1           
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $applied_date = date('Y-m-d');
@@ -1378,8 +1425,16 @@ class HR extends DATABASE {
 
         if ($r_error == 0) {
             if ($pending_id != false) {
-                $q1 = "UPDATE users_previous_month_time SET status = 'Leave applied for previous month pending time'  Where id = $pending_id";
-                self::DBrunQuery($q1);
+                if ( self::manipulatingPendingTimeWhenLeaveIsApplied( $pending_id, $no_of_days ) ) {
+                    $q = "Select * from users_previous_month_time where id = $pending_id";
+                    $run = self::DBrunQuery($q);
+                    $row = self::DBfetchRow($run);
+                    $oldStatus = $row['status'];
+
+                    $q1 = "UPDATE users_previous_month_time SET status = '$oldStatus - Leave applied for previous month pending time', status_merged = 1  Where id = $pending_id";
+                    self::DBrunQuery($q1);
+                }                
+                
             }
             ////send  slack message to user && HR
             $userInfo = self::getUserInfo($userid);
@@ -1882,7 +1937,11 @@ class HR extends DATABASE {
         $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
 
         if ($pending_id != false) {
-            $q = "UPDATE users_previous_month_time SET status = 'Time added to user working hours'  Where id = $pending_id";
+            $q = "Select * from users_previous_month_time where id = $pending_id";
+            $run = self::DBrunQuery($q);
+            $row = self::DBfetchRow($run);
+            $oldStatus = $row['status'];
+            $q = "UPDATE users_previous_month_time SET status = '$oldStatus - Time added to user working hours', status_merged = 1  Where id = $pending_id";
             self::DBrunQuery($q);
         }
 
