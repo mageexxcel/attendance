@@ -3798,9 +3798,157 @@ class HR extends DATABASE {
         }
         return $arr;
     }
-    
+
+    // EMPLOYEE LIFE CYCLE
+    static $ELC_stage_onboard = 5501;
+    static $ELC_stage_employment = 5502;
+    static $ELC_stage_termination = 5503;
+
+    static $ELC_create_hr_system_account = 5511;
+    static $ELC_create_gmail_account = 5512;
+    static $ELC_create_slack_account = 5513;
+    static $ELC_send_joining_email = 5514;
+
+    public static function getGenericElcList(){
+        $allStages = array(            
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => self::$ELC_create_hr_system_account,
+                'text' => 'Create HR System Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => self::$ELC_create_gmail_account,
+                'text' => 'Create GMail Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => self::$ELC_create_slack_account,
+                'text' => 'Create Slack Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => self::$ELC_send_joining_email,
+                'text' => 'Send Joining Email'
+            )
+        );
+        return $allStages;
+    }
+
+    public static function getElcStageName( $stageid ){
+        $stageName = '';
+        $stages = array();
+        $stages[] = array( 'id' => self::$ELC_stage_onboard, 'name' => 'On-Board' );
+        $stages[] = array( 'id' => self::$ELC_stage_employment, 'name' => 'Employement' );
+        $stages[] = array( 'id' => self::$ELC_stage_termination, 'name' => 'Termination' );
+        foreach( $stages as $stage ){
+            if( $stage['id'] == $stageid ){
+                $stageName = $stage['name'];
+                break;
+            }
+        }
+        return $stageName;
+    }
+
+    public static function getELC( $userid = false ){
+        $allList = self::getGenericElcList();
+
+        $employeeLifeCycleStepsDone = array();
+        if( $userid != false ){
+            $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );            
+        }
+
+        foreach( $allList as $k => $g ){
+            $g_step_id = $g['id'];
+            $status = 0;
+            foreach( $employeeLifeCycleStepsDone as $d ){
+                $d_elc_step_id = $d['elc_step_id'];
+                if( $g_step_id == $d_elc_step_id ){
+                    $status = 1;
+                }
+            }
+            $allList[$k]['status'] = $status;
+        }
+
+        $return = array();
+
+        
+        foreach( $allList as $elc ){
+            if( array_key_exists( $elc['stage_id'], $return )){
+                $return[ $elc['stage_id'] ]['steps'][] = array(
+                    'id' => $elc['id'],
+                    'text' => $elc['text'],
+                    'status' => $elc['status']
+                );
+                
+            }else{
+                $return[ $elc['stage_id'] ] = array(
+                    'stage_id' => $elc['stage_id'],
+                    'text' => self::getElcStageName( $elc['stage_id'] ),
+                );
+                $return[ $elc['stage_id'] ]['steps'] = array();
+                $return[ $elc['stage_id'] ]['steps'][] = array(
+                    'id' => $elc['id'],
+                    'text' => $elc['text'],
+                     'status' => $elc['status']
+                );
+            }         
+        }
+        return $return;
+    }
+
+    public static function getEmployeeLifeCycleStepsDone( $userid ){
+        $q = "select * from employee_life_cycle where userid=$userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof( $rows ) > 0 ){
+            return $rows;
+        }
+        return array();
+    }
+
+    public static function getEmployeeLifeCycle( $userid ){
+        
+        $return = array();
+
+        $employee_life_cycle =  self::getELC( $userid );
+
+        $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );
+        if( sizeof($employeeLifeCycleStepsDone) > 0 ){
+            $data_employee_life_cycle = $employee_life_cycle['employee_life_cycle'];
+        }
+
+        
+
+        $return['error'] = 0;
+        $return['message'] = '';
+        $return['data'] = array();
+        $return['data']['employee_life_cycle'] = $employee_life_cycle;
+        //print_r( $return );
+        return $return;
+    }
+
+    public static function updateELC( $elc_stepid, $userid ){
+        $q = "select * from employee_life_cycle where userid=$userid AND elc_step_id=$elc_stepid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) > 0) {
+            $q2 = "DELETE FROM employee_life_cycle where userid=$userid AND elc_step_id=$elc_stepid";
+            self::DBrunQuery($q2);
+        } else {
+            $q3 = "INSERT into employee_life_cycle ( userid, elc_step_id  ) VALUES ( $userid, $elc_stepid )";
+            self::DBrunQuery($q3);
+        }
+        $return['error'] = 0;
+        $return['message'] = 'Successfully Updated!!';
+        $return['data'] = array();
+        return $return;
+    }
+        
 
 }
+
+
 
 new HR();
 ?>

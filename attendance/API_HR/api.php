@@ -64,6 +64,7 @@ foreach( $actionsNotRequiredToken as $ac ){
 }
 // end -- check if action required token
 
+
 //validate a token
 //if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
 if ( $DO_TOKEN_VERIFICATION == true ) {
@@ -518,6 +519,10 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getBandwidthDetail();
 } else if ($action == 'validate_unique_key') {
     $res = HR::validateUniqueKey($PARAMS);
+} else if ($action == 'get_employee_life_cycle'){
+    $res = HR::getEmployeeLifeCycle( $PARAMS['userid'] );
+} else if ($action == 'update_employee_life_cycle' ){
+    $res = HR::updateELC( $PARAMS['stepid'], $PARAMS['userid'] );
 }
 echo json_encode($res);
 ?>
