@@ -253,7 +253,13 @@ trait Roles {
                 )
             ),
             
-            array( 'id' => self::$PAGE_apply_leave, 'name' => 'apply_leave' ),
+            array( 
+                'id' => self::$PAGE_apply_leave,
+                'name' => 'apply_leave',
+                'actions_list' =>  array(
+                    array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
+                )
+            ),
             
             array( 
                 'id' => self::$PAGE_my_leaves,
@@ -372,6 +378,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_change_leave_status, 'name' => 'change_leave_status' ),
                     array( 'id' => self::$ACTION_add_extra_leave_day, 'name' => 'add_extra_leave_day' ),
                     array( 'id' => self::$ACTION_send_request_for_doc, 'name' => 'send_request_for_doc' ),
+                    array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
                 )
             ),
 
@@ -456,6 +463,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
                 )
             ),
+
         );
 
         return $array;
@@ -476,32 +484,18 @@ trait Roles {
 
         $array = array(            
             
-            // start - missing
-            
+            // start - uncategorised actions
             array( 'id' => self::$ACTION_get_user_worktime_detail, 'name' => 'get_user_worktime_detail' ),
-            
-            
-            array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
             array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
-            
-            // end - missing
-            
             array( 'id' => self::$ACTION_get_user_previous_month_time, 'name' => 'get_user_previous_month_time' ),
-            
-            
             array( 'id' => self::$ACTION_delete_employee, 'name' => 'delete_employee' ),
-            array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
             
             array( 'id' => self::$ACTION_update_user_entry_exit_time, 'name' => 'update_user_entry_exit_time' ),
-            
             array( 'id' => self::$ACTION_attendance_summary, 'name' => 'attendance_summary' ),
-            
-            
             array( 'id' => self::$ACTION_get_users_leaves_summary, 'name' => 'get_users_leaves_summary' ),
             array( 'id' => self::$ACTION_get_user_role_from_slack_id, 'name' => 'get_user_role_from_slack_id' ),
             array( 'id' => self::$ACTION_get_all_not_approved_leave_of_user, 'name' => 'get_all_not_approved_leave_of_user' ),
             array( 'id' => self::$ACTION_approve_decline_leave_of_user, 'name' => 'approve_decline_leave_of_user' ),
-            
             array( 'id' => self::$ACTION_cancel_applied_leave_admin, 'name' => 'cancel_applied_leave_admin' ),
             array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
@@ -515,12 +509,13 @@ trait Roles {
             array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
-            
-            
             array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
+            // end - uncategorised actions
 
             // below aree added in pages
+            // array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
+            // array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
             // array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
             // array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
             // array( 'id' => self::$ACTION_user_day_summary, 'name' => 'user_day_summary' ),
