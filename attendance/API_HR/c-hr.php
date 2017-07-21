@@ -132,10 +132,24 @@ class HR extends DATABASE {
             } catch (Exception $e) {
                 
             }
+
+            // start added by arun for role update in toked on 21st july
+            $userRole = '';
+            if( strtolower( $userInfo['type'] ) === 'admin' ){ // this is for wher type is admin
+                $userRole = $userInfo['type'];
+            }else{
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false ){
+                     $userRole = $roleInfo['name'];
+                }
+            }
+            // end added by arun for role update in toked on 21st july
+
+
             $u = array(
                 "id" => $userInfo['user_Id'],
                 "username" => $userInfo['username'],
-                "role" => $userInfo['type'],
+                "role" => $userRole,
                 "name" => $userInfo['name'],
                 "jobtitle" => $userInfo['jobtitle'],
                 "profileImage" => $userProfileImage,
@@ -3809,12 +3823,12 @@ class HR extends DATABASE {
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5511,
-                'text' => 'Create HR System Account'
+                'text' => 'Create Hr System Account'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5512,
-                'text' => 'Create GMail Account'
+                'text' => 'Create Gmail Account'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
@@ -3824,114 +3838,158 @@ class HR extends DATABASE {
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5514,
-                'text' => 'Send Joining Email'
+                'text' => 'Send Joining Mail'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5515,
-                'text' => 'Collect documents'
+                'text' => 'Joining Document Signature '
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5516,
-                'text' => 'Add to Biometric'
+                'text' => 'Collect Documents'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5517,
-                'text' => 'Assign Inventory'
+                'text' => 'Add To Biometric'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5518,
-                'text' => 'Assign Stationary'
+                'text' => 'Assign Inventory'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5519,
-                'text' => 'Assign ID Card'
+                'text' => 'Assign Stationary'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5520,
-                'text' => 'PPT share and explain'
+                'text' => 'Assign Temporary ID Card'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5521,
-                'text' => 'Employee profile needs to be filled'
+                'text' => 'Share Joining PPTs and Explain in meeting'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5522,
-                'text' => 'Employee documents need to be uploaded'
+                'text' => 'Share HR System PPT and Explain in meeting'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5523,
-                'text' => 'Add Employee Salary'
+                'text' => 'Fill Employee Profile'
             ),
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5524,
-                'text' => 'Joining Document Signature'
+                'text' => 'Add Salary'
             ),
+
 
             array(
                 'stage_id' => self::$ELC_stage_employment,
-                'id' => 5525,
-                'text' => 'Service agrement and signature'
-            ),
-            array(
-                'stage_id' => self::$ELC_stage_employment,
-                'id' => 5526,
+                'id' => 5611,
                 'text' => 'Send Confirmation Email'
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
-                'id' => 5527,
-                'text' => 'HR system update training complition date'
+                'id' => 5612,
+                'text' => 'Service agreement and signature'
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
-                'id' => 5528,
-                'text' => 'upload documents in digital format'
+                'id' => 5613,
+                'text' => 'NDA signature'
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
-                'id' => 5529,
-                'text' => 'set is salary'
+                'id' => 5614,
+                'text' => 'HR system update training completion date'
             ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5615,
+                'text' => 'Upload documents in digital format'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5616,
+                'text' => 'Assign Salary'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5617,
+                'text' => 'Issue permanent ID card'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5618,
+                'text' => 'Update fingerprint (if required)'
+            ),
+
+
+
 
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5530,
-                'text' => 'experiance letter, releving letter'
+                'id' => 5711,
+                'text' => 'Email Feedback Document and Get it filled'
             ),
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5531,
-                'text' => 'feedback document mail and get it filled'
+                'id' => 5712,
+                'text' => 'Get NDA Agreement filled depends on employee'
             ),
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5532,
-                'text' => 'take id card'
+                'id' => 5713,
+                'text' => 'Experience Letter'
             ),
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5533,
-                'text' => 'check and unassign inventory'
+                'id' => 5714,
+                'text' => 'Relieving Letter'
             ),
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5534,
-                'text' => 'put terminatino date in hr system and any commnets for terminations'
+                'id' => 5715,
+                'text' => 'Take ID Card'
             ),
             array(
                 'stage_id' => self::$ELC_stage_termination,
-                'id' => 5535,
-                'text' => 'disable the employee from hr system and slack and gmail'
+                'id' => 5716,
+                'text' => 'Check and Unassign Inventory (make sure all devices are working)'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5717,
+                'text' => 'Put termination date in hr system and termination comments.'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5718,
+                'text' => 'Disable the employee'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5719,
+                'text' => 'Disable employee from gmail'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5710,
+                'text' => 'Disable employee from slack'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5711,
+                'text' => 'Remainder to send pending salary to employee on slack'
             ),
 
         );
@@ -3941,8 +3999,8 @@ class HR extends DATABASE {
     public static function getElcStageName( $stageid ){
         $stageName = '';
         $stages = array();
-        $stages[] = array( 'id' => self::$ELC_stage_onboard, 'name' => 'On-Board' );
-        $stages[] = array( 'id' => self::$ELC_stage_employment, 'name' => 'Employement' );
+        $stages[] = array( 'id' => self::$ELC_stage_onboard, 'name' => 'New Employee Onboarding' );
+        $stages[] = array( 'id' => self::$ELC_stage_employment, 'name' => 'Employment Confirmation' );
         $stages[] = array( 'id' => self::$ELC_stage_termination, 'name' => 'Termination' );
         foreach( $stages as $stage ){
             if( $stage['id'] == $stageid ){
