@@ -410,7 +410,7 @@ else if( $action == 'get_user_salary_info_by_id' ){
 
             
             // arun you have to work on this to enable this for hr role
-            if( strtolower( $loggedUserInfo['role'] ) == "hr"  &&  $numberOfMonths > 8 ){            
+            if( strtolower( $loggedUserInfo['role'] ) == "hr"  &&  $numberOfMonths > 5 ){            
                 $res['data'] = array();
                 $res['data']['message'] = "You are not authorise to view this user data";
             }
