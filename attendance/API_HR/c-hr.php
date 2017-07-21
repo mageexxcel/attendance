@@ -132,10 +132,24 @@ class HR extends DATABASE {
             } catch (Exception $e) {
                 
             }
+
+            // start added by arun for role update in toked on 21st july
+            $userRole = '';
+            if( strtolower( $userInfo['type'] ) === 'admin' ){ // this is for wher type is admin
+                $userRole = $userInfo['type'];
+            }else{
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false ){
+                     $userRole = $roleInfo['name'];
+                }
+            }
+            // end added by arun for role update in toked on 21st july
+
+
             $u = array(
                 "id" => $userInfo['user_Id'],
                 "username" => $userInfo['username'],
-                "role" => $userInfo['type'],
+                "role" => $userRole,
                 "name" => $userInfo['name'],
                 "jobtitle" => $userInfo['jobtitle'],
                 "profileImage" => $userProfileImage,
