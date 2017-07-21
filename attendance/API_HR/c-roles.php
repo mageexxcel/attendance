@@ -170,6 +170,9 @@ trait Roles {
     static $ACTION_get_user_document_by_id = 8019;
     static $ACTION_get_user_salary_info_by_id = 8020;
 
+    static $ACTION_get_employee_life_cycle = 8021;
+    static $ACTION_update_employee_life_cycle = 8022;
+
 
 
 
@@ -425,6 +428,8 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_user_document_by_id,'name' => 'get_user_document_by_id' ),
                     array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
                     array( 'id' => self::$ACTION_delete_user_document,'name' => 'delete_user_document' ),
+                    array( 'id' => self::$ACTION_get_employee_life_cycle,'name' => 'get_employee_life_cycle' ),
+                    array( 'id' => self::$ACTION_update_employee_life_cycle,'name' => 'update_employee_life_cycle' ),
                 )
             ),
 
