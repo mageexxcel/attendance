@@ -278,6 +278,8 @@ trait Roles {
                 'name' => 'disabled_employes',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_show_disabled_users, 'name' => 'show_disabled_users' ),
+                    array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
+
                 )
             ),
             
@@ -491,7 +493,7 @@ trait Roles {
             
             // start - uncategorised actions
             array( 'id' => self::$ACTION_get_user_worktime_detail, 'name' => 'get_user_worktime_detail' ),
-            array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
+            
             array( 'id' => self::$ACTION_get_user_previous_month_time, 'name' => 'get_user_previous_month_time' ),
             array( 'id' => self::$ACTION_delete_employee, 'name' => 'delete_employee' ),
             
@@ -524,6 +526,7 @@ trait Roles {
             // array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
 
             // below aree added in pages
+            // array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
             // array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
             // array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
             // array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
