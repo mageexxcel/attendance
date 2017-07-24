@@ -507,9 +507,9 @@ trait Roles {
             array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
             array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
             array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),            
-            array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
-            array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
-            array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
+            
+            
+            
             array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
             array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
@@ -517,6 +517,11 @@ trait Roles {
             array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
             // end - uncategorised actions
+
+            // actions not required token
+            // array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
+            // array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
+            // array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
 
             // below aree added in pages
             // array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
@@ -635,6 +640,9 @@ trait Roles {
             array( 'id' => self::$ACTION_get_bandwidth_detail, 'name' => 'get_bandwidth_detail' ),
             array( 'id' => self::$ACTION_validate_unique_key, 'name' => 'validate_unique_key' ),
             array( 'id' => self::$ACTION_get_user_policy_document, 'name' => 'get_user_policy_document' ),
+            array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
+            array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
+            array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
         );
         return $array;
     }
