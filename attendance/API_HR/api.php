@@ -486,7 +486,14 @@ else if ($action == 'add_hr_comment') {
     }
     $res = HR::getAllUserLunchDetail($date);    
 } elseif ($action == "get_lunch_break_detail") {
-    $userid = $loggedUserInfo['id'];
+
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+        $userid = $loggedUserInfo['id'];
+    }else{
+        $userid = $loggedUserInfo['id'];    
+    }
+    
     if (!isset($PARAMS['month']) && $PARAMS['month'] == "") {
         $month = date('Y-m');
     } else {
@@ -494,7 +501,11 @@ else if ($action == 'add_hr_comment') {
     }
     $res = HR::getlunchBreakDetail($userid, $month);    
 } elseif ($action == "lunch_break") {
+    if ($slack_id != "") {
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
     $PARAMS['user_id'] = $loggedUserInfo['id'];
+
     $res = HR::lunchBreak($PARAMS);    
 } elseif ($action == 'get_user_current_status') {
     $res = HR::getAllUserCurrentStatus();
