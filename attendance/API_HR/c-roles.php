@@ -225,6 +225,8 @@ trait Roles {
                     array( 'id' => self::$ACTION_update_office_machine, 'name' => 'update_office_machine' ),
                     array( 'id' => self::$ACTION_remove_machine_detail, 'name' => 'remove_machine_detail' ),
                     array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
+                    array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
+                    array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
                 )
             ),
                        
@@ -398,6 +400,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
                     array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
                     array( 'id' => self::$ACTION_send_employee_email,'name' => 'send_employee_email' ),
+                    array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
                 )
             ),
 
@@ -507,8 +510,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
             array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
-            array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
-            array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),            
+            
             
             
             
@@ -516,7 +518,7 @@ trait Roles {
             array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
-            array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
+            
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
             // end - uncategorised actions
 
@@ -526,6 +528,9 @@ trait Roles {
             // array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
 
             // below aree added in pages
+            // array( 'id' => self::$ACTION_create_pdf,'name' => 'create_pdf' ),
+            // array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
+            // array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
             // array( 'id' => self::$ACTION_change_employee_status, 'name' => 'change_employee_status' ),
             // array( 'id' => self::$ACTION_add_hr_comment, 'name' => 'add_hr_comment' ),
             // array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
