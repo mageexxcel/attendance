@@ -379,10 +379,14 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getWorkingHoursSummary($year, $month);
 } else if ($action == "get_enable_user") {
     $res = HR::getEnabledUsersListWithoutPass();
-} else if ($action == 'add_roles') {    
+} else if ($action == 'add_roles') { 
+    $base_role_id = false;
+    if( isset( $PARAMS['base_role_id']) && !empty( $PARAMS['base_role_id']) ){
+        $base_role_id = $PARAMS['base_role_id'];
+    }   
     $name = $PARAMS['name'];
     $description = $PARAMS['description'];
-    $res = HR::AddNewRole($name, $description);
+    $res = HR::AddNewRole($name, $description, $base_role_id);
 } else if ($action == 'update_role') {
     $res = HR::updateRole($PARAMS);
 } else if ($action == 'list_all_roles') {
