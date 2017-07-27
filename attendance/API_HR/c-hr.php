@@ -2852,11 +2852,21 @@ class HR extends DATABASE {
             $q = "select * from machines_list where mac_address='$mac_addr'";
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
+            $r_message = "Mac Address already exist";
+        }
+
+        if( $serial_no != '' ){
+            $q = "select * from machines_list where serial_number='$serial_no'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            $r_message = "Serial no already exist";
+        }else{
+            $row = true;
+            $r_message = "Serial no is empty";
         }
 
         if ($row != false) {
             $r_error = 1;
-            $r_message = "Mac Address already exist";
         } else {
             $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
             self::DBrunQuery($q);
