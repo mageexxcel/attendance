@@ -210,23 +210,31 @@ class HR extends DATABASE {
         } else {
             $userid = $row['id'];
             ////------
-            $userInfo = self::getUserInfo($userid);
-
-            
+            $userInfo = self::getUserInfo($userid);            
 
             if ($userInfo == false) {
                 $r_message = "Invalid Login";
             } else {
-                $r_error = 0;
-                $r_message = "Success Login";
+                // check if role is not assigned then show message to contact admin
+                $is_super_admin = false;
+                if( strtolower( $userInfo['type'] ) == 'admin' ){
+                    $is_super_admin = true;
+                }
+                if( $is_super_admin == false && ( !isset( $userInfo['role_id'] ) || $userInfo['role_id'] == '') ){
+                    $r_error = 1;
+                    $r_message = "Role is not assigned. Contact Admin!"; 
+                }else{
+                    $r_error = 0;
+                    $r_message = "Success Login";
 
-                $jwtToken = self::generateUserToken( $userInfo['user_Id'] );
+                    $jwtToken = self::generateUserToken( $userInfo['user_Id'] );
 
-                self::insertToken($userInfo['user_Id'], $jwtToken);
-                $r_data = array(
-                    "token" => $jwtToken,
-                    "userid" => $userInfo['user_Id']
-                );
+                    self::insertToken($userInfo['user_Id'], $jwtToken);
+                    $r_data = array(
+                        "token" => $jwtToken,
+                        "userid" => $userInfo['user_Id']
+                    );
+                }                
             }
         }
 

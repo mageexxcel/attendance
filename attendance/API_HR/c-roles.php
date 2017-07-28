@@ -691,7 +691,34 @@ trait Roles {
         return $return;
     }
 
-    public static function AddNewRole($name, $description) {
+    public static function copyExistingRoleRightsToNewRole( $base_role_id, $new_role_id ){
+        $baseRoleData = self::getRoleCompleteDetails( $base_role_id );
+        if( $baseRoleData != false && !empty($new_role_id)){
+            if( isset( $baseRoleData['role_pages']) && sizeof( $baseRoleData['role_pages'] ) > 0 ){
+                $b_pages = $baseRoleData['role_pages'];
+                foreach( $b_pages as $b_page ){
+                    $b_page_id = $b_page['page_id'];
+                    self::addRolePage( $new_role_id, $b_page_id );
+                }
+            }
+            if( isset( $baseRoleData['role_actions']) && sizeof( $baseRoleData['role_actions'] ) > 0 ){
+                $b_actions = $baseRoleData['role_actions'];
+                foreach( $b_actions as $b_action ){
+                    $b_action_id = $b_action['action_id'];
+                    self::addRoleAction( $new_role_id, $b_action_id );
+                }
+            }
+            if( isset( $baseRoleData['role_notifications']) && sizeof( $baseRoleData['role_notifications'] ) > 0 ){
+                $b_notifications = $baseRoleData['role_notifications'];
+                foreach( $b_notifications as $b_notification ){
+                    $b_notification_id = $b_notification['notification_id'];
+                    self::addRoleNotification( $new_role_id, $b_notification_id );
+                }
+            }
+        }
+    }
+
+    public static function AddNewRole($name, $description, $base_role_id = false ) {
         $r_error = 1;
         $r_message = "";
         $q = "SELECT * FROM roles WHERE name ='" . trim($name) . "'";
@@ -705,6 +732,17 @@ trait Roles {
             self::DBinsertQuery('roles', $ins);
             $r_error = 0;
             $r_message = "New role added";
+
+            // pick action and pages of base branch and assign it to latest
+            if( $base_role_id != false ){
+                $q = "SELECT * FROM roles WHERE name ='" . trim($name) . "'";
+                $run = self::DBrunQuery($q);
+                $inserted_role = self::DBfetchRow($run);
+                if( $inserted_role != false && isset( $inserted_role['id']) ){
+                    $inserted_role_id = $inserted_role['id'];
+                    self::copyExistingRoleRightsToNewRole( $base_role_id, $inserted_role_id );
+                }
+            }
         } else {
             $r_error = 1;
             $r_message = "Role name already exist";
@@ -730,6 +768,32 @@ trait Roles {
             // echo '<pre>';
             // print_r( $ins );
             self::DBinsertQuery('roles_actions', $ins);
+        }
+    }
+
+    public static function addRolePage( $roleid, $pageid ){
+        $q = "SELECT * FROM roles_pages WHERE role_id = $roleid AND page_id = $pageid";
+        $runQuery = self::DBrunQuery($q);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows == 0) {
+            $ins = array(
+                'role_id' => $roleid,
+                'page_id' => $pageid
+            );
+            self::DBinsertQuery('roles_pages', $ins);
+        }
+    }
+
+    public static function addRoleNotification( $roleid, $notificationid ){
+        $q = "SELECT * FROM roles_notifications WHERE role_id = $roleid AND page_id = $notificationid";
+        $runQuery = self::DBrunQuery($q);
+        $no_of_rows = self::DBnumRows($runQuery);
+        if ($no_of_rows == 0) {
+            $ins = array(
+                'role_id' => $roleid,
+                'notification_id' => $notificationid
+            );
+            self::DBinsertQuery('roles_pages', $ins);
         }
     }
 
