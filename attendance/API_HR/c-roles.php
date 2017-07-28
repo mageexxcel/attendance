@@ -778,7 +778,7 @@ trait Roles {
         if ($no_of_rows == 0) {
             $ins = array(
                 'role_id' => $roleid,
-                'page_id' => $actionid
+                'page_id' => $pageid
             );
             self::DBinsertQuery('roles_pages', $ins);
         }
