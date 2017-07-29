@@ -3414,17 +3414,21 @@ class HR extends DATABASE {
         $not_deleted = "";
         $r_message = "";
         $r_data = array();
+
+        $data_status = trim( $data['status'] );
+        $data_color = trim( $data['color'] );
+
         $ins = array(
-            'status' => $data['status'],
-            'color' => $data['color']
+            'status' => $data_status,
+            'color' => $data_color
         );
-        $q1 = "select * from machine_status where status ='" . trim($data['status']) . "'";
+        $q1 = "select * from machine_status where status ='" . $data_status . "'";
 
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
 
-        $q2 = "select * from machine_status where color ='" . trim($data['color']) . "' AND status !='" . trim($data['status']) . "'";
+        $q2 = "select * from machine_status where color ='" . $data_color . "' AND status !='" . $data_status . "'";
         $runQuery2 = self::DBrunQuery($q2);
         $no_of_rows2 = self::DBnumRows($runQuery2);
         if ($no_of_rows2 == 0) {
@@ -3434,7 +3438,7 @@ class HR extends DATABASE {
                 $r_message = "Variable Successfully Inserted";
                 $r_data['message'] = $r_message;
             } if ($no_of_rows != 0) {
-                $q = "UPDATE machine_status set status='" . $data['status'] . "', color='" . $data['color'] . "'WHERE id ='" . $row1['id'] . "'";
+                $q = "UPDATE machine_status set status='" . $data_status . "', color='" . $data_color . "'WHERE id ='" . $row1['id'] . "'";
                 self::DBrunQuery($q);
 
                 $r_error = 0;
@@ -3442,7 +3446,7 @@ class HR extends DATABASE {
                 $r_data['message'] = $r_message;
             }
         } else {
-            $r_error = 0;
+            $r_error = 1;
             $r_message = "Color already assigned to status";
             $r_data['message'] = $r_message;
         }
