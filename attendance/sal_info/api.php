@@ -19,6 +19,7 @@ $res = array(
     'error' => 1,
     'data' => array()
 );
+
 //validate a token
 $token = $PARAMS['token'];
 $validateToken = Salary::validateToken($token);
@@ -26,6 +27,75 @@ if ($validateToken == false) {
     header("HTTP/1.1 401 Unauthorized");
     exit;
 }
+
+
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+// start added by arun JUNE 2017 to implement on role basis
+
+require_once ("../API_HR/c-hr.php");
+$DO_TOKEN_VERIFICATION = true;
+$actionsNotRequiredToken = HR::getActionsNotRequiredToken();
+foreach( $actionsNotRequiredToken as $ac ){
+    if( $ac['name'] == $action ){
+        $DO_TOKEN_VERIFICATION = false;
+    }
+}
+
+$IS_SUPER_ADMIN = false;  // can do every thing. this is the person whose type=Admin in users table itself.
+
+if( $DO_TOKEN_VERIFICATION == false  ){
+    //echo "action :: $action <br>";
+    // these are the actions which not required token, so need to check for role
+}else{
+    // loggedUserInfo : this variable is compulsory since it is used in most of the actions
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+    if ( $slack_id != "" ) { // these are called from slack rtm
+        $loggedUserInfo = HR::getUserInfofromSlack($slack_id);
+    }
+    // dont do any change in above lines
+    if( strtolower($loggedUserInfo['role']) == 'admin' ){
+        $IS_SUPER_ADMIN = true;
+    }
+
+    // echo '<pre>';
+    // print_r( $loggedUserInfo );
+    // echo '<pre>';
+    
+
+    if( $IS_SUPER_ADMIN === true ){
+        // this is the admin on existing role basis, have access to all. type = "Admin" defined in users table
+    }else{
+
+    //print_r($loggedUserInfo);
+
+    $loggedUserInfo_emp_id = $loggedUserInfo['id'];
+    //if( $loggedUserInfo_emp_id == 343 ){ // uncomment this line after testing for meraj user
+        $is_user_valid_action = HR::is_user_valid_action( $action, $loggedUserInfo_emp_id );
+        if( $is_user_valid_action == true ){
+            
+        }else{
+            header("HTTP/1.1 401 Unauthorized");
+            exit;
+            //send 401 unathoried request, this will show an alert message and redirect to home page
+
+            // $res['error'] = 1;
+            // $res['data']['message'] = "$action - You are not authorized to perform this action!!";
+            // echo json_encode($res);
+            // die;
+        }
+    //}
+    }
+}
+
+// end added by arun JUNE 2017 to implement on role basis
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+
+
+
+
 $user_id = Salary::getIdUsingToken($token);
 
 $userinfo = Salary::getUserDetail($user_id);
@@ -35,395 +105,244 @@ if ($userinfo['type'] == admin) {
     Salary::setAdmin($data);
 }
 
-// action to get employee profile detail
-if ($action == 'get_user_profile_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::getUserDetailInfo($user_id);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
+
+
+
+
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+// actions defined as constants DONE
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+
+if ($action == 'get_all_users_detail') { //action to get all employee details
+    $res = Salary::getAllUserInfo();
+} else if ($action == 'get_template_variable') {   // action to get all template variables
+    $res = Salary::getAllTemplateVariable();
+} else if ($action == 'create_template_variable') {    //action to create a template varible
+    $res = Salary::createTemplateVariable($PARAMS);
+} else if ($action == 'update_template_variable') {    //action to update a template variable
+    $res = Salary::updateTemplateVariable($PARAMS);
+} else if ($action == 'delete_template_variable') {    //action to delete a template variable.
+    $res = Salary::deleteTemplateVariable($PARAMS);
+} else if ($action == 'get_email_template') {  //action to get all email templates
+    $res = Salary::getAllEmailTemplate();
+} else if ($action == 'create_email_template') {   //action to create an email template.
+    $res = Salary::createEmailTemplate($PARAMS);
+} else if ($action == 'update_email_template') {   //action to update an email template
+    $res = Salary::updateEmailTemplate($PARAMS);
+} else if ($action == 'delete_email_template') {   //action to delete an email template
+    $res = Salary::deleteEmailTemplate($PARAMS);
+} else if ($action == 'get_email_template_byId') { //aciton to get an email template by id 
+    $res = Salary::getEmailTemplateById($PARAMS);
+} else if ($action == 'add_team_list') {  //action to add or update team list
+    $PARAMS['value'] = json_encode($PARAMS['value']);
+    $res = Salary::saveTeamList($PARAMS);
+} else if ($action == 'get_team_list') {
+    $res = Salary::getTeamList();
+} else if ($action == 'get_team_users_detail') {   //action to get all employee details on basis of team
+    $team = $PARAMS['team'];
+    $res = Salary::getAllUserInfo($team);
+} else if ($action == 'get_user_policy_document') {    // action to get user policy document.
+    $res = Salary::getUserPolicyDocument($user_id);
+} else if ($action == 'update_user_policy_document') { // action to update user policy document
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::updateUserPolicyDocument($PARAMS);
+    // update user token when he read doc
+    $newToken = HR::refreshToken( $token );
+    $res['data']['new_token'] = $newToken;
+} else if ($action == 'get_policy_document') { //action to get policy document
+    $res = Salary::getPolicyDocument();
+} else if ($action == 'save_policy_document') {    //action to save policy document
+   $res = Salary::savePolicyDocument($PARAMS);
+} else if ($action == 'get_all_clients') { //action to get all client details 
+    $res = Salary::getAllClient();
+} else if ($action == 'get_client_detail') {   //action to get client detail.
+    if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
+        $client_id = $PARAMS['client_id'];
+        $res = Salary::getClientDetails($client_id);
     } else {
+        $res['data']['message'] = 'Please give client_id ';
+    }
+} else if ($action == 'create_new_client') {   //action to create a new client.
+    if (!isset($PARAMS['name']) || $PARAMS['name'] == "") {
+        $res['data']['message'][] = 'Please Insert name';
+    }
+    if (!isset($PARAMS['address']) || $PARAMS['address'] == "") {
+        $res['data']['message'][] = 'Please Insert address';
+    } else {
+        $res = Salary::createNewClient($PARAMS);
+    }
+} else if ($action == 'update_client_details') {   //action to update client details 
+    if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
+        $clientid = $PARAMS['client_id'];
+        $res = Salary::UpdateClientDetails($PARAMS);
+    } else {
+        $res['data']['message'] = 'Please give client_id ';
+    }
+} else if ($action == 'create_client_invoice') {   //action to create a client invoice
+    if (!isset($PARAMS['client_id']) || $PARAMS['client_id'] == "") {
+        $res['data']['message'][] = 'Please Insert client_id';
+    }
+    if (!isset($PARAMS['client_name']) || $PARAMS['client_name'] == "") {
+        $res['data']['message'][] = 'Please Insert client_name';
+    }
+    if (!isset($PARAMS['client_address']) || $PARAMS['client_address'] == "") {
+        $res['data']['message'][] = 'Please Insert client_address';
+    }
+    if (!isset($PARAMS['currency']) || $PARAMS['currency'] == "") {
+        $res['data']['message'][] = 'Please Insert currency';
+    }
+    if (!isset($PARAMS['items']) || $PARAMS['items'] == "") {
+        $res['data']['message'][] = 'Please Insert items';
+    }
+    if (!isset($PARAMS['sub_total']) || $PARAMS['sub_total'] == "") {
+        $res['data']['message'][] = 'Please Insert sub_total';
+    }
+    if (!isset($PARAMS['service_tax']) || $PARAMS['service_tax'] == "") {
+        $res['data']['message'][] = 'Please Insert service_tax';
+    }
+    if (!isset($PARAMS['total_amount']) || $PARAMS['total_amount'] == "") {
+        $res['data']['message'][] = 'Please Insert total_amount';
+    }
+    if (!isset($PARAMS['due_date']) || $PARAMS['due_date'] == "") {
+        $res['data']['message'][] = 'Please Insert due_date';
+    } else {
+        $res = Salary::createClientInvoice($PARAMS);
+    }
+} else if ($action == 'delete_invoice') {  //action to delete client invoice
+    if (isset($PARAMS['invoice_id']) && $PARAMS['invoice_id'] != "") {
+        $invoiceid = $PARAMS['invoice_id'];
+        $res = Salary::DeleteInvoice($PARAMS);
+    } else {
+        $res['data']['message'] = 'Please give invoice_id ';
+    }
+} else if ($action == 'get_user_profile_detail') { //action to get employee profile detail
+    $res = Salary::getUserDetailInfo($user_id);
+} else if ($action == 'get_user_profile_detail_by_id') { //action to get employee profile detail
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $user_id = $PARAMS['user_id'];
         $res = Salary::getUserDetailInfo($user_id);
-    }
-}
-// action to update employee profile detail.
-if ($action == 'update_user_profile_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::UpdateUserInfo($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
     } else {
-        $PARAMS['user_id'] = $user_id;
+        $res['data']['message'] = 'Please give user_id ';
+    }
+} else if ($action == 'update_user_profile_detail') {  //action to update employee profile detail.
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::UpdateUserInfo($PARAMS);
+} else if ($action == 'update_user_profile_detail_by_id') {  //action to update employee profile detail.
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $user_id = $PARAMS['user_id'];
         $res = Salary::UpdateUserInfo($PARAMS);
-    }
-}
-// action to update employee bank details
-if ($action == 'update_user_bank_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::UpdateUserBankInfo($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
     } else {
-        $PARAMS['user_id'] = $user_id;
+        $res['data']['message'] = 'Please give user_id ';
+    }
+} else if ($action == 'update_user_bank_detail') { //action to update employee bank details
+    $PARAMS['user_id'] = $user_id;
+    $res = Salary::UpdateUserBankInfo($PARAMS);
+} else if ($action == 'update_user_bank_detail_by_id') { //action to update employee bank details
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $user_id = $PARAMS['user_id'];
         $res = Salary::UpdateUserBankInfo($PARAMS);
-    }
-}
-// action  to generate user salary.
-if ($action == 'create_user_salary') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::generateUserSalary($user_id);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+        $res['data']['message'] = 'Please give user_id ';
     }
-}
-// action to create a new client.
-if ($action == 'create_new_client') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (!isset($PARAMS['name']) || $PARAMS['name'] == "") {
-            $res['data']['message'][] = 'Please Insert name';
-        }
-        if (!isset($PARAMS['address']) || $PARAMS['address'] == "") {
-            $res['data']['message'][] = 'Please Insert address';
-        } else {
-            $res = Salary::createNewClient($PARAMS);
-        }
+} else if ($action == 'create_user_salary') { //action  to generate user salary.
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $user_id = $PARAMS['user_id'];
+        $res = Salary::generateUserSalary($user_id);
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+        $res['data']['message'] = 'Please give user_id ';
     }
-}
-// action to update client details 
-if ($action == 'update_client_details') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
-            $clientid = $PARAMS['client_id'];
-            $res = Salary::UpdateClientDetails($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give client_id ';
-        }
+} else if ($action == 'create_employee_salary_slip') { //action to create an employee salary slip pdf
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $res = Salary::createUserPayslip($PARAMS);
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+        $res['data']['message'] = 'Please give user_id ';
     }
-}
-// action to get all client details 
-if ($action == 'get_all_clients') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::getAllClient();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to create a client invoice
-if ($action == 'create_client_invoice') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (!isset($PARAMS['client_id']) || $PARAMS['client_id'] == "") {
-            $res['data']['message'][] = 'Please Insert client_id';
+} else if ($action == 'get_user_manage_payslips_data') {   //aciton to get employee last month salary details
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $extra_arrear = "";
+        $arrear_for_month = "";
+        $userid = $PARAMS['user_id'];
+        if (isset($PARAMS['year'])) {
+            $year = $PARAMS['year'];
         }
-        if (!isset($PARAMS['client_name']) || $PARAMS['client_name'] == "") {
-            $res['data']['message'][] = 'Please Insert client_name';
+        if (isset($PARAMS['month'])) {
+            $month = $PARAMS['month'];
         }
-        if (!isset($PARAMS['client_address']) || $PARAMS['client_address'] == "") {
-            $res['data']['message'][] = 'Please Insert client_address';
-        }
-        if (!isset($PARAMS['currency']) || $PARAMS['currency'] == "") {
-            $res['data']['message'][] = 'Please Insert currency';
-        }
-        if (!isset($PARAMS['items']) || $PARAMS['items'] == "") {
-            $res['data']['message'][] = 'Please Insert items';
-        }
-        if (!isset($PARAMS['sub_total']) || $PARAMS['sub_total'] == "") {
-            $res['data']['message'][] = 'Please Insert sub_total';
-        }
-        if (!isset($PARAMS['service_tax']) || $PARAMS['service_tax'] == "") {
-            $res['data']['message'][] = 'Please Insert service_tax';
-        }
-        if (!isset($PARAMS['total_amount']) || $PARAMS['total_amount'] == "") {
-            $res['data']['message'][] = 'Please Insert total_amount';
-        }
-        if (!isset($PARAMS['due_date']) || $PARAMS['due_date'] == "") {
-            $res['data']['message'][] = 'Please Insert due_date';
-        } else {
-            $res = Salary::createClientInvoice($PARAMS);
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to delete client invoice
-if ($action == 'delete_invoice') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['invoice_id']) && $PARAMS['invoice_id'] != "") {
-            $invoiceid = $PARAMS['invoice_id'];
-            $res = Salary::DeleteInvoice($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give invoice_id ';
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to get client detail.
-if ($action == 'get_client_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
-            $client_id = $PARAMS['client_id'];
-            $res = Salary::getClientDetails($client_id);
-        } else {
-            $res['data']['message'] = 'Please give client_id ';
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to create an employee salary slip pdf
-if ($action == 'create_employee_salary_slip') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = Salary::createUserPayslip($PARAMS);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// aciton to get employee last month salary details 
-if ($action == 'get_user_manage_payslips_data') {
-
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-
-            $extra_arrear = "";
-            $arrear_for_month = "";
-            $userid = $PARAMS['user_id'];
-            if (isset($PARAMS['year'])) {
-                $year = $PARAMS['year'];
-            }
-            if (isset($PARAMS['month'])) {
-                $month = $PARAMS['month'];
-            }
-            if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
-                $extra_arrear = $PARAMS['extra_arrear'];
-                $arrear_for_month = $PARAMS['arrear_for_month'];
-            } 
-            
-            if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
-
-                $currentYear = date("Y");
-                $currentMonth = date("F");
-                if ($currentMonth == "January") {
-                    $year = date('Y', strtotime($currentYear . ' -1 year'));
-                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
-                } else {
-                    $year = $currentYear;
-                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
-                    
-                }
-               
-            }
-
-            $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to get employee document detail
-if ($action == 'get_user_document') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $user_id = $PARAMS['user_id'];
-            $res = Salary::getUserDocumentDetail($user_id);
-        } else {
-            $res['data']['message'] = 'Please give user_id ';
-        }
-    } else {
-        $res = Salary::getUserDocumentDetail($user_id);
-    }
-}
-// action to delete employee document detail.
-if ($action == 'delete_user_document') {
-    if ($userinfo['type'] == guest) {
-        $res['data']['message'] = 'You are not authorise for this operation';
-    } else {
-        if (isset($PARAMS['id']) && $PARAMS['id'] != "") {
-            $id = $PARAMS['id'];
-            $res = Salary::deleteUserDocument($id);
-        } else {
-            $res['data']['message'] = 'Please give document id';
-        }
-    }
-}
-// action to delete employee salary detail
-if ($action == 'delete_salary') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res['data']['message'] = "";
-        if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
-            $res['data']['message'] .= 'Please give user_id ';
-        }
-        if (!isset($PARAMS['salary_id']) || (isset($PARAMS['salary_id']) && $PARAMS['salary_id'] == "")) {
-            $res['data']['message'] .= 'Please give salary_id ';
-        } else {
-            $userid = $PARAMS['user_id'];
-            $salaryid = $PARAMS['salary_id'];
-            $res = Salary::deleteUserSalary($userid, $salaryid);
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to send payslip slack notification to employee slack channel
-if ($action == 'send_payslips_to_employees') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res['data']['message'] = "";
-        if (!isset($PARAMS['payslip_ids']) || (isset($PARAMS['payslip_ids']) && $PARAMS['payslip_ids'] == "")) {
-            $res['data']['message'] .= 'Please give payslip_ids ';
-        } else {
-            $payslip_id = array();
-            $payslip_id = $PARAMS['payslip_ids'];
-            if (sizeof($payslip_id) > 0) {
-                foreach ($payslip_id as $val) {
-                    $res = Salary::sendPayslipMsgEmployee($val);
-                }
+        if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
+            $extra_arrear = $PARAMS['extra_arrear'];
+            $arrear_for_month = $PARAMS['arrear_for_month'];
+        }        
+        if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
+            $currentYear = date("Y");
+            $currentMonth = date("F");
+            if ($currentMonth == "January") {
+                $year = date('Y', strtotime($currentYear . ' -1 year'));
+                $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
             } else {
-                $res['data']['message'] .= 'Please give payslip_ids ';
+                $year = $currentYear;
+                $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;                
+            }           
+        }
+        $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
+    } else {
+        $res['data']['message'] = 'Please give user_id ';
+    }    
+} else if ($action == 'get_user_document') {   //action to get employee document detail
+    $res = Salary::getUserDocumentDetail($user_id);
+} else if ($action == 'get_user_document_by_id') {   //action to get employee document detail
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $user_id = $PARAMS['user_id'];
+        $res = Salary::getUserDocumentDetail($user_id);
+    } else {
+        $res['data']['message'] = 'Please give user_id ';
+    }
+} else if ($action == 'delete_user_document') {    //action to delete employee document detail.
+    if (isset($PARAMS['id']) && $PARAMS['id'] != "") {
+        $id = $PARAMS['id'];
+        $res = Salary::deleteUserDocument($id);
+    } else {
+        $res['data']['message'] = 'Please give document id';
+    }
+} else if ($action == 'delete_salary') {    //action to delete employee salary detail
+    $res['data']['message'] = "";
+    if (!isset($PARAMS['user_id']) || (isset($PARAMS['user_id']) && $PARAMS['user_id'] == "")) {
+        $res['data']['message'] .= 'Please give user_id ';
+    }
+    if (!isset($PARAMS['salary_id']) || (isset($PARAMS['salary_id']) && $PARAMS['salary_id'] == "")) {
+        $res['data']['message'] .= 'Please give salary_id ';
+    } else {
+        $userid = $PARAMS['user_id'];
+        $salaryid = $PARAMS['salary_id'];
+        $res = Salary::deleteUserSalary($userid, $salaryid);
+    }
+} else if ($action == 'send_payslips_to_employees') {  //action to send payslip slack notification to employee slack channel
+    $res['data']['message'] = "";
+    if (!isset($PARAMS['payslip_ids']) || (isset($PARAMS['payslip_ids']) && $PARAMS['payslip_ids'] == "")) {
+        $res['data']['message'] .= 'Please give payslip_ids ';
+    } else {
+        $payslip_id = array();
+        $payslip_id = $PARAMS['payslip_ids'];
+        if (sizeof($payslip_id) > 0) {
+            foreach ($payslip_id as $val) {
+                $res = Salary::sendPayslipMsgEmployee($val);
             }
-        }
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to get all employee details
-if ($action == 'get_all_users_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::getAllUserInfo();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to get all template variables
-if ($action == 'get_template_variable') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::getAllTemplateVariable();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to create a template varible
-if ($action == 'create_template_variable') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        $res = Salary::createTemplateVariable($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to update a template variable
-if ($action == 'update_template_variable') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::updateTemplateVariable($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to delete a template variable.
-if ($action == 'delete_template_variable') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::deleteTemplateVariable($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to get all email templates
-if ($action == 'get_email_template') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::getAllEmailTemplate();
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to create an email template.
-if ($action == 'create_email_template') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::createEmailTemplate($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to update an email template
-if ($action == 'update_email_template') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::updateEmailTemplate($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to delete an email template
-if ($action == 'delete_email_template') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::deleteEmailTemplate($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// aciton to get an email template by id 
-if ($action == 'get_email_template_byId') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $res = Salary::getEmailTemplateById($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to send employee  email
-if ($action == 'send_employee_email') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        $res = Salary::sendEmail($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-// action to cancel employee applied leaves
-if ($action == 'cancel_applied_leave') {
-    if ($userinfo['type'] == guest) {
-        $res['data']['message'] = 'You are not authorise for this operation';
-    } else {
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-            $res = Salary::cancelAppliedLeave($PARAMS);
         } else {
-            $res['data']['message'] = 'Please give user_id ';
+            $res['data']['message'] .= 'Please give payslip_ids ';
         }
     }
-}
-
-// action to create a template varible
-if ($action == 'create_pdf') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-
-        $res = Salary::createEmailTempPdf($PARAMS);
+} else if ($action == 'send_employee_email') { //action to send employee  email
+    $res = Salary::sendEmail($PARAMS);
+} else if ($action == 'cancel_applied_leave') {    //action to cancel employee applied leaves
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $res = Salary::cancelAppliedLeave($PARAMS);
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+        $res['data']['message'] = 'Please give user_id ';
     }
-}
-
-// action to create a template varible
-if ($action == 'update_read_document') {
+} else if ($action == 'create_pdf') {  //action to create a template varible
+    $res = Salary::createEmailTempPdf($PARAMS);
+} else if ($action == 'update_read_document') {    //action to create a template varible
     $doc_id = $PARAMS['document_id'];
     if ($user_id != "") {
         $res = Salary::UpdateDocumentDetail($user_id, $doc_id);
@@ -432,61 +351,78 @@ if ($action == 'update_read_document') {
     }
 }
 
-// action to save policy document
-if ($action == 'save_policy_document') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
 
-        $res = Salary::savePolicyDocument($PARAMS);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+else if( $action == 'get_user_salary_info' ){
+    $res['error'] = 0;
+    $res['data'] = $userinfo;
+    $userSalaryInfo = Salary::getSalaryInfo($user_id);
+    $res3 = Salary::getHoldingDetail($user_id);
+    $res4 = Salary::getUserPayslipInfo($user_id);
+    $i = 0;
+    foreach ($userSalaryInfo as $val) {
+
+        $res2 = Salary::getSalaryDetail($val['id']);
+
+        $res2['test'] = $val;
+        $res2['date'] = $val['applicable_from'];
+        $res['data']['salary_details'][] = $res2;
+
+        $i++;
     }
+    $res['data']['holding_details'] = $res3;
+    $res['data']['payslip_history'] = $res4;
 }
 
-// action to get policy document.
-if ($action == 'get_policy_document') {
+else if( $action == 'get_user_salary_info_by_id' ){
 
-    $res = Salary::getPolicyDocument();
-}
+    if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+        $userid = $PARAMS['user_id'];
+        $userinfo = Salary::getUserDetail($userid);
+        if (sizeof($userinfo) <= 0) {
+            $res['error'] = 1;
+            $res['message'] = 'The given user id member not found';
+            //$res['error'][] = 'The given user id member not found';
+        } else {
+            $res['error'] = 0;
+            $res['data'] = $userinfo;
+            $res3 = Salary::getHoldingDetail($userid);
+            $resData = Salary::getSalaryInfo($userid);
+            $res4 = Salary::getUserPayslipInfo($userid);
+            $i = 0;
+            $res['data']['salary_details'] = array();
+            foreach ($resData as $val) {
+                $res2 = Salary::getSalaryDetail($val['id']);
+                $res2['test'] = $val;
+                $res2['date'] = $val['applicable_from'];
+                $res['data']['salary_details'][] = $res2;
+                $i++;
+            }
+            $res['data']['holding_details'] = $res3;
+            $res['data']['payslip_history'] = $res4;
+            
+            $joining_date = $res['data']['date_of_joining'];
+            $current_date = date("Y-m-d");
+            $endDate = strtotime($current_date);
+            $startDate = strtotime($joining_date);
+            
+            $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
 
-// action to get user policy document.
-if ($action == 'get_user_policy_document') {
 
-
-    $res = Salary::getUserPolicyDocument($user_id);
-}
-// action to update user policy document.
-if ($action == 'update_user_policy_document') {
-
-    $PARAMS['user_id'] = $user_id;
-    $res = Salary::updateUserPolicyDocument($PARAMS);
-}
-
-// action to add or update team list
-if ($action == 'add_team_list') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-
-        $PARAMS['value'] = json_encode($PARAMS['value']);
-
-        $res = Salary::saveTeamList($PARAMS);
+            
+            // arun you have to work on this to enable this for hr role
+            if( strtolower( $loggedUserInfo['role'] ) == "hr"  &&  $numberOfMonths > 5 ){            
+                $res['data'] = array();
+                $res['data']['message'] = "You are not authorise to view this user data";
+            }
+             
+        }
     } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
+        $res['error'] = 1;
+        $res['message'] = 'The given user id member not found';
+        //$res['error'][] = 'The given user id number';
     }
+    
 }
-if ($action == 'get_team_list') {
-
-    $res = Salary::getTeamList();
-}
-
-// action to get all employee details on basis of team
-if ($action == 'get_team_users_detail') {
-    if ($userinfo['type'] == admin || $userinfo['type'] == hr) {
-        $team = $PARAMS['team'];
-        $res = Salary::getAllUserInfo($team);
-    } else {
-        $res['data']['message'] = 'You are not authorise person for this operation ';
-    }
-}
-
 
 
 echo json_encode($res);

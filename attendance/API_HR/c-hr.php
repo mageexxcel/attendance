@@ -90,6 +90,111 @@ class HR extends DATABASE {
         return true;
     }
 
+    //START -- added by arun on 4 july2017
+    public static function isValidTokenAgainstTime( $token ){
+        $return = true;
+        $tokenInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+        $tokenInfo = json_decode(json_encode($tokenInfo), true);
+        if (is_array($tokenInfo) && isset($tokenInfo['login_time']) && $tokenInfo['login_time'] != "") {
+            $token_start_time = $tokenInfo['login_time'];
+            $current_time = time();
+            $time_diff = $current_time - $token_start_time;
+            $mins = $time_diff / 60;
+            if ($mins > 60) { //if 60 mins more
+                $return = false;
+            } 
+        } else {
+            $return = false;
+        }
+        return $return;
+    }
+    
+    public static function refreshToken( $oldToken ){
+        $return = $oldToken;
+        if( self::isValidTokenAgainstTime( $oldToken ) ){
+            $loggedUserInfo = JWT::decode($oldToken, HR::JWT_SECRET_KEY);
+            $loggedUserInfo = json_decode(json_encode($loggedUserInfo), true);
+            $loggedUserInfo_userid = $loggedUserInfo['id'];
+            $return = self::generateUserToken( $loggedUserInfo_userid );
+        }
+        return $return;
+    }
+
+    public static function generateUserToken( $userid ){
+        $jwtToken = '';
+        $userInfo = self::getUserInfo($userid);
+        if ($userInfo == false) {
+            
+        } else {
+            $userProfileImage = '';
+            try {
+                $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
+            } catch (Exception $e) {
+                
+            }
+
+            // start added by arun for role update in toked on 21st july
+            $userRole = '';
+            if( strtolower( $userInfo['type'] ) === 'admin' ){ // this is for wher type is admin
+                $userRole = $userInfo['type'];
+            }else{
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false ){
+                     $userRole = $roleInfo['name'];
+                }
+            }
+            // end added by arun for role update in toked on 21st july
+
+
+            $u = array(
+                "id" => $userInfo['user_Id'],
+                "username" => $userInfo['username'],
+                "role" => $userRole,
+                "name" => $userInfo['name'],
+                "jobtitle" => $userInfo['jobtitle'],
+                "profileImage" => $userProfileImage,
+                "login_time" => time(),
+                "login_date_time" => date('d-M-Y H:i:s')
+            );
+
+            // start - get user role and then role pages
+            if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
+                $u['role_pages'] = self::getRolePagesForSuperAdmin();
+            }else{
+                $roleInfo = self::getUserRole( $userInfo['user_Id'] );
+                if( $roleInfo != false && isset( $roleInfo['role_pages']) ){
+                    $u['role_pages'] = self::getRolePagesForApiToken( $roleInfo['id'] );
+                }
+            }
+
+            // echo '<pre>';
+            // print_r( $u) ;              
+            // end - get user role and then role pages
+
+            //start - check if policy docs are read
+            $u['is_policy_documents_read_by_user'] = 1;
+            if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
+                
+            }else{
+                $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
+                if( $is_policy_documents_read_by_user == false ){
+                    $u['is_policy_documents_read_by_user'] = 0;
+                    $u['role_pages'] = self::getGenericPagesForAllRoles('');
+                }
+            }
+            //end - check if policy docs are read
+
+            // echo '<pre>';
+            // print_r( $u );
+
+            $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
+            self::insertToken($userInfo['user_Id'], $jwtToken);
+        }
+        return $jwtToken;
+    }
+
+    //END  -- added by arun on 4 july2017
+
     public static function login($username, $password) {
         $r_error = 1;
         $r_message = "";
@@ -104,39 +209,32 @@ class HR extends DATABASE {
             $r_message = "Invalid Login";
         } else {
             $userid = $row['id'];
-            $userInfo = self::getUserInfo($userid);
-
-            $userProfileImage = '';
-            try {
-                $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
-            } catch (Exception $e) {
-                
-            }
+            ////------
+            $userInfo = self::getUserInfo($userid);            
 
             if ($userInfo == false) {
                 $r_message = "Invalid Login";
             } else {
-                $r_error = 0;
-                $r_message = "Success Login";
+                // check if role is not assigned then show message to contact admin
+                $is_super_admin = false;
+                if( strtolower( $userInfo['type'] ) == 'admin' ){
+                    $is_super_admin = true;
+                }
+                if( $is_super_admin == false && ( !isset( $userInfo['role_id'] ) || $userInfo['role_id'] == '') ){
+                    $r_error = 1;
+                    $r_message = "Role is not assigned. Contact Admin!"; 
+                }else{
+                    $r_error = 0;
+                    $r_message = "Success Login";
 
-                $u = array(
-                    "id" => $userInfo['user_Id'],
-                    "username" => $userInfo['username'],
-                    "role" => $userInfo['type'],
-                    "name" => $userInfo['name'],
-                    "jobtitle" => $userInfo['jobtitle'],
-                    "profileImage" => $userProfileImage,
-                    "login_time" => time(),
-                    "login_date_time" => date('d-M-Y H:i:s')
-                );
+                    $jwtToken = self::generateUserToken( $userInfo['user_Id'] );
 
-                $jwtToken = JWT::encode($u, self::JWT_SECRET_KEY);
-
-                self::insertToken($userInfo['user_Id'], $jwtToken);
-                $r_data = array(
-                    "token" => $jwtToken,
-                    "userid" => $userInfo['user_Id']
-                );
+                    self::insertToken($userInfo['user_Id'], $jwtToken);
+                    $r_data = array(
+                        "token" => $jwtToken,
+                        "userid" => $userInfo['user_Id']
+                    );
+                }                
             }
         }
 
@@ -160,8 +258,19 @@ class HR extends DATABASE {
     }
 
     public static function getUserInfo($userid) {
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
-        //$q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
+        // $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
+        // $q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
+        $q = "SELECT 
+                users.*,
+                user_profile.*,
+                roles.id as role_id,
+                roles.name as role_name 
+                FROM users 
+                LEFT JOIN user_profile ON users.id = user_profile.user_id 
+                LEFT JOIN user_roles ON users.id = user_roles.user_id
+                LEFT JOIN roles ON user_roles.role_id = roles.id 
+                where 
+                users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
         //slack info if user
@@ -171,7 +280,17 @@ class HR extends DATABASE {
     }
 
     public static function getEnabledUsersList() {
-        $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' ";
+        $q = "SELECT 
+                users.*,
+                user_profile.*,
+                roles.id as role_id,
+                roles.name as role_name  
+                FROM users 
+                LEFT JOIN user_profile ON users.id = user_profile.user_id
+                LEFT JOIN user_roles ON users.id = user_roles.user_id
+                LEFT JOIN roles ON user_roles.role_id = roles.id 
+                where 
+                users.status = 'Enabled' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();
@@ -952,10 +1071,6 @@ class HR extends DATABASE {
 
         $userDayPunchingDetails = self::getUserDayPunchingDetails($userid, $date);
 
-        // echo '<pre>';
-        // print_r( $userDayPunchingDetails );
-        //
-
         $r_data['name'] = $userInfo['name'];
         $r_data['profileImage'] = '';
         $r_data['userid'] = $userid;
@@ -1180,7 +1295,7 @@ class HR extends DATABASE {
         $allSlackUsers = self::getSlackUsersList();
         if (sizeof($allSlackUsers) > 0) {
             foreach ($allSlackUsers as $sl) {
-                if ($sl['profile']['email'] == $emailid) {
+                if ( isset($sl['profile'] ) && $sl['profile']['email'] == $emailid) {
                     $return = $sl;
                     break;
                 }
@@ -1265,6 +1380,53 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function manipulatingPendingTimeWhenLeaveIsApplied( $pending_id, $leavesNumDays ){
+        $q = "Select * from users_previous_month_time where id = $pending_id";
+        $run = self::DBrunQuery($q);
+        $row = self::DBfetchRow($run);
+
+        $newPendingHour = '00';
+        $newPendingMinutes = '00';
+
+        if( $row != false ){
+            $pendingTime = $row['extra_time'];
+            $pendingTimeExplode = explode(":",$pendingTime);
+            $pending_hour = $pendingTimeExplode[0];
+            $pending_minute = $pendingTimeExplode[1];
+
+            if( $leavesNumDays === '0.5' ){
+                $newPendingHour = ($pending_hour * 1) - 4; // less 4 hrs as half day
+            }else{
+                $newPendingHour = ($pending_hour * 1) - ( $leavesNumDays * 9 );
+            }            
+
+            if( $newPendingHour > 0 ){
+                if( $newPendingHour < 10 ){
+                    $newPendingHour = '0'.$newPendingHour;
+                }                
+            }else {            
+                $newPendingHour = '00';
+            }
+            if( $pending_minute > 0 ){
+                $newPendingMinutes = $pending_minute;
+            }
+
+            if( $pending_hour == '00' ){
+                $newPendingMinutes = '00';
+            }
+        }
+        
+        $newPendingTime = $newPendingHour.':'.$newPendingMinutes;
+
+        // update new time pending time to db
+        if( $newPendingTime != '00:00' ){            
+            $q1 = "UPDATE users_previous_month_time SET extra_time = '$newPendingTime'  Where id = $pending_id";
+            self::DBrunQuery($q1);
+            return false; // means set status_merged will be 0
+        }
+        return true; // means set status_merged to 1           
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $applied_date = date('Y-m-d');
@@ -1285,8 +1447,16 @@ class HR extends DATABASE {
 
         if ($r_error == 0) {
             if ($pending_id != false) {
-                $q1 = "UPDATE users_previous_month_time SET status = 'Leave applied for previous month pending time'  Where id = $pending_id";
-                self::DBrunQuery($q1);
+                if ( self::manipulatingPendingTimeWhenLeaveIsApplied( $pending_id, $no_of_days ) ) {
+                    $q = "Select * from users_previous_month_time where id = $pending_id";
+                    $run = self::DBrunQuery($q);
+                    $row = self::DBfetchRow($run);
+                    $oldStatus = $row['status'];
+
+                    $q1 = "UPDATE users_previous_month_time SET status = '$oldStatus - Leave applied for previous month pending time', status_merged = 1  Where id = $pending_id";
+                    self::DBrunQuery($q1);
+                }                
+                
             }
             ////send  slack message to user && HR
             $userInfo = self::getUserInfo($userid);
@@ -1789,7 +1959,11 @@ class HR extends DATABASE {
         $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
 
         if ($pending_id != false) {
-            $q = "UPDATE users_previous_month_time SET status = 'Time added to user working hours'  Where id = $pending_id";
+            $q = "Select * from users_previous_month_time where id = $pending_id";
+            $run = self::DBrunQuery($q);
+            $row = self::DBfetchRow($run);
+            $oldStatus = $row['status'];
+            $q = "UPDATE users_previous_month_time SET status = '$oldStatus - Time added to user working hours', status_merged = 1  Where id = $pending_id";
             self::DBrunQuery($q);
         }
 
@@ -2297,7 +2471,6 @@ class HR extends DATABASE {
         $userid = $data['user_id'];
         $leave_start_date = date('Y-m-d', strtotime($data['date']));
         $current_date = date("Y-m-d");
-
         if ((strtotime($current_date) < strtotime($leave_start_date)) || isset($data['role'])) {
             $q = "SELECT * FROM leaves WHERE user_Id= $userid  AND from_date= '$leave_start_date' AND (status = 'Approved' OR status = 'Pending')";
 
@@ -2687,11 +2860,21 @@ class HR extends DATABASE {
             $q = "select * from machines_list where mac_address='$mac_addr'";
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
+            $r_message = "Mac Address already exist";
+        }
+
+        if( $serial_no != '' ){
+            $q = "select * from machines_list where serial_number='$serial_no'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRow($runQuery);
+            $r_message = "Serial no already exist";
+        }else{
+            $row = true;
+            $r_message = "Serial no is empty";
         }
 
         if ($row != false) {
             $r_error = 1;
-            $r_message = "Mac Address already exist";
         } else {
             $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
             self::DBrunQuery($q);
@@ -3231,17 +3414,21 @@ class HR extends DATABASE {
         $not_deleted = "";
         $r_message = "";
         $r_data = array();
+
+        $data_status = trim( $data['status'] );
+        $data_color = trim( $data['color'] );
+
         $ins = array(
-            'status' => $data['status'],
-            'color' => $data['color']
+            'status' => $data_status,
+            'color' => $data_color
         );
-        $q1 = "select * from machine_status where status ='" . trim($data['status']) . "'";
+        $q1 = "select * from machine_status where status ='" . $data_status . "'";
 
         $runQuery1 = self::DBrunQuery($q1);
         $row1 = self::DBfetchRow($runQuery1);
         $no_of_rows = self::DBnumRows($runQuery1);
 
-        $q2 = "select * from machine_status where color ='" . trim($data['color']) . "' AND status !='" . trim($data['status']) . "'";
+        $q2 = "select * from machine_status where color ='" . $data_color . "' AND status !='" . $data_status . "'";
         $runQuery2 = self::DBrunQuery($q2);
         $no_of_rows2 = self::DBnumRows($runQuery2);
         if ($no_of_rows2 == 0) {
@@ -3251,7 +3438,7 @@ class HR extends DATABASE {
                 $r_message = "Variable Successfully Inserted";
                 $r_data['message'] = $r_message;
             } if ($no_of_rows != 0) {
-                $q = "UPDATE machine_status set status='" . $data['status'] . "', color='" . $data['color'] . "'WHERE id ='" . $row1['id'] . "'";
+                $q = "UPDATE machine_status set status='" . $data_status . "', color='" . $data_color . "'WHERE id ='" . $row1['id'] . "'";
                 self::DBrunQuery($q);
 
                 $r_error = 0;
@@ -3259,7 +3446,7 @@ class HR extends DATABASE {
                 $r_data['message'] = $r_message;
             }
         } else {
-            $r_error = 0;
+            $r_error = 1;
             $r_message = "Color already assigned to status";
             $r_data['message'] = $r_message;
         }
@@ -3492,31 +3679,459 @@ class HR extends DATABASE {
     }
     
     public static function getUserRole($userid){
+        // this has complete information of role - pages, actions, noitfications
+        $return = false;
         $userInfo = self::getUserInfo($userid);
-        $role_id = $userInfo['role_id'];
-        return $role_id;
+        if( isset( $userInfo['role_id'] ) && !empty( $userInfo['role_id']) ){
+            $roleCompleteDetails = self::getRoleCompleteDetails( $userInfo['role_id'] );
+            $return = $roleCompleteDetails;
+        }
+        return $return;
     }
-    public static function validateRoleAction($roleid,$action){
-        $result = false;
-        $get_all_action = self::getAllAction();
-        $action_id = "";
-        foreach($get_all_action as $val){
-            if(in_array($action, $val)){
-               $action_id = $val['id']; 
+
+    // check page is valid for current user id
+    public static function is_user_valid_page( $page_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_pages = $user_role_details['role_pages'];
+        if( sizeof( $role_pages ) > 0 ){
+            foreach( $role_pages as $page ){
+                if( $page_name == $page['page_name'] ){
+                    $return = true;
+                    break;
+                }
             }
         }
-     $q = "select * from roles_action where role_Id =$roleid AND action_Id = $action_id";
-     $run = self::DBrunQuery($q);
-     $no_of_row = self::DBnumRows($run);
-     
-     if($no_of_row > 0){
-         $result = true;
-     }
-        return $result;
+        return $return;;
     }
-    
+
+    // check action is valid for current user id
+    public static function is_user_valid_action( $action_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_actions = $user_role_details['role_actions'];
+        if( sizeof( $role_actions ) > 0 ){
+            foreach( $role_actions as $action ){
+                if( $action_name == $action['action_name'] ){
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;;
+    }
+
+    // check notification is valid for current user id
+    public static function is_user_valid_notification( $notification_name, $userid ){
+        $return = false;
+        $user_role_details = self::getUserRole( $userid );
+        $role_notifications = $user_role_details['role_notifications'];
+        if( sizeof( $role_notifications ) > 0 ){
+            foreach( $role_notifications as $notification ){
+                if( $notification_name == $notification['notification_name'] ){
+                    $return = true;
+                    break;
+                }
+            }
+        }
+        return $return;;
+    }
+
+    // get employee next working date , starts from today onwards
+    public static function getEmployeeNextWorkingDate( $userid ){
+        $return = false;
+        $currentDate = date('Y-m-d');        
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $currentDateDate = date('d');
+
+        $monthDetails = self::getUserMonthAttendace($userid, $currentYear, $currentMonth );
+        // check if there is no working day left in current month
+        $tempArray = array();
+        foreach( $monthDetails as $md ){
+            $md_date = $md['date'];
+            if( $md_date * 1 >= $currentDateDate * 1 && $md['day_type'] == 'WORKING_DAY' ){
+                $tempArray[] = $md;
+            }
+        }
+        // if temp array is empty, means to get working day from next month date 
+        if( sizeof( $tempArray) == 0 ){
+            $nextMonth = self::_getNextMonth($currentYear, $currentMonth);
+            $monthDetails = self::getUserMonthAttendace($userid, $nextMonth['year'], $nextMonth['month'] );
+            foreach( $monthDetails as $md ){
+                $md_date = $md['date'];
+                if( $md['day_type'] == 'WORKING_DAY' ){
+                    $tempArray[] = $md;
+                }
+            }
+        }
+        $return = $tempArray[0];
+        return $return;
+    }
+
+    // get employee last present day of the month
+    public static function getEmployeeLastPresentDay( $userid, $year, $month ){
+        $return = false;
+        $monthDetails = self::getUserMonthAttendace($userid, $year, $month );
+        $monthDetails = array_reverse($monthDetails);
+        foreach( $monthDetails as $md ){
+            if( $md['day_type'] == 'WORKING_DAY' ){
+                $return = $md;
+                break;
+            }
+        }
+        return $return;
+    }
+
+
+    //policy documents
+    public static function is_policy_documents_read_by_user( $userid ){
+        $return = true;
+        $allDocuments = self::NEW_getUserPolicyDocument( $userid );
+        if( is_array($allDocuments) ){
+            foreach( $allDocuments as $doc ){
+                if( $doc['read'] != 1 ){
+                    $return = false;
+                }
+            }
+        }
+        return $return;
+    }
+
+    public static function NEW_getUserPolicyDocument($userid) {
+
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $q1 = "SELECT * FROM user_profile where user_Id = $userid";
+        $runQuery1 = self::DBrunQuery($q1);
+        $row1 = self::DBfetchRow($runQuery1);
+
+        $ar0 = json_decode($row1['policy_document'], true);
+
+        $q2 = "SELECT * FROM config where type ='policy_document'";
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRow($runQuery2);
+
+        $ar1 = json_decode($row2['value'], true);
+        $arr = array();
+        if (empty($ar0)) {
+            foreach ($ar1 as $v2) {
+                $v2['read'] = 0;
+                $arr[] = $v2;
+            }
+        }
+        if (!empty($ar0)) {
+            foreach ($ar1 as $v3) {
+                if (in_array($v3['name'], $ar0)) {
+                    $v3['read'] = 1;
+                    $arr[] = $v3;
+                } else {
+                    $v3['read'] = 0;
+                    $arr[] = $v3;
+                }
+            }
+        }
+        return $arr;
+    }
+
+    // EMPLOYEE LIFE CYCLE
+    static $ELC_stage_onboard = 5501;
+    static $ELC_stage_employment = 5502;
+    static $ELC_stage_termination = 5503;
+
+    public static function getGenericElcList(){
+        $allStages = array(            
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5511,
+                'text' => 'Create Hr System Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5512,
+                'text' => 'Create Gmail Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5513,
+                'text' => 'Create Slack Account'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5514,
+                'text' => 'Send Joining Mail'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5515,
+                'text' => 'Joining Document Signature '
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5516,
+                'text' => 'Collect Documents'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5517,
+                'text' => 'Add To Biometric'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5518,
+                'text' => 'Assign Inventory'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5519,
+                'text' => 'Assign Stationary'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5520,
+                'text' => 'Assign Temporary ID Card'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5521,
+                'text' => 'Share Joining PPTs and Explain in meeting'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5522,
+                'text' => 'Share HR System PPT and Explain in meeting'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5523,
+                'text' => 'Fill Employee Profile'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5524,
+                'text' => 'Add Salary'
+            ),
+
+
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5611,
+                'text' => 'Send Confirmation Email'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5612,
+                'text' => 'Service agreement and signature'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5613,
+                'text' => 'NDA signature'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5614,
+                'text' => 'HR system update training completion date'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5615,
+                'text' => 'Upload documents in digital format'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5616,
+                'text' => 'Assign Salary'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5617,
+                'text' => 'Issue permanent ID card'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5618,
+                'text' => 'Update fingerprint (if required)'
+            ),
+
+
+
+
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5711,
+                'text' => 'Email Feedback Document and Get it filled'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5712,
+                'text' => 'Get NDA Agreement filled depends on employee'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5713,
+                'text' => 'Experience Letter'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5714,
+                'text' => 'Relieving Letter'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5715,
+                'text' => 'Take ID Card'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5716,
+                'text' => 'Check and Unassign Inventory (make sure all devices are working)'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5717,
+                'text' => 'Put termination date in hr system and termination comments.'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5718,
+                'text' => 'Disable the employee'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5719,
+                'text' => 'Disable employee from gmail'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5710,
+                'text' => 'Disable employee from slack'
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_termination,
+                'id' => 5711,
+                'text' => 'Remainder to send pending salary to employee on slack'
+            ),
+
+        );
+        return $allStages;
+    }
+
+    public static function getElcStageName( $stageid ){
+        $stageName = '';
+        $stages = array();
+        $stages[] = array( 'id' => self::$ELC_stage_onboard, 'name' => 'New Employee Onboarding' );
+        $stages[] = array( 'id' => self::$ELC_stage_employment, 'name' => 'Employment Confirmation' );
+        $stages[] = array( 'id' => self::$ELC_stage_termination, 'name' => 'Termination' );
+        foreach( $stages as $stage ){
+            if( $stage['id'] == $stageid ){
+                $stageName = $stage['name'];
+                break;
+            }
+        }
+        return $stageName;
+    }
+
+    public static function getELC( $userid = false ){
+        $allList = self::getGenericElcList();
+
+        $employeeLifeCycleStepsDone = array();
+        if( $userid != false ){
+            $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );            
+        }
+
+        foreach( $allList as $k => $g ){
+            $g_step_id = $g['id'];
+            $status = 0;
+            foreach( $employeeLifeCycleStepsDone as $d ){
+                $d_elc_step_id = $d['elc_step_id'];
+                if( $g_step_id == $d_elc_step_id ){
+                    $status = 1;
+                }
+            }
+            $allList[$k]['status'] = $status;
+        }
+
+        $return = array();
+
+        
+        foreach( $allList as $elc ){
+            if( array_key_exists( $elc['stage_id'], $return )){
+                $return[ $elc['stage_id'] ]['steps'][] = array(
+                    'id' => $elc['id'],
+                    'text' => $elc['text'],
+                    'status' => $elc['status']
+                );
+                
+            }else{
+                $return[ $elc['stage_id'] ] = array(
+                    'stage_id' => $elc['stage_id'],
+                    'text' => self::getElcStageName( $elc['stage_id'] ),
+                );
+                $return[ $elc['stage_id'] ]['steps'] = array();
+                $return[ $elc['stage_id'] ]['steps'][] = array(
+                    'id' => $elc['id'],
+                    'text' => $elc['text'],
+                     'status' => $elc['status']
+                );
+            }         
+        }
+        return $return;
+    }
+
+    public static function getEmployeeLifeCycleStepsDone( $userid ){
+        $q = "select * from employee_life_cycle where userid=$userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof( $rows ) > 0 ){
+            return $rows;
+        }
+        return array();
+    }
+
+    public static function getEmployeeLifeCycle( $userid ){
+        
+        $return = array();
+
+        $employee_life_cycle =  self::getELC( $userid );
+
+        $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );
+        if( sizeof($employeeLifeCycleStepsDone) > 0 ){
+            $data_employee_life_cycle = $employee_life_cycle['employee_life_cycle'];
+        }
+
+        
+
+        $return['error'] = 0;
+        $return['message'] = '';
+        $return['data'] = array();
+        $return['data']['employee_life_cycle'] = $employee_life_cycle;
+        //print_r( $return );
+        return $return;
+    }
+
+    public static function updateELC( $elc_stepid, $userid ){
+        $q = "select * from employee_life_cycle where userid=$userid AND elc_step_id=$elc_stepid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) > 0) {
+            $q2 = "DELETE FROM employee_life_cycle where userid=$userid AND elc_step_id=$elc_stepid";
+            self::DBrunQuery($q2);
+        } else {
+            $q3 = "INSERT into employee_life_cycle ( userid, elc_step_id  ) VALUES ( $userid, $elc_stepid )";
+            self::DBrunQuery($q3);
+        }
+        $return['error'] = 0;
+        $return['message'] = 'Successfully Updated!!';
+        $return['data'] = array();
+        return $return;
+    }
+        
 
 }
+
+
 
 new HR();
 ?>
