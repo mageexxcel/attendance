@@ -1184,6 +1184,24 @@ trait Roles {
         }
         return $return; 
     }
+
+    // check if user elc is completed or not
+    public static function isUserElcCompleted( $userid ){
+        $return = true;
+        $employee_life_cycle =  self::getELC( $userid );
+        foreach( $employee_life_cycle as $el ) {
+            if( isset( $el['steps']) ){
+                $el_steps = $el['steps'];
+                foreach( $el_steps as $step ){
+                    if( $step['status'] == 0 ){
+                        $return = false;
+                        break;
+                    }
+                }
+            }
+        }
+        return $return;
+    }
     
     
 
