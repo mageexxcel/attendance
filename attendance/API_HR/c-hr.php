@@ -3931,47 +3931,54 @@ class HR extends DATABASE {
             ),
 
 
-            array(
+           array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5611,
-                'text' => 'Send Confirmation Email'
+                'text' => 'Send Confirmation Email',
+                'sort' => 7
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5612,
-                'text' => 'Service agreement and signature'
+                'text' => 'Service agreement and signature',
+                'sort' => 1
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5613,
-                'text' => 'NDA signature'
+                'text' => 'Offer Letter Signed',
+                'sort' => 2
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5614,
-                'text' => 'HR system update training completion date'
+                'text' => 'HR system update training completion date',
+                'sort' => 3
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5615,
-                'text' => 'Upload documents in digital format'
+                'text' => 'Upload documents in digital format',
+                'sort' => 4
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5616,
-                'text' => 'Assign Salary'
+                'text' => 'Assign Salary',
+                'sort' => 5
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5617,
-                'text' => 'Issue permanent ID card'
+                'text' => 'Issue permanent ID card',
+                'sort' => 6
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5618,
-                'text' => 'Update fingerprint (if required)'
+                'text' => 'Update fingerprint (if required)',
+                'sort' => 8
             ),
-
 
 
 
@@ -4050,6 +4057,13 @@ class HR extends DATABASE {
         return $stageName;
     }
 
+    public static function sortElcStageSteps( $a, $b ){
+        if ($a['sort'] == $b['sort']) {
+            return 0;
+        }
+        return ($a['sort'] < $b['sort']) ? -1 : 1;
+    }
+
     public static function getELC( $userid = false ){
         $allList = self::getGenericElcList();
 
@@ -4074,11 +4088,17 @@ class HR extends DATABASE {
 
         
         foreach( $allList as $elc ){
+            $sort = 0;
+            if( isset( $elc['sort']) ){
+                $sort = $elc['sort'];
+            }
+
             if( array_key_exists( $elc['stage_id'], $return )){
                 $return[ $elc['stage_id'] ]['steps'][] = array(
                     'id' => $elc['id'],
                     'text' => $elc['text'],
-                    'status' => $elc['status']
+                    'status' => $elc['status'],
+                    'sort' => $sort
                 );
                 
             }else{
@@ -4090,10 +4110,24 @@ class HR extends DATABASE {
                 $return[ $elc['stage_id'] ]['steps'][] = array(
                     'id' => $elc['id'],
                     'text' => $elc['text'],
-                     'status' => $elc['status']
+                     'status' => $elc['status'],
+                     'sort' => $sort
                 );
             }         
         }
+
+
+        //sort according to sort order
+        if( sizeof( $return ) > 0 ){
+            foreach( $return as $key => $stage ){
+                if( isset($stage['steps'] ) && sizeof($stage['steps'])>0 ){
+                    $steps = $stage['steps'];
+                    usort( $steps, array( 'HR', 'sortElcStageSteps' ) );
+                    $return[$key]['steps'] = $steps;
+                }
+            }
+        }
+
         return $return;
     }
 

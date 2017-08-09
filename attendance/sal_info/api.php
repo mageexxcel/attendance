@@ -261,31 +261,40 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     }
 } else if ($action == 'get_user_manage_payslips_data') {   //aciton to get employee last month salary details
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
-        $extra_arrear = "";
-        $arrear_for_month = "";
-        $userid = $PARAMS['user_id'];
-        if (isset($PARAMS['year'])) {
-            $year = $PARAMS['year'];
+
+        if( $IS_SUPER_ADMIN ==  false ){
+            $res = array();
+            $res['error'] = 0;
+            $r_data = array();
+            $r_data['all_users_latest_payslip'] = array();
+            $res['data'] = $r_data;
+        }else{
+            $extra_arrear = "";
+            $arrear_for_month = "";
+            $userid = $PARAMS['user_id'];
+            if (isset($PARAMS['year'])) {
+                $year = $PARAMS['year'];
+            }
+            if (isset($PARAMS['month'])) {
+                $month = $PARAMS['month'];
+            }
+            if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
+                $extra_arrear = $PARAMS['extra_arrear'];
+                $arrear_for_month = $PARAMS['arrear_for_month'];
+            }        
+            if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
+                $currentYear = date("Y");
+                $currentMonth = date("F");
+                if ($currentMonth == "January") {
+                    $year = date('Y', strtotime($currentYear . ' -1 year'));
+                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
+                } else {
+                    $year = $currentYear;
+                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;                
+                }           
+            }
+            $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
         }
-        if (isset($PARAMS['month'])) {
-            $month = $PARAMS['month'];
-        }
-        if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
-            $extra_arrear = $PARAMS['extra_arrear'];
-            $arrear_for_month = $PARAMS['arrear_for_month'];
-        }        
-        if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
-            $currentYear = date("Y");
-            $currentMonth = date("F");
-            if ($currentMonth == "January") {
-                $year = date('Y', strtotime($currentYear . ' -1 year'));
-                $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
-            } else {
-                $year = $currentYear;
-                $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;                
-            }           
-        }
-        $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
     } else {
         $res['data']['message'] = 'Please give user_id ';
     }    
