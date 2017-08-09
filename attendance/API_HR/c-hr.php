@@ -2300,17 +2300,34 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
         $status = $data['status'];
-        $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
-        $res = self::DBrunQuery($q);
-        if ($res == false) {
-            $r_error = 1;
-            $r_message = "Error occured while updating employee status";
-            $r_data['message'] = $r_message;
-        } else {
 
-            $r_error = 0;
-            $r_message = "Employee Status Updated";
-            $r_data['message'] = $r_message;
+        $doFurtherProcess = true;
+
+        // check for if elc is completed or not
+        if( strtolower( $status ) == 'disabled' ){
+            $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
+            if( $checkElcCompleted == true ){
+                
+            }else{
+                $doFurtherProcess = false;
+                $r_error = 1;
+                $r_data['message'] = 'ELC till termination need to be complete before disabling an user!!';
+            }
+        }
+
+        if( $doFurtherProcess == true ){
+            $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
+            $res = self::DBrunQuery($q);
+            if ($res == false) {
+                $r_error = 1;
+                $r_message = "Error occured while updating employee status";
+                $r_data['message'] = $r_message;
+            } else {
+
+                $r_error = 0;
+                $r_message = "Employee Status Updated";
+                $r_data['message'] = $r_message;
+            }
         }
         $return = array();
 
