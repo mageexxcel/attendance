@@ -2300,17 +2300,34 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
         $status = $data['status'];
-        $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
-        $res = self::DBrunQuery($q);
-        if ($res == false) {
-            $r_error = 1;
-            $r_message = "Error occured while updating employee status";
-            $r_data['message'] = $r_message;
-        } else {
 
-            $r_error = 0;
-            $r_message = "Employee Status Updated";
-            $r_data['message'] = $r_message;
+        $doFurtherProcess = true;
+
+        // check for if elc is completed or not
+        if( strtolower( $status ) == 'disabled' ){
+            $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
+            if( $checkElcCompleted == true ){
+                
+            }else{
+                $doFurtherProcess = false;
+                $r_error = 1;
+                $r_data['message'] = 'ELC till termination need to be complete before disabling an user!!';
+            }
+        }
+
+        if( $doFurtherProcess == true ){
+            $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
+            $res = self::DBrunQuery($q);
+            if ($res == false) {
+                $r_error = 1;
+                $r_message = "Error occured while updating employee status";
+                $r_data['message'] = $r_message;
+            } else {
+
+                $r_error = 0;
+                $r_message = "Employee Status Updated";
+                $r_data['message'] = $r_message;
+            }
         }
         $return = array();
 
@@ -3914,47 +3931,54 @@ class HR extends DATABASE {
             ),
 
 
-            array(
+           array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5611,
-                'text' => 'Send Confirmation Email'
+                'text' => 'Send Confirmation Email',
+                'sort' => 7
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5612,
-                'text' => 'Service agreement and signature'
+                'text' => 'Service agreement and signature',
+                'sort' => 1
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5613,
-                'text' => 'NDA signature'
+                'text' => 'Offer Letter Signed',
+                'sort' => 2
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5614,
-                'text' => 'HR system update training completion date'
+                'text' => 'HR system update training completion date',
+                'sort' => 3
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5615,
-                'text' => 'Upload documents in digital format'
+                'text' => 'Upload documents in digital format',
+                'sort' => 4
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5616,
-                'text' => 'Assign Salary'
+                'text' => 'Assign Salary',
+                'sort' => 5
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5617,
-                'text' => 'Issue permanent ID card'
+                'text' => 'Issue permanent ID card',
+                'sort' => 6
             ),
             array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5618,
-                'text' => 'Update fingerprint (if required)'
+                'text' => 'Update fingerprint (if required)',
+                'sort' => 8
             ),
-
 
 
 
@@ -4033,6 +4057,13 @@ class HR extends DATABASE {
         return $stageName;
     }
 
+    public static function sortElcStageSteps( $a, $b ){
+        if ($a['sort'] == $b['sort']) {
+            return 0;
+        }
+        return ($a['sort'] < $b['sort']) ? -1 : 1;
+    }
+
     public static function getELC( $userid = false ){
         $allList = self::getGenericElcList();
 
@@ -4057,11 +4088,17 @@ class HR extends DATABASE {
 
         
         foreach( $allList as $elc ){
+            $sort = 0;
+            if( isset( $elc['sort']) ){
+                $sort = $elc['sort'];
+            }
+
             if( array_key_exists( $elc['stage_id'], $return )){
                 $return[ $elc['stage_id'] ]['steps'][] = array(
                     'id' => $elc['id'],
                     'text' => $elc['text'],
-                    'status' => $elc['status']
+                    'status' => $elc['status'],
+                    'sort' => $sort
                 );
                 
             }else{
@@ -4073,10 +4110,24 @@ class HR extends DATABASE {
                 $return[ $elc['stage_id'] ]['steps'][] = array(
                     'id' => $elc['id'],
                     'text' => $elc['text'],
-                     'status' => $elc['status']
+                     'status' => $elc['status'],
+                     'sort' => $sort
                 );
             }         
         }
+
+
+        //sort according to sort order
+        if( sizeof( $return ) > 0 ){
+            foreach( $return as $key => $stage ){
+                if( isset($stage['steps'] ) && sizeof($stage['steps'])>0 ){
+                    $steps = $stage['steps'];
+                    usort( $steps, array( 'HR', 'sortElcStageSteps' ) );
+                    $return[$key]['steps'] = $steps;
+                }
+            }
+        }
+
         return $return;
     }
 
