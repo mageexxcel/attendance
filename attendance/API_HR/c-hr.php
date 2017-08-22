@@ -102,13 +102,13 @@ class HR extends DATABASE {
             $mins = $time_diff / 60;
             if ($mins > 60) { //if 60 mins more
                 $return = false;
-            } 
+            }
         } else {
             $return = false;
         }
         return $return;
     }
-    
+
     public static function refreshToken( $oldToken ){
         $return = $oldToken;
         if( self::isValidTokenAgainstTime( $oldToken ) ){
@@ -124,13 +124,13 @@ class HR extends DATABASE {
         $jwtToken = '';
         $userInfo = self::getUserInfo($userid);
         if ($userInfo == false) {
-            
+
         } else {
             $userProfileImage = '';
             try {
                 $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
             } catch (Exception $e) {
-                
+
             }
 
             // start added by arun for role update in toked on 21st july
@@ -168,13 +168,13 @@ class HR extends DATABASE {
             }
 
             // echo '<pre>';
-            // print_r( $u) ;              
+            // print_r( $u) ;
             // end - get user role and then role pages
 
             //start - check if policy docs are read
             $u['is_policy_documents_read_by_user'] = 1;
             if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
-                
+
             }else{
                 $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
                 if( $is_policy_documents_read_by_user == false ){
@@ -210,7 +210,7 @@ class HR extends DATABASE {
         } else {
             $userid = $row['id'];
             ////------
-            $userInfo = self::getUserInfo($userid);            
+            $userInfo = self::getUserInfo($userid);
 
             if ($userInfo == false) {
                 $r_message = "Invalid Login";
@@ -222,7 +222,7 @@ class HR extends DATABASE {
                 }
                 if( $is_super_admin == false && ( !isset( $userInfo['role_id'] ) || $userInfo['role_id'] == '') ){
                     $r_error = 1;
-                    $r_message = "Role is not assigned. Contact Admin!"; 
+                    $r_message = "Role is not assigned. Contact Admin!";
                 }else{
                     $r_error = 0;
                     $r_message = "Success Login";
@@ -234,7 +234,7 @@ class HR extends DATABASE {
                         "token" => $jwtToken,
                         "userid" => $userInfo['user_Id']
                     );
-                }                
+                }
             }
         }
 
@@ -260,16 +260,16 @@ class HR extends DATABASE {
     public static function getUserInfo($userid) {
         // $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.id = $userid ";
         // $q = "SELECT users.*,user_profile.*,roles.id as role_id,roles.name as role_name FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_role ON users.id=user_role.user_Id LEFT JOIN roles ON user_role.role_Id=roles.id where users.id = $userid ";
-        $q = "SELECT 
+        $q = "SELECT
                 users.*,
                 user_profile.*,
                 roles.id as role_id,
-                roles.name as role_name 
-                FROM users 
-                LEFT JOIN user_profile ON users.id = user_profile.user_id 
+                roles.name as role_name
+                FROM users
+                LEFT JOIN user_profile ON users.id = user_profile.user_id
                 LEFT JOIN user_roles ON users.id = user_roles.user_id
-                LEFT JOIN roles ON user_roles.role_id = roles.id 
-                where 
+                LEFT JOIN roles ON user_roles.role_id = roles.id
+                where
                 users.id = $userid ";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRow($runQuery);
@@ -280,23 +280,23 @@ class HR extends DATABASE {
     }
 
     public static function getEnabledUsersList() {
-        $q = "SELECT 
+        $q = "SELECT
                 users.*,
                 user_profile.*,
                 roles.id as role_id,
-                roles.name as role_name  
-                FROM users 
+                roles.name as role_name
+                FROM users
                 LEFT JOIN user_profile ON users.id = user_profile.user_id
                 LEFT JOIN user_roles ON users.id = user_roles.user_id
-                LEFT JOIN roles ON user_roles.role_id = roles.id 
-                where 
+                LEFT JOIN roles ON user_roles.role_id = roles.id
+                where
                 users.status = 'Enabled' ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
-                
+
             } else {
                 if (empty(self::$isAdmin)) {
                     unset($pp['holding_comments']);
@@ -305,7 +305,7 @@ class HR extends DATABASE {
                 $newRows[] = $pp;
             }
         }
-        // slack users 
+        // slack users
         $slackUsersList = self::getSlackUsersList();
 
 
@@ -506,7 +506,7 @@ class HR extends DATABASE {
                 }
             }
         }
-        //exclude working weekend from month weekends   
+        //exclude working weekend from month weekends
         $list2 = self::getWorkingHoursOfMonth($year, $month);
 
         $pop = array();
@@ -525,7 +525,7 @@ class HR extends DATABASE {
     }
 
     public static function getMonthTotalWorkingHours($month) {
-        
+
     }
 
     ///------working hours
@@ -625,7 +625,7 @@ class HR extends DATABASE {
         $holidaysOfMonth = self::getHolidaysOfMonth($year, $month);
         $weekendsOfMonth = self::getWeekendsOfMonth($year, $month);
         $nonworkingdayasWorking = self::getNonworkingdayAsWorking($year, $month);
-        $workingHoursOfMonth = self::getWorkingHoursOfMonth($year, $month); // change thisis arun 
+        $workingHoursOfMonth = self::getWorkingHoursOfMonth($year, $month); // change thisis arun
 
         if (sizeof($holidaysOfMonth) > 0) {
             foreach ($holidaysOfMonth as $hm_key => $hm) {
@@ -1130,7 +1130,7 @@ class HR extends DATABASE {
         return true;
     }
 
-    //--start insert user in/out punchig time 
+    //--start insert user in/out punchig time
     public static function insertUserInOutTimeOfDay($userid, $date, $inTime, $outTime, $reason, $isadmin = true) {
 
         $extra_time = 0;
@@ -1225,7 +1225,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    //--end insert user in/out punchig time 
+    //--end insert user in/out punchig time
     public static function getHtml($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -1241,12 +1241,12 @@ class HR extends DATABASE {
 
     public static function sendSlackMessageToUser($channelid, $message, $auth_array = false) {
         $return = false;
-       
+
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
         $message = str_replace("", "%20", $message);
 
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
-        
+
        //  if ($auth_array != false || $channelid == "hr") {
        //     $q = "select * from roles_notification where role_Id=" . $auth_array['role_id'] . " AND notification_Id =" . $auth_array['notification_id'];
        //     $run = self::DBrunQuery($q);
@@ -1264,7 +1264,7 @@ class HR extends DATABASE {
                     }
                 }
          //   }
-            
+
        // }
 
 
@@ -1276,7 +1276,7 @@ class HR extends DATABASE {
         $url = "https://slack.com/api/im.list?token=" . self::$SLACK_token;
         $html = self::getHtml($url);
         if ($html === false) {
-            
+
         } else {
             $fresult = json_decode($html, true);
             if (isset($fresult['ims']) && sizeof($fresult['ims']) > 0) {
@@ -1331,7 +1331,7 @@ class HR extends DATABASE {
                         }
                     }
 
-                    //added for channedl details 
+                    //added for channedl details
                     $pp['slack_channel_id_info'] = $slack_channel_id_info;
                     $pp['slack_channel_id'] = $slack_channel_id;
                     $return[] = $pp;
@@ -1398,13 +1398,13 @@ class HR extends DATABASE {
                 $newPendingHour = ($pending_hour * 1) - 4; // less 4 hrs as half day
             }else{
                 $newPendingHour = ($pending_hour * 1) - ( $leavesNumDays * 9 );
-            }            
+            }
 
             if( $newPendingHour > 0 ){
                 if( $newPendingHour < 10 ){
                     $newPendingHour = '0'.$newPendingHour;
-                }                
-            }else {            
+                }
+            }else {
                 $newPendingHour = '00';
             }
             if( $pending_minute > 0 ){
@@ -1415,16 +1415,16 @@ class HR extends DATABASE {
                 $newPendingMinutes = '00';
             }
         }
-        
+
         $newPendingTime = $newPendingHour.':'.$newPendingMinutes;
 
         // update new time pending time to db
-        if( $newPendingTime != '00:00' ){            
+        if( $newPendingTime != '00:00' ){
             $q1 = "UPDATE users_previous_month_time SET extra_time = '$newPendingTime'  Where id = $pending_id";
             self::DBrunQuery($q1);
             return false; // means set status_merged will be 0
         }
-        return true; // means set status_merged to 1           
+        return true; // means set status_merged to 1
     }
 
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
@@ -1455,8 +1455,8 @@ class HR extends DATABASE {
 
                     $q1 = "UPDATE users_previous_month_time SET status = '$oldStatus - Leave applied for previous month pending time', status_merged = 1  Where id = $pending_id";
                     self::DBrunQuery($q1);
-                }                
-                
+                }
+
             }
             ////send  slack message to user && HR
             $userInfo = self::getUserInfo($userid);
@@ -1999,7 +1999,7 @@ class HR extends DATABASE {
 
             $user_month_attendance = $user_month_attendance['data'];
 
-            //---final leaves and missing punching days 
+            //---final leaves and missing punching days
             $raw = $user_month_attendance['attendance'];
             $finalAttendance = array();
             foreach ($raw as $pp) {
@@ -2013,7 +2013,7 @@ class HR extends DATABASE {
                 }
             }
 
-            //---final leaves and missing punching days 
+            //---final leaves and missing punching days
 
             if (sizeof($finalAttendance) > 0) {
 
@@ -2152,7 +2152,7 @@ class HR extends DATABASE {
                     $r_message = "Errosr occurs while inserting user";
                 } else {
                     //user is inserted
-                    $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES 
+                    $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
 
                     self::DBrunQuery($q1);
@@ -2307,7 +2307,7 @@ class HR extends DATABASE {
         if( strtolower( $status ) == 'disabled' ){
             $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
             if( $checkElcCompleted == true ){
-                
+
             }else{
                 $doFurtherProcess = false;
                 $r_error = 1;
@@ -2344,7 +2344,7 @@ class HR extends DATABASE {
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
-                
+
             } else {
 
                 $newRows[] = $pp;
@@ -2424,7 +2424,7 @@ class HR extends DATABASE {
         $user_month_attendance = $user_month_attendance['data'];
 
 
-        //---final leaves and missing punching days 
+        //---final leaves and missing punching days
         $raw = $user_month_attendance['attendance'];
         $finalAttendance = array();
         foreach ($raw as $pp) {
@@ -2439,7 +2439,7 @@ class HR extends DATABASE {
         }
 
 
-        //---final leaves and missing punching days 
+        //---final leaves and missing punching days
 
         if (sizeof($finalAttendance) > 0) {
 
@@ -2480,7 +2480,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    // cancel applied leave 
+    // cancel applied leave
     public static function cancelAppliedLeave($data) {
         $r_error = 1;
         $r_message = "";
@@ -3174,7 +3174,7 @@ class HR extends DATABASE {
                     if (strtotime($half_time) <= strtotime($te) && strtotime($te) < strtotime($working_hour)) {
                         $hd = self::getUserHalfDay($user_id, $cdate);
                         if ($hd != 0) {
-                            
+
                         } else {
                             $ed1 = strtotime($working_hour) - strtotime($te);
                             $te1 = $ed1 / 60;
@@ -3632,7 +3632,7 @@ class HR extends DATABASE {
 
         $run = self::DBrunQuery($q);
         $rows = self::DBfetchRows($run);
-        
+
         if(sizeof($rows) > 0){
             foreach($rows as $val){
                 $hr_min = "";
@@ -3645,7 +3645,7 @@ class HR extends DATABASE {
                 $format_array[] = $val;
             }
         }
-        
+
         $nextMonth = self::_getNextMonth($year, $month);
         $previousMonth = self::_getPreviousMonth($year, $month);
         $currentMonth = self::_getCurrentMonth($year, $month);
@@ -3694,7 +3694,7 @@ class HR extends DATABASE {
         $return['message'] = $r_message;
         return $return;
     }
-    
+
     public static function getUserRole($userid){
         // this has complete information of role - pages, actions, noitfications
         $return = false;
@@ -3757,7 +3757,7 @@ class HR extends DATABASE {
     // get employee next working date , starts from today onwards
     public static function getEmployeeNextWorkingDate( $userid ){
         $return = false;
-        $currentDate = date('Y-m-d');        
+        $currentDate = date('Y-m-d');
         $currentYear = date('Y');
         $currentMonth = date('m');
         $currentDateDate = date('d');
@@ -3771,7 +3771,7 @@ class HR extends DATABASE {
                 $tempArray[] = $md;
             }
         }
-        // if temp array is empty, means to get working day from next month date 
+        // if temp array is empty, means to get working day from next month date
         if( sizeof( $tempArray) == 0 ){
             $nextMonth = self::_getNextMonth($currentYear, $currentMonth);
             $monthDetails = self::getUserMonthAttendace($userid, $nextMonth['year'], $nextMonth['month'] );
@@ -3858,7 +3858,7 @@ class HR extends DATABASE {
     static $ELC_stage_termination = 5503;
 
     public static function getGenericElcList(){
-        $allStages = array(            
+        $allStages = array(
             array(
                 'stage_id' => self::$ELC_stage_onboard,
                 'id' => 5511,
@@ -3929,9 +3929,14 @@ class HR extends DATABASE {
                 'id' => 5524,
                 'text' => 'Add Salary'
             ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5525,
+                'text' => 'Training Service Agreement'
+            ),
 
 
-           array(
+            array(
                 'stage_id' => self::$ELC_stage_employment,
                 'id' => 5611,
                 'text' => 'Send Confirmation Email',
@@ -4069,7 +4074,7 @@ class HR extends DATABASE {
 
         $employeeLifeCycleStepsDone = array();
         if( $userid != false ){
-            $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );            
+            $employeeLifeCycleStepsDone = self::getEmployeeLifeCycleStepsDone( $userid );
         }
 
         foreach( $allList as $k => $g ){
@@ -4086,7 +4091,7 @@ class HR extends DATABASE {
 
         $return = array();
 
-        
+
         foreach( $allList as $elc ){
             $sort = 0;
             if( isset( $elc['sort']) ){
@@ -4100,7 +4105,7 @@ class HR extends DATABASE {
                     'status' => $elc['status'],
                     'sort' => $sort
                 );
-                
+
             }else{
                 $return[ $elc['stage_id'] ] = array(
                     'stage_id' => $elc['stage_id'],
@@ -4113,7 +4118,7 @@ class HR extends DATABASE {
                      'status' => $elc['status'],
                      'sort' => $sort
                 );
-            }         
+            }
         }
 
 
@@ -4142,7 +4147,7 @@ class HR extends DATABASE {
     }
 
     public static function getEmployeeLifeCycle( $userid ){
-        
+
         $return = array();
 
         $employee_life_cycle =  self::getELC( $userid );
@@ -4152,7 +4157,7 @@ class HR extends DATABASE {
             $data_employee_life_cycle = $employee_life_cycle['employee_life_cycle'];
         }
 
-        
+
 
         $return['error'] = 0;
         $return['message'] = '';
@@ -4178,7 +4183,7 @@ class HR extends DATABASE {
         $return['data'] = array();
         return $return;
     }
-        
+
 
 }
 
