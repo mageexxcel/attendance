@@ -8,8 +8,8 @@ trait Roles {
     static $PAGE_home = 101;
     static $PAGE_monthly_attendance = 102;
     static $PAGE_inventory_system = 103;
-    static $PAGE_manage_payslips = 104;    
-    static $PAGE_manage_working_hours = 105;    
+    static $PAGE_manage_payslips = 104;
+    static $PAGE_manage_working_hours = 105;
     static $PAGE_holidays = 107;
     static $PAGE_team_view = 108;
     static $PAGE_apply_leave = 109;
@@ -37,10 +37,10 @@ trait Roles {
     static $PAGE_manage_user_pending_hours = 131;
     static $PAGE_logout = 132;
 
-    
-    
-    
-    
+
+
+
+
     //action
     static $ACTION_working_hours_summary = 201;
     static $ACTION_add_new_employee = 202;
@@ -84,16 +84,16 @@ trait Roles {
     static $ACTION_save_bandwidth_detail = 239;
     static $ACTION_get_bandwidth_detail = 240;
     static $ACTION_validate_unique_key = 241;
-    static $ACTION_send_slack_msg = 242;    
+    static $ACTION_send_slack_msg = 242;
     static $ACTION_get_all_users_detail = 243;
-    
+
     static $ACTION_get_all_clients = 301;
     static $ACTION_get_client_detail = 302;
     static $ACTION_create_new_client = 303;
     static $ACTION_update_client_details = 304;
     static $ACTION_create_client_invoice = 305;
     static $ACTION_delete_invoice = 306;
-    
+
 
     static $ACTION_delete_role = 401;
     static $ACTION_assign_user_role = 402;
@@ -176,7 +176,7 @@ trait Roles {
 
 
 
-    
+
 
 
     //notification
@@ -191,7 +191,7 @@ trait Roles {
 
    public static function getAllPages() {
         $array = array(
-            array( 
+            array(
                 'id' => self::$PAGE_home,
                 'name' => 'home',
                 'actions_list' => array(
@@ -201,8 +201,8 @@ trait Roles {
                 )
             ),
 
-            array( 
-                'id' => self::$PAGE_monthly_attendance, 
+            array(
+                'id' => self::$PAGE_monthly_attendance,
                 'name' => 'monthly_attendance',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
@@ -210,8 +210,8 @@ trait Roles {
                     array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
                 )
             ),
-            array( 
-                'id' => self::$PAGE_inventory_system, 
+            array(
+                'id' => self::$PAGE_inventory_system,
                 'name' => 'inventory_system',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
@@ -229,9 +229,9 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
                 )
             ),
-                       
-            
-            array( 
+
+
+            array(
                 'id' => self::$PAGE_manage_working_hours,
                 'name' => 'manage_working_hours',
                 'actions_list' => array(
@@ -240,16 +240,16 @@ trait Roles {
                 )
             ),
 
-            array( 
-                'id' => self::$PAGE_holidays, 
+            array(
+                'id' => self::$PAGE_holidays,
                 'name' => 'holidays',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_holidays_list, 'name' => 'get_holidays_list' ),
                 )
             ),
-            
-            array( 
-                'id' => self::$PAGE_team_view, 
+
+            array(
+                'id' => self::$PAGE_team_view,
                 'name' => 'team_view',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
@@ -257,16 +257,16 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_apply_leave,
                 'name' => 'apply_leave',
                 'actions_list' =>  array(
                     array( 'id' => self::$ACTION_apply_leave, 'name' => 'apply_leave' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_my_leaves,
                 'name' => 'my_leaves',
                 'actions_list' => array(
@@ -274,8 +274,8 @@ trait Roles {
                     array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_disabled_employes,
                 'name' => 'disabled_employes',
                 'actions_list' => array(
@@ -284,73 +284,74 @@ trait Roles {
 
                 )
             ),
-            
-            
-            
-            array( 
+
+
+
+            array(
                 'id' => self::$PAGE_leaves_summary,
                 'name' => 'leaves_summary',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_all_leaves_summary, 'name' => 'get_all_leaves_summary' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_salary,
                 'name' => 'salary' ,
                 'actions_list' => array(
-                    
+
                 )
             ),
-            
+
             array( 'id' => self::$PAGE_manage_salary, 'name' => 'manage_salary' ),
-            array( 
-                'id' => self::$PAGE_my_profile, 
+            array(
+                'id' => self::$PAGE_my_profile,
                 'name' => 'my_profile',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_user_profile_detail,'name' => 'get_user_profile_detail' ),
                     array( 'id' => self::$ACTION_update_user_bank_detail,'name' => 'update_user_bank_detail' ),
                     array( 'id' => self::$ACTION_update_user_profile_detail,'name' => 'update_user_profile_detail' ),
+                    array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
                     array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
                     array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
                     array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_my_inventory,
                 'name' => 'my_inventory',
                 'actions_list' => array(
 
                 )
             ),
-            
 
 
-            
+
+
             array( 'id' => self::$PAGE_uploadAttendance, 'name' => 'uploadAttendance' ),
-            array( 
+            array(
                 'id' => self::$PAGE_view_salary,
                 'name' => 'view_salary',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_all_users_detail, 'name' => 'get_all_users_detail' ),
                 )
             ),
-            
-            array( 
+
+            array(
                 'id' => self::$PAGE_policy_documents,
                 'name' => 'policy_documents',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_user_policy_document, 'name' => 'get_user_policy_document' ),
                 )
             ),
-            
-            
-           
-                      
+
+
+
+
             array( 'id' => self::$PAGE_login, 'name' => 'login' ),
             array( 'id' => self::$PAGE_logout, 'name' => 'logout' ),
-            array( 
+            array(
                 'id' => self::$PAGE_manage_roles,
                 'name' => 'manage_roles',
                 'actions_list' => array(
@@ -361,10 +362,10 @@ trait Roles {
                     array( 'id' => self::$ACTION_add_roles, 'name' => 'add_roles' ),
                 )
             ),
-            
 
 
-            array( 
+
+            array(
                 'id' => self::$PAGE_manage_clients,
                 'name' => 'manage_clients',
                 'actions_list' => array(
@@ -377,8 +378,8 @@ trait Roles {
                 )
             ),
 
-            array( 
-                'id' => self::$PAGE_manage_leaves, 
+            array(
+                'id' => self::$PAGE_manage_leaves,
                 'name' => 'manage_leaves',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_all_leaves, 'name' => 'get_all_leaves' ),
@@ -389,11 +390,11 @@ trait Roles {
                 )
             ),
 
-            array( 
+            array(
                 'id' => self::$PAGE_mail_templates,
                 'name' => 'mail_templates',
                 'actions_list' => array(
-                    array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),                    
+                    array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),
                     array( 'id' => self::$ACTION_get_email_template, 'name' => 'get_email_template' ),
                     array( 'id' => self::$ACTION_create_email_template, 'name' => 'create_email_template' ),
                     array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
@@ -404,7 +405,7 @@ trait Roles {
                 )
             ),
 
-            array( 
+            array(
                 'id' => self::$PAGE_add_variables,
                 'name' => 'add_variables',
                 'actions_list' => array(
@@ -414,7 +415,7 @@ trait Roles {
                 )
             ),
 
-            array( 
+            array(
                 'id' => self::$PAGE_upload_policy_documents,
                 'name' => 'upload_policy_documents',
                 'actions_list' =>  array(
@@ -424,8 +425,8 @@ trait Roles {
                 )
             ),
 
-            array( 
-                'id' => self::$PAGE_manage_users, 
+            array(
+                'id' => self::$PAGE_manage_users,
                 'name' => 'manage_users',
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
@@ -447,7 +448,7 @@ trait Roles {
                 )
             ),
 
-            array( 
+            array(
                 'id' => self::$PAGE_manage_payslips,
                 'name' => 'manage_payslips',
                 'actions_list' => array(
@@ -457,7 +458,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_save_google_payslip_drive_access_token, 'name' => 'save_google_payslip_drive_access_token' ),
                     array( 'id' => self::$ACTION_get_user_salary_info_by_id,'name' => 'get_user_salary_info_by_id' ),
                 )
-            ), 
+            ),
             array(
                 'id' => self::$PAGE_documents,
                 'name' => 'documents',
@@ -492,14 +493,14 @@ trait Roles {
 
         return $array;
 
-        $array = array(            
-            
+        $array = array(
+
             // start - uncategorised actions
             array( 'id' => self::$ACTION_get_user_worktime_detail, 'name' => 'get_user_worktime_detail' ),
-            
+
             array( 'id' => self::$ACTION_get_user_previous_month_time, 'name' => 'get_user_previous_month_time' ),
             array( 'id' => self::$ACTION_delete_employee, 'name' => 'delete_employee' ),
-            
+
             array( 'id' => self::$ACTION_update_user_entry_exit_time, 'name' => 'update_user_entry_exit_time' ),
             array( 'id' => self::$ACTION_attendance_summary, 'name' => 'attendance_summary' ),
             array( 'id' => self::$ACTION_get_users_leaves_summary, 'name' => 'get_users_leaves_summary' ),
@@ -510,19 +511,20 @@ trait Roles {
             array( 'id' => self::$ACTION_get_all_leaves_of_user, 'name' => 'get_all_leaves_of_user' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
             array( 'id' => self::$ACTION_get_role_from_slackid, 'name' => 'get_role_from_slackid' ),
-            
-            
-            
-            
-            array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
+
+
+
+
+
             array( 'id' => self::$ACTION_update_user_bank_detail_by_id,'name' => 'update_user_bank_detail_by_id' ),
             array( 'id' => self::$ACTION_create_user_salary,'name' => 'create_user_salary' ),
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
-            
+
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
             // end - uncategorised actions
 
             // actions not required token
+            // array( 'id' => self::$ACTION_update_user_profile_detail_by_id,'name' => 'update_user_profile_detail_by_id' ),
             // array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
             // array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
             // array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
@@ -584,7 +586,7 @@ trait Roles {
             // array( 'id' => self::$ACTION_update_client_details, 'name' => 'update_client_details' ),
             // array( 'id' => self::$ACTION_create_client_invoice, 'name' => 'create_client_invoice' ),
             // array( 'id' => self::$ACTION_delete_invoice, 'name' => 'delete_invoice' ),
-            
+
             // array( 'id' => self::$ACTION_get_template_variable, 'name' => 'get_template_variable' ),
             // array( 'id' => self::$ACTION_create_template_variable, 'name' => 'create_template_variable' ),
             // array( 'id' => self::$ACTION_update_template_variable, 'name' => 'update_template_variable' ),
@@ -594,15 +596,15 @@ trait Roles {
             // array( 'id' => self::$ACTION_update_email_template, 'name' => 'update_email_template' ),
             // array( 'id' => self::$ACTION_delete_email_template, 'name' => 'delete_email_template' ),
             // array( 'id' => self::$ACTION_get_email_template_byId, 'name' => 'get_email_template_byId' ),
-            
+
             // array( 'id' => self::$ACTION_add_team_list, 'name' => 'add_team_list' ),
             // array( 'id' => self::$ACTION_get_team_list, 'name' => 'get_team_list' ),
             // array( 'id' => self::$ACTION_get_team_users_detail, 'name' => 'get_team_users_detail' ),
-            
+
             // array( 'id' => self::$ACTION_update_user_policy_document, 'name' => 'update_user_policy_document' ),
             // array( 'id' => self::$ACTION_get_policy_document, 'name' => 'get_policy_document' ),
             // array( 'id' => self::$ACTION_save_policy_document, 'name' => 'save_policy_document' ),
-            
+
             // array( 'id' => self::$ACTION_delete_role, 'name' => 'delete_role' ),
             // array( 'id' => self::$ACTION_assign_user_role, 'name' => 'assign_user_role' ),
             // array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
@@ -884,12 +886,12 @@ trait Roles {
             }
             $r_error = 0;
             $r_message = "Role updated!!";
-        } 
+        }
         }
         else{
-          $r_message = "Empty data passed";  
+          $r_message = "Empty data passed";
         }
-        
+
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -916,23 +918,23 @@ trait Roles {
                 foreach ($allpages as $v1) {
                     $p = 0;
                     foreach ($role_page as $u1) {
-                        
+
                         if ($u1['page_id'] == $v1['id']) {
                             $p = 1;
                         }
-                       
+
                     }
                      $v1['is_assigned'] = $p;
-                     // start added by arun 
+                     // start added by arun
                      $updatedActionsList = array();
                      if( isset($v1['actions_list']) ){
                         $updatedActionsList = $v1['actions_list'];
                         foreach( $updatedActionsList as $key => $ual ){
                             $is_assigned = 0;
-                            foreach ($role_action as $u2) {                                
+                            foreach ($role_action as $u2) {
                                 if ($u2['action_id'] == $ual['id']) {
                                     $is_assigned = 1;
-                                }                               
+                                }
                             }
                             $ual['is_assigned'] = $is_assigned;
                             $updatedActionsList[$key] = $ual;
@@ -946,11 +948,11 @@ trait Roles {
                 foreach ($allaction as $v2) {
                     $p = 0;
                     foreach ($role_action as $u2) {
-                        
+
                         if ($u2['action_id'] == $v2['id']) {
                             $p = 1;
                         }
-                       
+
                     }
                      $v2['is_assigned'] = $p;
                   $val['role_actions'][] =  $v2;
@@ -958,18 +960,18 @@ trait Roles {
                 foreach ($allnotification as $v3) {
                     $p = 0;
                     foreach ($role_notify as $u2) {
-                        
+
                         if ($u2['notification_id'] == $v3['id']) {
                             $p = 1;
                         }
-                        
-                      
+
+
                     }
                       $v3['is_assigned'] = $p;
                      $val['role_notifications'][] = $v3;
                 }
                 $result['roles'][] = $val;
-                
+
             }
         }
        $result['users_list'] = self::getEnabledUsersListWithoutPass();
@@ -1022,7 +1024,7 @@ trait Roles {
 
     public static function getRolePagesForSuperAdmin ( ){
         $return = self::getGenericPagesForAllRoles();
-        $allPages = self::getAllPages( );   
+        $allPages = self::getAllPages( );
 
         foreach( $allPages as $page ){
             // $pid = $page['id'];
@@ -1087,8 +1089,8 @@ trait Roles {
 
         return $rows;
     }
-   
-    
+
+
     public static function assignUserRole($userid,$roleid) {
         $r_error = 1;
         $r_message = "";
@@ -1171,7 +1173,7 @@ trait Roles {
         $return = false;
         $q = "SELECT * FROM roles WHERE id=$roleid";
         $run = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($run);        
+        $rows = self::DBfetchRows($run);
         if( sizeof($rows) > 0 ){
             $role = $rows[0];
             $pages = self::getRolePages( $roleid );
@@ -1182,7 +1184,7 @@ trait Roles {
             $role['role_notifications'] = $notifications;
             $return =  $role;
         }
-        return $return; 
+        return $return;
     }
 
     // check if user elc is completed or not
@@ -1202,8 +1204,8 @@ trait Roles {
         }
         return $return;
     }
-    
-    
+
+
 
 }
 
