@@ -15,7 +15,7 @@ if (isset($_FILES['image'])) {
     if ($file_name != "AGL_001.TXT") {
         echo "Wrong file inserted";
     } else {
-      
+
         if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
             echo "File Not uploaded";
             die;
@@ -41,10 +41,26 @@ if (isset($_FILES['image'])) {
                 if (!empty($line)) {
                     $data = explode(" ", $line);
                 }
+
+                // start old machine format
+                // 06-30-2016 01:19:29PM
+                // $user_id = $data['2'];
+                // $datetime = $data['6'] . " " . $data['7'];
+
+                // start new machine format // added by arun on 30th august
+                // 2017/07/10 20:31:57
+                // need to change this
                 $user_id = $data['2'];
-                $datetime = $data['6'] . " " . $data['7'];
+                $raw_date = $data['5'];
+                $raw_time = $data['6'];
+
+                $final_date = date("m-d-Y", strtotime($raw_date));
+                $final_time = date("h:i:sA", strtotime($raw_time));
+
+                $datetime = $final_date . " " . $final_time;
+
                 if (in_array($datetime, $attendance)) {
-                    
+
                 } else {
                     if (strpos($datetime, '01-08-2017') === false) {
                         $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
@@ -78,7 +94,6 @@ while ($s = mysqli_fetch_assoc($w)) {
         $time_table[$sid]['timing'][] = "";
     }
 }
-
 
 if (isset($sendmessage) && $sendmessage == 1) {
     $qv = "SELECT * from admin";
@@ -114,7 +129,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
     $string2 = "";
     $string3 = "";
     $string4 = "";
-    
+
     foreach ($ttable as $valo) {
         $a = current($valo['timing']);
         $a = strtotime(str_replace("-", "/", $a));
@@ -269,7 +284,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     $ff = saveUserMonthPunching($id, $e, $link);
                     $ffprev = saveUserMonthPunching($id, $e, $link, $prev_year, $prev_month);
                     $c_id = get_channel_id($f, $cid_array);
-                
+
                     $d = str_replace("PM", "", current($value['timing']));
                     $d = strtotime(str_replace("-", "/", $d));
                     $d1 = date("h:i A", $d);
@@ -292,7 +307,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                             send_slack_message($c_id, $token, $msg);
                     }
-                  
+
                 }
             }
             if (!in_array($e, $are)) {
@@ -425,7 +440,7 @@ function saveUserMonthPunching($userid, $email, $link, $cyear = false, $cmonth =
         $month = $cmonth;
         $c_day = "";
     }
-  
+
     $list = array();
     $q = "SELECT * FROM attendance Where user_id = $userid";
     $runQuery = mysqli_query($link, $q) or die();
@@ -534,12 +549,12 @@ function getleaveinfo($userid,$date,$link) {
         }
     }
     ksort($list);
-  
+
     if(in_array($date,$list)){
-      $result= 1;  
+      $result= 1;
     }
-    
-   return $result; 
+
+   return $result;
 }
 function getDatesBetweenTwoDates($startDate, $endDate) {
     $return = array($startDate);

@@ -1,5 +1,9 @@
 <?php
 
+// script die added by arun
+echo "no need of this functionality from 28th august 2017";
+die;
+
 /*
   Cron file to update lunch break detail of employee if not inserted by them.
  */
@@ -101,7 +105,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $month = date("Y-m");
             $current_month = date("F");
             $arr = array();
-            
+
 
             $f1 = $f2 = 0;
             if ($row != false) {
@@ -137,7 +141,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                 }
 
                 $arr = array_sort($arr, 'rx_total', SORT_DESC);
-               
+
                 if (sizeof($arr) > 0) {
                     foreach ($arr as $key => $v2) {
                         $assign_with_data.= $name . " - " . $key . "\n";
@@ -153,9 +157,9 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
                            }
                         }
                         else{
-                           $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";  
+                           $assign_with_data.= " " . date("jS M", strtotime($date)) . " - " . Mb_or_Gb($v2['tx_' . $date]) . " Up / " . Mb_or_Gb($v2['rx_' . $date]) . " Down - " . Mb_or_Gb($v2['rx_' . $date] + $v2['tx_' . $date]) . "\n\n";
                         }
-                       
+
                     }
                 }
             } else {
@@ -166,17 +170,17 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
             $not_assign[] = $name;
         }
     }
-    
-    
+
+
     if (!empty($assign_with_data)) {
         $title = "User consumed bandwidth list";
         $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $assign_with_data);
-        
+
     }
     if (!empty($assign_with_no_data)) {
         $title = "User bandwidth not found list";
         $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $assign_with_no_data);
-        
+
     }
     if (sizeof($not_assign) > 0) {
         $message = "";
@@ -186,7 +190,7 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
         }
         if (!empty($message)) {
             $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $message);
-           
+
         }
     }
 }
@@ -292,13 +296,13 @@ function getLasttwoDaysData($userid, $mac_address, $date) {
     $date3 = date("Y-m-d", strtotime(getPreviousWorkDate($date2)));
     $arr = array($date, $date2, $date3);
     $pr = HR::getUserMonthLeaves($userid, date("Y"), date("m"));
-    
+
    //$pr = HR::getUserMonthLeaves($userid, "2017", "04");
-    
+
     $q = "select * from bandwidth_stats where mac = '$mac_address' AND (date='$date' OR date='$date2' OR date='$date3')";
     $run = Database::DBrunQuery($q);
     $row = Database::DBfetchRows($run);
-    
+
     if (empty($row)) {
         if (sizeof($pr) > 0) {
             foreach ($arr as $v) {
