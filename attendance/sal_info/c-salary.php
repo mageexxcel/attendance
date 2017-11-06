@@ -2561,7 +2561,6 @@ class Salary extends DATABASE {
     }
 
     public static function checkDatePresent($data) {
-
         $db = self::getInstance();
         $mysqli = $db->getConnection();
         $result = 0;
@@ -2570,7 +2569,33 @@ class Salary extends DATABASE {
         $row1 = self::DBfetchRows($runQuery1);
 
         if (mysqli_num_rows($runQuery1) >= 1) {
-            $result = 1;
+
+            // start added by arun on 6th october to check date is off day
+            $is_off_day = false;
+            $dateBreak = explode("-", $data);
+            $req_month = $dateBreak[0];
+            $req_date = $dateBreak[1];
+            $req_year = $dateBreak[2];
+            $weekendsOfMonth = self::getWeekendsOfMonth( $req_year, $req_month );
+            if( sizeof($weekendsOfMonth) > 0 ){
+                foreach( $weekendsOfMonth as $wom ){
+                    if( $wom['date'] == $req_date ){
+                       $is_off_day = true; 
+                    }
+                }
+            }
+            $holidaysOfMonth = self::getHolidaysOfMonth($req_year, $req_month);
+            if( sizeof($holidaysOfMonth) > 0 ){
+                foreach( $holidaysOfMonth as $wom ){
+                    if( $wom['date'] == $req_date ){
+                       $is_off_day = true; 
+                    }
+                }
+            }
+            // end added by arun on 6th october to check date is off day
+            if( $is_off_day == false ){
+                $result = 1;    
+            }
             return $result;
         } else {
             return $result;
