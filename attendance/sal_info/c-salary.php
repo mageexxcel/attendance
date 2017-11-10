@@ -2049,7 +2049,14 @@ class Salary extends DATABASE {
         $q = "SELECT * FROM email_templates";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
-        return $row;
+        // start added to fix issue on json_encode by arun on 10th nov 2017
+        $encodedRows = [];
+        if( sizeof($row) > 0 ){
+            foreach( $row as $p ){
+                $encodedRows[] = array_map('utf8_encode', $p);
+            }
+        }
+        return $encodedRows;
     }
 
 // create an email template
