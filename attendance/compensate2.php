@@ -1061,14 +1061,17 @@ function getDatesBetweenTwoDates($startDate, $endDate) {
 }
 
 function getSlackMsgSendStatus($email, $link) {
-    $result = 0;
-    $qry = "select * from user_profile where work_email = '$email' AND slack_msg = 1";
+    // $result = 0;
+    // $qry = "select * from user_profile where work_email = '$email' AND slack_msg = 1";
 
-    $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
-    if (mysqli_num_rows($resl) > 0) {
-        $result = 1;
-    }
-    return $result;
+    // $resl = mysqli_query($link, $qry) or die(mysqli_error($link));
+    // if (mysqli_num_rows($resl) > 0) {
+    //     $result = 1;
+    // }
+    // return $result;
+    // above code commendted by arun on 31st oct 2017, so that msg will be send to all users & not dependent on db status
+
+    return 0;
 }
 
 function getAssignDeviceStatus($userid,$link) {

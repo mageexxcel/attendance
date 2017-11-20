@@ -44,20 +44,20 @@ if (isset($_FILES['image'])) {
 
                 // start old machine format
                 // 06-30-2016 01:19:29PM
-                // $user_id = $data['2'];
-                // $datetime = $data['6'] . " " . $data['7'];
+                $user_id = $data['2'];
+                $datetime = $data['6'] . " " . $data['7'];
+                // end old machine format
 
                 // start new machine format // added by arun on 30th august
                 // 2017/07/10 20:31:57
                 // need to change this
-                $user_id = $data['2'];
-                $raw_date = $data['5'];
-                $raw_time = $data['6'];
-
-                $final_date = date("m-d-Y", strtotime($raw_date));
-                $final_time = date("h:i:sA", strtotime($raw_time));
-
-                $datetime = $final_date . " " . $final_time;
+                // $user_id = $data['2'];
+                // $raw_date = $data['5'];
+                // $raw_time = $data['6'];
+                // $final_date = date("m-d-Y", strtotime($raw_date));
+                // $final_time = date("h:i:sA", strtotime($raw_time));
+                // $datetime = $final_date . " " . $final_time;
+                // end new machine format
 
                 if (in_array($datetime, $attendance)) {
 
