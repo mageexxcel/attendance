@@ -62,7 +62,7 @@ if( $DO_TOKEN_VERIFICATION == false  ){
     // echo '<pre>';
     // print_r( $loggedUserInfo );
     // echo '<pre>';
-    
+
 
     if( $IS_SUPER_ADMIN === true ){
         // this is the admin on existing role basis, have access to all. type = "Admin" defined in users table
@@ -74,7 +74,7 @@ if( $DO_TOKEN_VERIFICATION == false  ){
     //if( $loggedUserInfo_emp_id == 343 ){ // uncomment this line after testing for meraj user
         $is_user_valid_action = HR::is_user_valid_action( $action, $loggedUserInfo_emp_id );
         if( $is_user_valid_action == true ){
-            
+
         }else{
             header("HTTP/1.1 401 Unauthorized");
             exit;
@@ -133,7 +133,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     $res = Salary::updateEmailTemplate($PARAMS);
 } else if ($action == 'delete_email_template') {   //action to delete an email template
     $res = Salary::deleteEmailTemplate($PARAMS);
-} else if ($action == 'get_email_template_byId') { //aciton to get an email template by id 
+} else if ($action == 'get_email_template_byId') { //aciton to get an email template by id
     $res = Salary::getEmailTemplateById($PARAMS);
 } else if ($action == 'add_team_list') {  //action to add or update team list
     $PARAMS['value'] = json_encode($PARAMS['value']);
@@ -155,7 +155,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     $res = Salary::getPolicyDocument();
 } else if ($action == 'save_policy_document') {    //action to save policy document
    $res = Salary::savePolicyDocument($PARAMS);
-} else if ($action == 'get_all_clients') { //action to get all client details 
+} else if ($action == 'get_all_clients') { //action to get all client details
     $res = Salary::getAllClient();
 } else if ($action == 'get_client_detail') {   //action to get client detail.
     if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
@@ -173,7 +173,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     } else {
         $res = Salary::createNewClient($PARAMS);
     }
-} else if ($action == 'update_client_details') {   //action to update client details 
+} else if ($action == 'update_client_details') {   //action to update client details
     if (isset($PARAMS['client_id']) && $PARAMS['client_id'] != "") {
         $clientid = $PARAMS['client_id'];
         $res = Salary::UpdateClientDetails($PARAMS);
@@ -281,7 +281,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
             if (isset($PARAMS['extra_arrear']) && isset($PARAMS['arrear_for_month'])) {
                 $extra_arrear = $PARAMS['extra_arrear'];
                 $arrear_for_month = $PARAMS['arrear_for_month'];
-            }        
+            }
             if (!isset($PARAMS['year']) && !isset($PARAMS['month']))  {
                 $currentYear = date("Y");
                 $currentMonth = date("F");
@@ -290,14 +290,14 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
                     $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
                 } else {
                     $year = $currentYear;
-                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;                
-                }           
+                    $month = date("m", strtotime ( '-1 month' , strtotime ( $currentMonth ) )) ;
+                }
             }
             $res = Salary::getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month);
         }
     } else {
         $res['data']['message'] = 'Please give user_id ';
-    }    
+    }
 } else if ($action == 'get_user_document') {   //action to get employee document detail
     $res = Salary::getUserDocumentDetail($user_id);
 } else if ($action == 'get_user_document_by_id') {   //action to get employee document detail
@@ -396,6 +396,18 @@ else if( $action == 'get_user_salary_info_by_id' ){
             $res['data'] = $userinfo;
             $res3 = Salary::getHoldingDetail($userid);
             $resData = Salary::getSalaryInfo($userid);
+
+            // start - check added so that salary greater than not to show to HR
+            $hideSalaryFromHR = false;
+            if( sizeof($resData ) > 0 ){
+                foreach($resData as $salCheck ){
+                    if( $salCheck['total_salary'] && $salCheck['total_salary'] > 20000 ){
+                        $hideSalaryFromHR = true;
+                    }
+                }
+            }
+            // end - check added so that salary greater than not to show to HR
+
             $res4 = Salary::getUserPayslipInfo($userid);
             $i = 0;
             $res['data']['salary_details'] = array();
@@ -408,29 +420,27 @@ else if( $action == 'get_user_salary_info_by_id' ){
             }
             $res['data']['holding_details'] = $res3;
             $res['data']['payslip_history'] = $res4;
-            
+
             $joining_date = $res['data']['date_of_joining'];
             $current_date = date("Y-m-d");
             $endDate = strtotime($current_date);
             $startDate = strtotime($joining_date);
-            
+
             $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
 
-
-            
             // arun you have to work on this to enable this for hr role
-            if( strtolower( $loggedUserInfo['role'] ) == "hr"  &&  $numberOfMonths > 5 ){            
+            if( strtolower( $loggedUserInfo['role'] ) == "hr"  &&  ( $numberOfMonths > 8 || $hideSalaryFromHR == true) ){
                 $res['data'] = array();
                 $res['data']['message'] = "You are not authorise to view this user data";
             }
-             
+
         }
     } else {
         $res['error'] = 1;
         $res['message'] = 'The given user id member not found';
         //$res['error'][] = 'The given user id number';
     }
-    
+
 }
 
 
