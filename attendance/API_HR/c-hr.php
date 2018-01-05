@@ -381,7 +381,7 @@ class HR extends DATABASE {
         return $obj;
     }
 
-    public static function _beautyDaySummary($dayRaw) {
+    public static function _beautyDaySummary($dayRaw, $dayWorkingHours = false ) {
         $TIMESTAMP = '';
         $numberOfPunch = sizeof($dayRaw);
 
@@ -407,7 +407,23 @@ class HR extends DATABASE {
 
         $r_total_time = (int) $outTimeKey - (int) $inTimeKey;
 
-        $r_extra_time = (int) $r_total_time - (int) ( 9 * 60 * 60 );
+        $orignal_total_time = 0;
+
+        if( $dayWorkingHours === false ){
+            $orignal_total_time = (int) ( 9 * 60 * 60 ); 
+            $r_extra_time = (int) $r_total_time - (int) ( 9 * 60 * 60 );    
+        } else {
+            // this will calculate from the hours passed
+            $explodeDayWorkingHours = explode(":",$dayWorkingHours);
+            $explodeDay_hour = $explodeDayWorkingHours[0] * 60 * 60;
+            $explodeDay_minute = $explodeDayWorkingHours[1] * 60;
+
+            $orignal_total_time = (int) ( $explodeDay_hour + $explodeDay_minute );
+
+            $r_extra_time = (int) $r_total_time - (int) ( $explodeDay_hour + $explodeDay_minute );
+        }
+
+        
 
         if ($r_extra_time < 0) { // not completed minimum hours
             $r_extra_time_status = "-";
@@ -422,6 +438,7 @@ class HR extends DATABASE {
         $return['total_time'] = $r_total_time;
         $return['extra_time_status'] = $r_extra_time_status;
         $return['extra_time'] = $r_extra_time;
+        $return['orignal_total_time'] = $orignal_total_time;
 
         return $return;
     }
@@ -613,7 +630,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getGenericMonthSummary($year, $month) {
+    public static function getGenericMonthSummary($year, $month, $userid = false) { // $userid added on 5jan2018 by arun so as to use user working hours
         $daysOfMonth = self::getDaysOfMonth($year, $month);
 
         //add default working hours
@@ -651,6 +668,21 @@ class HR extends DATABASE {
                 $daysOfMonth[$hm_key]['office_working_hours'] = $hm['working_hours'];
             }
         }
+
+        // start ---- added on 5jan2018
+        if( $userid != false ){
+            $userWorkingHours = self::getUserMangedHours($userid);
+            if (sizeof($userWorkingHours) > 0) {
+                foreach( $daysOfMonth as $key => $dm ){
+                    foreach ($userWorkingHours as $hm_key => $hm) {
+                        if( $dm['full_date'] == $hm['date'] ){
+                            $daysOfMonth[$key]['office_working_hours'] = $hm['working_hours'];
+                        }
+                    }                    
+                }
+            }
+        }
+        // end ---- added on 5jan2018
         return $daysOfMonth;
     }
 
@@ -676,8 +708,15 @@ class HR extends DATABASE {
             }
         }
 
+        // added on 5jan2018----
+        $genericMonthDays = self::getGenericMonthSummary($year, $month, $userid); // $userid added on 5jan2018 by arun so as to use user working hours
+        
         foreach ($allMonthAttendance as $pp_key => $pp) {
-            $daySummary = self::_beautyDaySummary($pp);
+            $dayW_hours = false;
+            if( isset($genericMonthDays[$pp_key]) && isset($genericMonthDays[$pp_key]['office_working_hours'])){
+                $dayW_hours = $genericMonthDays[$pp_key]['office_working_hours'];
+            }
+            $daySummary = self::_beautyDaySummary($pp, $dayW_hours);
             $list[$pp_key] = $daySummary;
         }
         return $list;
@@ -744,7 +783,7 @@ class HR extends DATABASE {
     }
 
     public static function getUserMonthAttendace($userid, $year, $month) {
-        $genericMonthDays = self::getGenericMonthSummary($year, $month);
+        $genericMonthDays = self::getGenericMonthSummary($year, $month, $userid); // $userid added on 5jan2018 by arun so as to use user working hours
         $userMonthPunching = self::getUserMonthPunching($userid, $year, $month);
         $userMonthLeaves = self::getUserMonthLeaves($userid, $year, $month);
 
@@ -770,6 +809,7 @@ class HR extends DATABASE {
                 $v['total_time'] = $userMonthPunching[$k]['total_time'];
                 $v['extra_time_status'] = $userMonthPunching[$k]['extra_time_status'];
                 $v['extra_time'] = $userMonthPunching[$k]['extra_time'];
+                $v['orignal_total_time'] = $userMonthPunching[$k]['orignal_total_time'];
                 $return[$k] = $v;
             } else {
                 $return[$k] = $v;
@@ -818,6 +858,8 @@ class HR extends DATABASE {
 
     public static function _beautyMonthSummary($monthAttendace) {
 
+        // print_r( $monthAttendace );
+
         $r_actual_working_hours = $r_completed_working_hours = $r_pending_working_hours = 0;
 
         $WORKING_DAYS = $NON_WORKING_DAYS = $LEAVE_DAYS = $HALF_DAYS = 0;
@@ -826,6 +868,9 @@ class HR extends DATABASE {
 
 
         foreach ($monthAttendace as $pp) {
+            
+            $r_actual_working_seconds += $pp['orignal_total_time']; 
+            
             $day_type = $pp['day_type'];
             if ($day_type == 'WORKING_DAY') {
                 $WORKING_DAYS++;
@@ -840,7 +885,7 @@ class HR extends DATABASE {
         }
 
         //-----------------------------
-        $r_actual_working_seconds = $WORKING_DAYS * 9 * 60 * 60;
+        //$r_actual_working_seconds = $WORKING_DAYS * 9 * 60 * 60;
         $r_pending_working_seconds = $r_actual_working_seconds - $r_completed_working_seconds;
         //-----------------------------
         $a = self::_secondsToTime($r_actual_working_seconds);
