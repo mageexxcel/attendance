@@ -683,6 +683,19 @@ class HR extends DATABASE {
             }
         }
         // end ---- added on 5jan2018
+
+
+        // add  original_working_time // added on 23rd jan 2018 by arun
+        foreach( $daysOfMonth as $key => $dom ){
+            if( $dom['office_working_hours'] != '' ){
+                $explodeDayWorkingHours = explode(":",$dom['office_working_hours']);
+                $explodeDay_hour = $explodeDayWorkingHours[0] * 60 * 60;
+                $explodeDay_minute = $explodeDayWorkingHours[1] * 60;
+                $orignal_total_time = (int) ( $explodeDay_hour + $explodeDay_minute );
+                $daysOfMonth[$key]['orignal_total_time'] = $orignal_total_time;
+            }
+        }
+
         return $daysOfMonth;
     }
 
