@@ -696,15 +696,21 @@ class HR extends DATABASE {
         foreach ($rows as $key => $d) {
             $d_timing = $d['timing'];
             $d_timing = str_replace("-", "/", $d_timing);
-            $d_full_date = date("Y-m-d", strtotime($d_timing));
-            $d_timestamp = strtotime($d_timing);
-            $d_month = date("m", $d_timestamp);
-            $d_year = date("Y", $d_timestamp);
-            $d_date = date("d", $d_timestamp);
-            //$d_date = (int)$d_date;
-            if ($d_year == $year && $d_month == $month) {
-                $d['timestamp'] = $d_timestamp;
-                $allMonthAttendance[$d_date][] = $d;
+
+            // check if date and time are not there in string
+            if( strlen($d_timing) < 10 ){
+
+            } else {
+                $d_full_date = date("Y-m-d", strtotime($d_timing));
+                $d_timestamp = strtotime($d_timing);
+                $d_month = date("m", $d_timestamp);
+                $d_year = date("Y", $d_timestamp);
+                $d_date = date("d", $d_timestamp);
+                //$d_date = (int)$d_date;
+                if ($d_year == $year && $d_month == $month) {
+                    $d['timestamp'] = $d_timestamp;
+                    $allMonthAttendance[$d_date][] = $d;
+                }
             }
         }
 
