@@ -684,8 +684,8 @@ class HR extends DATABASE {
         }
         // end ---- added on 5jan2018
 
-
         // add  original_working_time // added on 23rd jan 2018 by arun
+
         foreach( $daysOfMonth as $key => $dom ){
             if( $dom['office_working_hours'] != '' ){
                 $explodeDayWorkingHours = explode(":",$dom['office_working_hours']);
@@ -832,7 +832,7 @@ class HR extends DATABASE {
                 $return[$k] = $v;
             } else {
                 $return[$k] = $v;
-            }
+            } 
         }
 
         foreach ($return as $k => $v) {
@@ -842,6 +842,8 @@ class HR extends DATABASE {
                 if ($leave_number_of_days < 1) { // this means less then 1 day leave like half day
                     $v['day_type'] = 'HALF_DAY';
                     $v['day_text'] = $userMonthLeaves[$k]['reason'];
+                    $v['office_working_hours'] = "04:30";
+                    $v['orignal_total_time'] = ($v['orignal_total_time'] / 2) ;
                 } else {
                     $v['day_type'] = 'LEAVE_DAY';
                     $v['day_text'] = $userMonthLeaves[$k]['reason'];
@@ -886,11 +888,15 @@ class HR extends DATABASE {
         $r_actual_working_seconds = $r_completed_working_seconds = $r_pending_working_seconds = 0;
 
 
-        foreach ($monthAttendace as $pp) {
-            
-            $r_actual_working_seconds += $pp['orignal_total_time']; 
+        foreach ($monthAttendace as $pp) {           
             
             $day_type = $pp['day_type'];
+
+            if($day_type == 'WORKING_DAY' || $day_type == 'HALF_DAY' ){
+                $r_actual_working_seconds += $pp['orignal_total_time']; 
+            }
+
+
             if ($day_type == 'WORKING_DAY') {
                 $WORKING_DAYS++;
                 $r_completed_working_seconds += $pp['total_time'];
@@ -900,6 +906,7 @@ class HR extends DATABASE {
                 $LEAVE_DAYS++;
             } else if ($day_type == 'HALF_DAY') {
                 $HALF_DAYS++;
+                $r_completed_working_seconds += $pp['total_time'];
             }
         }
 
