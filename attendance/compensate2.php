@@ -166,14 +166,18 @@ if ($current_day != weekoff && $current_date != $second_sat && $current_date != 
 
                 $whour_already_updated = checkUserWorkingHours($qs['id'], $prev_month, $link); // check employee pending time already updated or not
 
-                if ($whour_already_updated == 0) {
-                    $pdate = $current_date;
-                    $qt = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value (" . $qs['id'] . ", '$ptime', '$prev_month', '$pdate')";
-                    $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
-                    $prev_mtime[$wmail] = $qs;
-                    $prev_mtime[$wmail]['pending'] = $previous_month_time;
-                    $prev_mtime[$wmail]['worktime'] = $ptime;
-                }
+
+                // NOTE - below lines are commented by arun on 24th jan 2018
+                // this was not working fine
+                // since these functionalites of calculating pending time is moved to /API_HR/cron.php
+                // if ($whour_already_updated == 0) {
+                //     $pdate = $current_date;
+                //     $qt = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value (" . $qs['id'] . ", '$ptime', '$prev_month', '$pdate')";
+                //     $updt = mysqli_query($link, $qt) or die(mysqli_error($link));
+                //     $prev_mtime[$wmail] = $qs;
+                //     $prev_mtime[$wmail]['pending'] = $previous_month_time;
+                //     $prev_mtime[$wmail]['worktime'] = $ptime;
+                // }
             }
         }
 
