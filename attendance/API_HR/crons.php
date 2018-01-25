@@ -27,6 +27,9 @@ echo "<H1>Action CAll :: $CRON_ACTION</h1>";
 
 
 // VARIABLES
+
+$current_time_hour_min = date('H:i');
+
 $current_date = date('d');
 $current_month = date('m');
 $prev_month = date('m', strtotime(date('Y-m')." -1 month"));
@@ -38,10 +41,14 @@ $todayDate_Y_m_d = date('Y-m-d');
 // function to get previous month pending time and insert it to users_previous_month_time table 
 // which will be list on manage_user_pending_hours page on HR portal
 function calculate_previous_month_pending_time(){
-	global $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
+	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
 
 	// if( $current_date * 1 !== 5 ){
 	// 	echo "<h3>This cron action run's only on 5th day of every month</h3>";
+	// 	die;
+	// }
+	// if( $current_time_hour_min !== '11:45' ){
+	// 	echo "<h3>Runs at 11:45 AM </h3>";
 	// 	die;
 	// }
 
