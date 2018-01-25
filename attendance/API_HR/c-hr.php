@@ -361,6 +361,14 @@ class HR extends DATABASE {
     //--end login------------------------------------------------------------
     //--start attendance------------------------------------------------------------
     public static function _secondsToTime($seconds) {
+        // $padHours == true will return with 0 , ie, if less then 10 then 0 will be attached
+        $status = "+";
+
+        if( $seconds * 1 < 0 ){
+            $seconds = $seconds * -1;
+            $status = "-";
+        }
+
         // extract hours
         $hours = floor($seconds / (60 * 60));
 
@@ -377,7 +385,26 @@ class HR extends DATABASE {
             "h" => (int) $hours,
             "m" => (int) $minutes,
             "s" => (int) $seconds,
+            "status" => $status
         );
+
+        $padData = array(
+            "h" => (int) $hours,
+            "m" => (int) $minutes,
+            "s" => (int) $seconds,
+        );
+        if( $hours < 10 ){
+            $padData['h'] = (int) '0'.$hours;    
+        }
+        if( $minutes < 10 ){
+            $padData['m'] = (int) '0'.$minutes;    
+        }
+        if( $seconds < 10 ){
+            $padData['s'] = (int) '0'.$seconds;    
+        }
+            
+        $obj["pad_hms"] = $padData;
+
         return $obj;
     }
 
@@ -915,13 +942,18 @@ class HR extends DATABASE {
         $r_pending_working_seconds = $r_actual_working_seconds - $r_completed_working_seconds;
         //-----------------------------
         $a = self::_secondsToTime($r_actual_working_seconds);
-        $r_actual_working_hours = $a['h'];
+        $r_actual_working_hours = $a['h']. ' Hrs ' . $a['m'] . ' Mins';
 
         $b = self::_secondsToTime($r_completed_working_seconds);
         $r_completed_working_hours = $b['h'] . ' Hrs ' . $b['m'] . ' Mins';
 
         $c = self::_secondsToTime($r_pending_working_seconds);
-        $r_pending_working_hours = $c['h'] . ' Hrs ' . $c['m'] . ' Mins';
+        $r_pending_working_hours = $c['status'].' '.$c['h'] . ' Hrs ' . $c['m'] . ' Mins';
+
+        // echo "r_pending_working_seconds ----- $r_pending_working_seconds<br>";
+        // print_r($c);
+        // echo "r_pending_working_seconds ----- $r_pending_working_hours<br>";
+        // echo "<hr>";
         //-----------------------------
 
         $monthSummary = array();
@@ -934,6 +966,10 @@ class HR extends DATABASE {
         $monthSummary['HALF_DAY'] = $HALF_DAYS;
         $monthSummary['admin_alert'] = '';
         $monthSummary['admin_alert_message'] = '';
+
+        $monthSummary['seconds_actual_working_hours'] = $r_actual_working_seconds;
+        $monthSummary['seconds_completed_working_hours'] = $r_completed_working_seconds;
+        $monthSummary['seconds_pending_working_hours'] = $r_pending_working_seconds;
 
         return $monthSummary;
     }
