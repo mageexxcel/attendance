@@ -467,6 +467,11 @@ class HR extends DATABASE {
         $return['extra_time'] = $r_extra_time;
         $return['orignal_total_time'] = $orignal_total_time;
 
+        // added new keys to get times in seconds
+        $return['seconds_actual_working_time'] = $orignal_total_time;
+        $return['seconds_actual_worked_time'] = $r_total_time;
+        $return['seconds_extra_time'] = $r_extra_time;
+
         return $return;
     }
 
@@ -856,6 +861,11 @@ class HR extends DATABASE {
                 $v['extra_time_status'] = $userMonthPunching[$k]['extra_time_status'];
                 $v['extra_time'] = $userMonthPunching[$k]['extra_time'];
                 $v['orignal_total_time'] = $userMonthPunching[$k]['orignal_total_time'];
+
+                $v['seconds_actual_working_time'] = $userMonthPunching[$k]['seconds_actual_working_time'];
+                $v['seconds_actual_worked_time'] = $userMonthPunching[$k]['seconds_actual_worked_time'];
+                $v['seconds_extra_time'] = $userMonthPunching[$k]['seconds_extra_time'];
+
                 $return[$k] = $v;
             } else {
                 $return[$k] = $v;
@@ -1059,14 +1069,99 @@ class HR extends DATABASE {
         $r_data['previousMonth'] = $previousMonth;
         $r_data['attendance'] = $beautyMonthAttendance;
 
+
+        // added to calculate compensation times added by arun on 29th jan 2018
+        $analyseCompensationTime = self::_analyseCompensationTime($beautyMonthAttendance);
+        $r_data['compensationSummary'] = $analyseCompensationTime;
+
         $r_error = 0;
         $return = array();
         $return['error'] = $r_error;
         $r_data['message'] = $r_message;
-        $return['data'] = $r_data;
+        $return['data'] = $r_data;        
 
         return $return;
     }
+
+    // this is added to calculate compensation timings by arun on 29th jan 2018 this accepts final beauty attendance
+    public static function _analyseCompensationTime($beautyAttendance){
+        $seconds_to_be_compensate = 0;
+        $compensation_break_up = [];
+        foreach( $beautyAttendance as $day ){
+            $breakUpText = "";
+            // print_r($day);
+            if( $day['day_type'] === 'WORKING_DAY' || $day['day_type'] === 'HALF_DAY' ){
+                $day_full_date = $day['full_date'];                
+                $day_orignal_total_time = $day['orignal_total_time'];
+
+                $date_for_break_up = date('d-M', strtotime($day['full_date']));              
+
+                // if in out time is missing
+                if( trim($day['total_time']) == ""){
+                    $seconds_to_be_compensate += $day_orignal_total_time;
+
+                    $hms = self::_secondsToTime($day_orignal_total_time);
+                    $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+
+                    $breakUpText = "$date_for_break_up # Addition # $hms_show";
+                } else{
+                    $day_extra_time_status = $day['extra_time_status'];
+                    $day_seconds_extra_time = $day['seconds_extra_time'];
+                    if( $day_extra_time_status === '-'){
+                        // echo "PLUS <br>";
+                        $seconds_to_be_compensate += $day_seconds_extra_time;
+                        // $breakUpText = "$date_for_break_up # Addition in compensation Time : $day_full_date : $day_seconds_extra_time";
+
+                        $hms = self::_secondsToTime($day_seconds_extra_time);
+                        $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+
+                        $breakUpText = "$date_for_break_up # Addition # $hms_show";
+                    }
+                    if( $day_extra_time_status === '+' && $seconds_to_be_compensate > 0 ){
+                        // echo "MINUS <br>";
+                        $seconds_to_be_compensate -= $day_seconds_extra_time;
+
+
+                        $hms = self::_secondsToTime($day_seconds_extra_time);
+                        $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+
+                        $breakUpText = "$date_for_break_up # Deduction # $hms_show";
+                    }
+                }
+            }
+
+            if( $seconds_to_be_compensate < 0 ){
+                $seconds_to_be_compensate = 0;
+            }
+
+            if( $breakUpText != ''){
+                $hms = self::_secondsToTime($seconds_to_be_compensate);
+                $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+                $breakUpText = $breakUpText. " ## Pending = $hms_show";
+            }
+            
+            // echo "----------------- :: $seconds_to_be_compensate<br><br>";
+
+            if($breakUpText != ''){
+                $row = array(
+                    'text' => $breakUpText
+                );
+                $compensation_break_up[] = $row;
+            }
+
+        }
+
+        $return = [];
+        $return['seconds_to_be_compensate'] = $seconds_to_be_compensate;
+        $return['time_to_be_compensate'] = "";
+        if( $seconds_to_be_compensate > 0 ){
+            $bb = self::_secondsToTime($seconds_to_be_compensate);
+            $return['time_to_be_compensate'] = $bb['h'] . 'h : ' . $bb['m'] . 'm :' . $bb['s'] . 's';
+        }
+        $return['compensation_break_up'] = $compensation_break_up;
+        return $return;
+    }
+
 
     //--end attendance------------------------------------------------------------
     //-start all users attendance summary----------------
