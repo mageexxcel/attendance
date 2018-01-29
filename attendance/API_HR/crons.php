@@ -127,6 +127,8 @@ function notification_compensation_time(){
 	$enabledUsersList = HR::getEnabledUsersList();
 
 	foreach( $enabledUsersList as $employee ){
+		$slack_userChannelid = $employee['slack_channel_id'];
+		// print_r($employee);
 		$employee_id = $employee['user_Id'];
 		$employee_name = $employee['name'];
 		$currentMonthAttendaceDetails = HR::getUserMonthAttendaceComplete($employee_id, $current_year, $current_month);			
@@ -136,11 +138,21 @@ function notification_compensation_time(){
 				$c_seconds_to_be_compensate = $compensationSummary['seconds_to_be_compensate'];
 				$c_time_to_be_compensate = $compensationSummary['time_to_be_compensate'];
 				$c_compensation_break_up = $compensationSummary['compensation_break_up'];
-				echo "$employee_id *** $employee_name **** $c_seconds_to_be_compensate ***** $c_time_to_be_compensate<br>";
+				
+				$info =  "$employee_id *** $employee_name **** $c_seconds_to_be_compensate ***** $c_time_to_be_compensate<br>";
+
+				echo $info;				
+
+				$slackMessageForUser = "Hi $employee_name !!\n\n You have to compensate $c_time_to_be_compensate \n\n Compensation summary \n\n";
+
 				echo "^^^^^^BREAK UP^^^^^^^<br>";
 				foreach( $c_compensation_break_up as $txt ){
 					echo " ---- ".$txt['text'].'<br>';
+
+					$slackMessageForUser .= $txt['text']. "\n";
 				}
+
+				$aa = HR::sendSlackMessageToUser($slack_userChannelid, $slackMessageForUser);
 				echo '<hr>';
 			}
 		}

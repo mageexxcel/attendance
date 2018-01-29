@@ -1101,7 +1101,7 @@ class HR extends DATABASE {
                     $seconds_to_be_compensate += $day_orignal_total_time;
 
                     $hms = self::_secondsToTime($day_orignal_total_time);
-                    $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+                    $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
 
                     $breakUpText = "$date_for_break_up # Addition # $hms_show";
                 } else{
@@ -1113,7 +1113,7 @@ class HR extends DATABASE {
                         // $breakUpText = "$date_for_break_up # Addition in compensation Time : $day_full_date : $day_seconds_extra_time";
 
                         $hms = self::_secondsToTime($day_seconds_extra_time);
-                        $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+                        $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
 
                         $breakUpText = "$date_for_break_up # Addition # $hms_show";
                     }
@@ -1123,7 +1123,7 @@ class HR extends DATABASE {
 
 
                         $hms = self::_secondsToTime($day_seconds_extra_time);
-                        $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+                        $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
 
                         $breakUpText = "$date_for_break_up # Deduction # $hms_show";
                     }
@@ -1136,7 +1136,7 @@ class HR extends DATABASE {
 
             if( $breakUpText != ''){
                 $hms = self::_secondsToTime($seconds_to_be_compensate);
-                $hms_show = $hms['pad_hms']['h'].":".$hms['pad_hms']['m'].":".$hms['pad_hms']['s'];
+                $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
                 $breakUpText = $breakUpText. " ## Pending = $hms_show";
             }
             
