@@ -1087,7 +1087,13 @@ class HR extends DATABASE {
     public static function _analyseCompensationTime($beautyAttendance){
         $seconds_to_be_compensate = 0;
         $compensation_break_up = [];
+        $currentDate = date('Y-m-d');
+        
         foreach( $beautyAttendance as $day ){
+            // don't include todays date
+            if( $currentDate == $day['full_date'] ){
+                continue;
+            }
             $breakUpText = "";
             // print_r($day);
             if( $day['day_type'] === 'WORKING_DAY' || $day['day_type'] === 'HALF_DAY' ){
