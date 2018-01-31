@@ -123,6 +123,20 @@ function notification_compensation_time(){
 
 	echo "current_month :: $current_month<br>";
 	echo "current_year :: $current_year<br>";
+
+	// check if current day is a working day then only send notification
+	$sendNotifications = false;
+	$genericMonthSummary = HR::getGenericMonthSummary($current_year, $current_month );
+	foreach( $genericMonthSummary as $gd ){
+		if( $gd['full_date'] ==  $todayDate_Y_m_d && $gd['day_type'] == 'WORKING_DAY'){
+			$sendNotifications = true;
+			break;
+		}
+	}
+	if($sendNotifications === false){
+		echo "<h3>Today is NON WORKING DAY, notifications will not sent!!</h3>";
+		die;
+	}
 	
 	$enabledUsersList = HR::getEnabledUsersList();
 
