@@ -44,8 +44,8 @@ $todayDate_Y_m_d = date('Y-m-d');
 function calculate_previous_month_pending_time(){
 	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
 
-	if( $current_date * 1 !== 5 ){
-		echo "<h3>This cron action run's only on 5th day of every month</h3>";
+	if( $current_date * 1 !== 2 ){
+		echo "<h3>This cron action run's only on 2nd day of every month</h3>";
 		die;
 	}
 
@@ -114,6 +114,11 @@ function calculate_previous_month_pending_time(){
 	    }
 		}
 	}
+
+	$beautyMonth = date('M', strtotime($prev_month));
+
+
+	HR::sendSlackMessageToUser("hr", "CRON Executed - Pending compensation time of $prev_month_year - $beautyMonth  is calculated!!");
 }
 
 
@@ -171,6 +176,7 @@ function notification_compensation_time(){
 			}
 		}
 	}
+	HR::sendSlackMessageToUser("hr", "CRON Executed - Notifications of pending compensation time!!");
 }
 
 
