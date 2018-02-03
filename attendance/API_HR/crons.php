@@ -118,7 +118,7 @@ function calculate_previous_month_pending_time(){
 	$beautyMonth = date('M', strtotime($prev_month));
 
 
-	HR::sendSlackMessageToUser("hr", "CRON Executed - Pending compensation time of $prev_month_year - $beautyMonth  is calculated!!");
+	HR::sendSlackMessageToUser("hr_system", "CRON Executed - Pending compensation time of $prev_month_year - $beautyMonth  is calculated!!");
 }
 
 
@@ -176,7 +176,7 @@ function notification_compensation_time(){
 			}
 		}
 	}
-	HR::sendSlackMessageToUser("hr", "CRON Executed - Notifications of pending compensation time!!");
+	HR::sendSlackMessageToUser("hr_system", "CRON Executed - Notifications of pending compensation time!!");
 }
 
 
