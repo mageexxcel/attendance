@@ -206,7 +206,7 @@ function notification_compensation_time(){
 
 							$slackLeaveMessageFor_HR = "Hi HR !!\n\n $employee_name leave for dates $b_l_start to $b_l_end is pending for approval. \n\n Reason of leave : $l_reason \n\n Respond for same else employee salary slip will not generate.";
 
-							HR::sendSlackMessageToUser("hr", $slackLeaveMessageFor_HR);
+							HR::sendSlackMessageToUser("hr_system", $slackLeaveMessageFor_HR);
 						}
 					}
 				}
