@@ -175,6 +175,46 @@ function notification_compensation_time(){
 				echo '<hr>';
 			}
 		}
+
+		// added on 26th feb 2018 new notification if leaves are not approved
+		if( isset($currentMonthAttendaceDetails['data']['attendance']) ){
+			$checkPendingLeaveForApproval = false;
+			$attendanceOfUser = $currentMonthAttendaceDetails['data']['attendance'];
+			foreach ($attendanceOfUser as $key => $value) {
+				if( $value['day_type'] == 'LEAVE_DAY' ){
+					$checkPendingLeaveForApproval = true;
+				}
+			}
+			if($checkPendingLeaveForApproval){
+				$userLeavesData = HR::getUserMonthLeaves($employee_id, $current_year, $current_month);
+				if (sizeof($userLeavesData) > 0) {
+					foreach( $userLeavesData as $l ){
+						if( strtolower($l['status']) === 'pending') {
+							$l_start = $l['from_date'];
+							$b_l_start = date('d-M-Y', strtotime($l_start));
+
+							$l_end = $l['to_date'];
+							$b_l_end = date('d-M-Y', strtotime($l_end));
+
+							$l_reason = $l['reason'];
+
+							$slackLeaveMessageForUser = "Hi $employee_name !!\n\n Your leave for dates $b_l_start to $b_l_end is pending for approval. \n\n Reason of leave : $l_reason \n\n Contact HR for approval or your salary slip will not generate.";
+							
+							echo $slackLeaveMessageForUser;
+							$aa = HR::sendSlackMessageToUser($slack_userChannelid, $slackLeaveMessageForUser);
+
+
+							$slackLeaveMessageFor_HR = "Hi HR !!\n\n $employee_name leave for dates $b_l_start to $b_l_end is pending for approval. \n\n Reason of leave : $l_reason \n\n Respond for same else employee salary slip will not generate.";
+
+							HR::sendSlackMessageToUser("hr", $slackLeaveMessageFor_HR);
+						}
+					}
+				}
+			}
+
+		}
+		// added on 26th feb 2018 new notification if leaves are not approved
+
 	}
 	HR::sendSlackMessageToUser("hr_system", "CRON Executed - Notifications of pending compensation time!!");
 }
