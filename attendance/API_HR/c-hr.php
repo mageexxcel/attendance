@@ -539,9 +539,21 @@ class HR extends DATABASE {
 
     // get weekends off list
     public static function getWeekendsOfMonth($year, $month) {
+        // echo $year.'-----'.$month.'*******';
         $list = array();
         $monthDays = self::getDaysOfMonth($year, $month);
-        $alternateSaturdayCheck = true; // this is change from false to true to make 1st saturday off
+
+        $firstSatOff = false;
+
+        if( $year >= 2018 && $month >= 03 ){
+            $firstSatOff = true;            
+        }
+
+        $alternateSaturdayCheck = false; // this is change from false to true to make 1st saturday off
+        if($firstSatOff == true ){
+            $alternateSaturdayCheck = true;
+        }
+
         foreach ($monthDays as $k => $v) {
             if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
