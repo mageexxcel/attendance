@@ -541,7 +541,7 @@ class HR extends DATABASE {
     public static function getWeekendsOfMonth($year, $month) {
         $list = array();
         $monthDays = self::getDaysOfMonth($year, $month);
-        $alternateSaturdayCheck = false;
+        $alternateSaturdayCheck = true; // this is change from false to true to make 1st saturday off
         foreach ($monthDays as $k => $v) {
             if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
@@ -3974,6 +3974,27 @@ class HR extends DATABASE {
             }
         }
         return $return;;
+    }
+
+    // get employee first working day of the current month
+    public static function getEmployeeCurrentMonthFirstWorkingDate( $userid ){
+        $return = false;
+        $currentDate = date('Y-m-d');
+        $currentYear = date('Y');
+        $currentMonth = date('m');
+        $currentDateDate = date('d');
+
+        $monthDetails = self::getUserMonthAttendace($userid, $currentYear, $currentMonth );
+        
+        $tempArray = array();
+        foreach( $monthDetails as $md ){
+            $md_date = $md['date'];
+            if( $md['day_type'] == 'WORKING_DAY' ){
+                $tempArray[] = $md;
+            }
+        }
+        $return = $tempArray[0];
+        return $return;
     }
 
     // get employee next working date , starts from today onwards
