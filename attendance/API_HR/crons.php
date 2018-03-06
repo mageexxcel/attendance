@@ -44,10 +44,11 @@ $todayDate_Y_m_d = date('Y-m-d');
 function calculate_previous_month_pending_time(){
 	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
 
-	if( $current_date * 1 !== 2 ){
-		echo "<h3>This cron action run's only on 2nd day of every month</h3>";
-		die;
-	}
+	// this will be run only manually by manish sir so below code is commented
+	// if( $current_date * 1 !== 2 ){
+	// 	echo "<h3>This cron action run's only on 2nd day of every month</h3>";
+	// 	die;
+	// }
 
 	echo "current_month :: $current_month<br>";
 	echo "prev_month :: $prev_month<br>";

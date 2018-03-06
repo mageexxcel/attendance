@@ -362,7 +362,14 @@ else if ($action == 'add_hr_comment') {
     if (isset($PARAMS['pending_id'])) {
         // below date and changes done by arun on 3 july 2017
         // this is case from when manually manipulating pending hours of users from manage_user_pending_hours page
-        $userNextWorkingDate = HR::getEmployeeNextWorkingDate( $userid );
+        // $userNextWorkingDate = HR::getEmployeeNextWorkingDate( $userid );
+
+        // this will be added to employee current month 1st working day;
+        $userNextWorkingDate = HR::getEmployeeCurrentMonthFirstWorkingDate( $userid );
+
+        // echo '<pre>';
+        // print_r($userNextWorkingDate);
+
         $date = $userNextWorkingDate['full_date'];
         $reason = 'Previous month pending time merged!!';
         $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason, $PARAMS['pending_id']);
