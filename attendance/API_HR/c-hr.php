@@ -2302,36 +2302,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    // Welcome mail
-
-    public function sendWelcomeMail($mailmsg) {
-        // fetching welcome email template
-        $q = "SELECT * FROM email_templates where id=52";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRows($runQuery);
-        $mail_body = $row[0]['body'];
-        // fetching new user data
-        $q = "SELECT * FROM user_profile ORDER BY id DESC LIMIT 1";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRows($runQuery);
-        $work_email = $row[0]['work_email'];
-        $replace_to = array();
-        $replace_to[0] = $row[0]['name'];
-        $replace_to[1] = $row[0]['dateofjoining'];
-        $replace_from = array('#employee_name','#joining_date');
-
-        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
-        $data = array();
-        $data['subject'] = 'Welcome to Excellence Technologies';
-        $data['name'] = $row[0]['name'];
-        $data['body'] = $mail_body;
-        $data['email_id'] = $work_email;
-        self::sendEmail($data);
-        $mailmsg = 'Email is sent to new user';
-        return $mailmsg;
-     }
-
-    //end welcome mail
+    
 
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
@@ -2407,14 +2378,8 @@ class HR extends DATABASE {
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
                     $r_error = 0;
-                    //$r_message = "Employee added Successfully !!";
+                    $r_message = "Employee added Successfully !!";
 
-                    // Added on 15-03-18 to send Welcome mail to new user
-                    if ($userID == true) {
-                        $pr_message = "Employee added Successfully !!";
-                        $tr_message = self::sendWelcomeMail($mailmsg); // call welcome mail
-                        $r_message = $pr_message." ".$tr_message;  
-                    }
                     // start -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
                     $allRoles = self::getAllRole();
                     $defaultRoleId = false;
