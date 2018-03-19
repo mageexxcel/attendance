@@ -2396,8 +2396,8 @@ class HR extends DATABASE {
     public function sendWelcomeMail($userID) {
         $userInfo = self::getUserInfo($userID);
 
-        // Fetching welcome email template
-        $q = "SELECT * FROM email_templates where name='Welcome mail'";
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='New Employee Welcome Email'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         if(empty($row)) {
