@@ -2401,7 +2401,7 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         if(empty($row)) {
-           $r_message = "Template not fetched!";
+           $r_message = "Warning - New Employee Welcome Email template not found!!";
            return $r_message; 
         }
         $mail_body = $row[0]['body'];
