@@ -2312,6 +2312,7 @@ class HR extends DATABASE {
         $q = "SELECT * from config where type='email_detail'";
         $r = self::DBrunQuery($q);
         $row = self::DBfetchRow($r);
+
         // convert this string into associative array
         parse_str($row['value'], $detail);
         include "phpmailer/PHPMailerAutoload.php";
@@ -2334,7 +2335,7 @@ class HR extends DATABASE {
                 $mail->SMTPDebug = 0;
                 $mail->Debugoutput = 'html';
                 $mail->Host = $detail['host'];
-                $mail->Port = $detail['port'];
+                $mail->Port = $detail['post'];
                 $mail->SMTPSecure = 'tls';
                 $mail->SMTPAuth = true;
                 $mail->Username = $detail['username']; //sender email address 
@@ -2390,12 +2391,12 @@ class HR extends DATABASE {
 
 
 
-    //Welcome mail
+    //New Employee Welcome Email
 
     public function sendWelcomeMail($userID) {
         $userInfo = self::getUserInfo($userID);
 
-        // fetching welcome email template
+        // Fetching welcome email template
         $q = "SELECT * FROM email_templates where name='Welcome mail'";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -2426,15 +2427,10 @@ class HR extends DATABASE {
         $data['email']['name'] = $userInfo['name'];
         $data['email']['body'] = $mail_body;
         $data['email']['email_id'] = $work_email;
-        $msg = "";
-        $msg = self::sendEmail($data); 
-        // if($msg!="Message sent") {
-        //     print_r($msg); die;
-        // }
-        
+        self::sendEmail($data); 
      }
 
-    //end welcome mail
+    //end New Employee Welcome Email
 
 
 
@@ -2513,13 +2509,12 @@ class HR extends DATABASE {
                     self::DBrunQuery($q1);
                     $r_error = 0;
                     
-                    //$r_message = "Employee added Successfully !!";
+                    $r_message = "Employee added Successfully !!";
 
                     // Added on 15-03-18 to send Welcome mail to new user
-                    if ($userID == true) {
-                        $r_message = "Employee added Successfully !!";
+                    if (!empty($userID)) {
                         self::sendWelcomeMail($userID); // call welcome mail
-                          
+                        $r_message = $r_message." Welcome Mail Sent!!";
                     }
 
                     // start -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
