@@ -2401,11 +2401,11 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
         if(empty($row)) {
-           echo "Template not fetched!";
-           die; 
+           $r_message = "Template not fetched!";
+           return $r_message; 
         }
         $mail_body = $row[0]['body'];
-        
+        $mail_subject = $row[0]['subject'];       
         $work_email = $userInfo['work_email'];
         $replace_to = array();
         $replace_to[0] = $userInfo['name'];
@@ -2423,11 +2423,13 @@ class HR extends DATABASE {
         }
 
         $data = array();
-        $data['email']['subject'] = 'Welcome to Excellence Technologies';
+        $data['email']['subject'] = $mail_subject;
         $data['email']['name'] = $userInfo['name'];
         $data['email']['body'] = $mail_body;
         $data['email']['email_id'] = $work_email;
-        self::sendEmail($data); 
+        self::sendEmail($data);
+        $r_message = "Welcome mail sent!!";
+        return $r_message;
      }
 
     //end New Employee Welcome Email
@@ -2513,8 +2515,10 @@ class HR extends DATABASE {
 
                     // Added on 15-03-18 to send Welcome mail to new user
                     if (!empty($userID)) {
-                        self::sendWelcomeMail($userID); // call welcome mail
-                        $r_message = $r_message." Welcome Mail Sent!!";
+                        $r_message2 = self::sendWelcomeMail($userID); // call welcome mail
+                        $r_message = $r_message." ".$r_message2;
+
+                        
                     }
 
                     // start -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
