@@ -2458,6 +2458,11 @@ class HR extends DATABASE {
             $late_reason = "";
             $res = HR::applyLeave($userID, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
             if($res['error']==0) {
+                $leavedetails = self::getMyLeaves($userID);
+                $leaveid = $leavedetails['data']['leaves']['0']['id'];
+                $newstatus = "Approved";
+                $messagetouser = "Your Leaves has been approved!";
+                self::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
                 $r_message3 = "Leave Applied!!"; 
             }
             else {
