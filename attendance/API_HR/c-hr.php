@@ -2302,6 +2302,140 @@ class HR extends DATABASE {
         return $return;
     }
 
+     // function to send email
+     public static function sendEmail($data) {
+        
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+
+        $q = "SELECT * from config where type='email_detail'";
+        $r = self::DBrunQuery($q);
+        $row = self::DBfetchRow($r);
+
+        // convert this string into associative array
+        parse_str($row['value'], $detail);
+        include "phpmailer/PHPMailerAutoload.php";
+
+
+        if (!empty($data['email'])) {
+            
+            
+            foreach ($data as $var) {
+                $work_email = $var['email_id']; 
+                $name = $var['name'];
+                $subject = $var['subject'];
+                $body = $var['body'];
+                $cc = $var['cc_detail'];
+                $bcc = $var['bcc_detail'];
+                $file_upload = $var['upload_file'];
+                
+                $mail = new PHPMailer;
+                $mail->isSMTP();
+                $mail->SMTPDebug = 0;
+                $mail->Debugoutput = 'html';
+                $mail->Host = $detail['host'];
+                $mail->Port = $detail['post'];
+                $mail->SMTPSecure = 'tls';
+                $mail->SMTPAuth = true;
+                $mail->Username = $detail['username']; //sender email address 
+                $mail->Password = $detail['password']; // sender email password
+                $mail->setFrom('hr@excellencetechnologies.in', 'Excellence Technologies'); // name and email address from which email is send
+                $mail->addReplyTo('hr@excellencetechnologies.in', 'Excellence Technologies'); // reply email address with name 
+                $mail->addAddress($work_email, $name); // name and address to whome mail is to send
+                if (sizeof($cc) > 0) {
+                    foreach ($cc as $d) {
+                        $mail->addCC($d[0], $d[1]);
+                    }
+                }
+                if (sizeof($bcc) > 0) {
+                    foreach ($bcc as $d2) {
+                        $mail->addBCC($d2[0], $d2[1]);
+                    }
+                }
+                $mail->Subject = $subject; // subject of email message 
+                $mail->msgHTML($body); // main message 
+                // $mail->AltBody = 'This is a plain-text message body';
+                //Attach an image file
+                if (sizeof($file_upload) > 0) {
+                    foreach ($file_upload as $d3) {
+                        $mail->addAttachment($d3);
+                    }
+                }
+//send the message, check for errors
+                if (!$mail->send()) {
+                    $row3 = $mail->ErrorInfo;
+                } else {
+                    $row3 = "Message sent";
+                }
+            }
+        }
+
+        
+        if ($row3 != "Message sent") {
+
+            $r_error = 1;
+            $r_message = $row3;
+            $r_data['message'] = $r_message;
+        } else {
+            $r_error = 0;
+            $r_message = "Message Sent";
+            $r_data['message'] = $r_message;
+        }
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
+
+
+
+
+    //New Employee Welcome Email
+
+    public function sendWelcomeMail($userID) {
+        $userInfo = self::getUserInfo($userID);
+
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='New Employee Welcome Email'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if(empty($row)) {
+           $r_message = "Warning - New Employee Welcome Email template not found!!";
+           return $r_message; 
+        }
+        $mail_body = $row[0]['body'];
+        $mail_subject = $row[0]['subject'];       
+        $work_email = $userInfo['work_email'];
+        $replace_to = array();
+        $replace_to[0] = $userInfo['name'];
+        $replace_to[1] = $userInfo['dateofjoining'];
+        $replace_from = array('#employee_name','#joining_date');
+
+        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
+
+        // Fetching value of Variables in Template
+        $q2 = 'Select * from template_variables';
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRows($runQuery2);
+        foreach ($row2 as $s) {
+            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
+        }
+
+        $data = array();
+        $data['email']['subject'] = $mail_subject;
+        $data['email']['name'] = $userInfo['name'];
+        $data['email']['body'] = $mail_body;
+        $data['email']['email_id'] = $work_email;
+        self::sendEmail($data);
+        $r_message = "Welcome mail sent!!";
+        return $r_message;
+     }
+
+    //end New Employee Welcome Email
+
+
+
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
         $r_message = "";
@@ -2376,7 +2510,16 @@ class HR extends DATABASE {
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
                     $r_error = 0;
+                    
                     $r_message = "Employee added Successfully !!";
+
+                    // Added on 15-03-18 to send Welcome mail to new user
+                    if (!empty($userID)) {
+                        $r_message2 = self::sendWelcomeMail($userID); // call welcome mail
+                        $r_message = $r_message." ".$r_message2;
+
+                        
+                    }
 
                     // start -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
                     $allRoles = self::getAllRole();
