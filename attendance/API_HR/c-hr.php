@@ -1707,7 +1707,6 @@ class HR extends DATABASE {
         $return['error'] = $r_error;
         $r_data['message'] = $r_message;
         $return['data'] = $r_data;
-
         return $return;
     }
 
@@ -2123,7 +2122,6 @@ class HR extends DATABASE {
 
 
 
-
         return $return;
     }
 
@@ -2434,6 +2432,42 @@ class HR extends DATABASE {
 
     //end New Employee Welcome Email
 
+    //Leave of New Employee
+
+    public static function leaveOfNewEmployee($userID) {
+        $r_message3 = "";
+        $userInfo = self::getUserInfo($userID);
+        $date_of_joining = $userInfo['dateofjoining'];
+        $d = new DateTime($date_of_joining);
+        $d->modify('first day of this month');
+        $firstDay = $d->format('Y-m-d');
+        if($date_of_joining!=$firstDay) {            
+            $data = self::getDaysBetweenLeaves($firstDay, $date_of_joining);
+            $from_date = "";
+            foreach($data['data']['days'] as $var) {
+                if($var['type'] == 'working') {
+                    $from_date = $var['full_date'];
+                    break;
+                }
+            }
+            $to_date = $date_of_joining;
+            $no_of_days = $data['data']['working_days'];
+            $reason = "Joining day was ".$date_of_joining;    
+            $day_status = "";
+            $leave_type = "Casual Leave";
+            $late_reason = "";
+            $res = HR::applyLeave($userID, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
+            if($res['error']==0) {
+                $r_message3 = "Leave Applied!!"; 
+            }
+            else {
+                $r_message3 = "Leave Not Applied!!";
+            }
+        }
+        return $r_message3;
+    }
+
+    // end Leave of New Employee
 
 
     public static function addNewEmployee($PARAMS) { //api call
@@ -2515,8 +2549,9 @@ class HR extends DATABASE {
 
                     // Added on 15-03-18 to send Welcome mail to new user
                     if (!empty($userID)) {
-                        $r_message2 = self::sendWelcomeMail($userID); // call welcome mail
-                        $r_message = $r_message." ".$r_message2;
+                        $r_message2 = self::sendWelcomeMail($userID); // call Welcome mail
+                        $r_message3 = self::leaveOfNewEmployee($userID); 
+                        $r_message = $r_message." ".$r_message2." ".$r_message3;
 
                         
                     }
