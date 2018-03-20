@@ -2434,15 +2434,18 @@ class HR extends DATABASE {
 
     //Leave of New Employee
 
-    public static function leaveOfNewEmployee($userID) {
+    public static function applyNewEmployeeLeaves($userID) {
         $r_message3 = "";
         $userInfo = self::getUserInfo($userID);
-        $date_of_joining = $userInfo['dateofjoining'];
-        $d = new DateTime($date_of_joining);
-        $d->modify('first day of this month');
-        $firstDay = $d->format('Y-m-d');
-        if($date_of_joining!=$firstDay) {            
-            $data = self::getDaysBetweenLeaves($firstDay, $date_of_joining);
+        $date_of_joining = $userInfo['dateofjoining'];        
+        $year = date('Y', strtotime($date_of_joining));
+        $month= date('m', strtotime($date_of_joining));;
+        $monthSummary = self::getDaysOfMonth($year, $month);
+        $firstDay = $monthSummary['01']['full_date'];
+
+        if($date_of_joining!=$firstDay) {
+            $to_date = date('Y-m-d', strtotime('-1 day', strtotime($date_of_joining)));            
+            $data = self::getDaysBetweenLeaves($firstDay, $to_date);
             $from_date = "";
             foreach($data['data']['days'] as $var) {
                 if($var['type'] == 'working') {
@@ -2450,7 +2453,6 @@ class HR extends DATABASE {
                     break;
                 }
             }
-            $to_date = $date_of_joining;
             $no_of_days = $data['data']['working_days'];
             $reason = "Joining day was ".$date_of_joining;    
             $day_status = "";
@@ -2555,7 +2557,7 @@ class HR extends DATABASE {
                     // Added on 15-03-18 to send Welcome mail to new user
                     if (!empty($userID)) {
                         $r_message2 = self::sendWelcomeMail($userID); // call Welcome mail
-                        $r_message3 = self::leaveOfNewEmployee($userID); 
+                        $r_message3 = self::applyNewEmployeeLeaves($userID); 
                         $r_message = $r_message." ".$r_message2." ".$r_message3;
 
                         
