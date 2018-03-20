@@ -2439,8 +2439,8 @@ class HR extends DATABASE {
         $userInfo = self::getUserInfo($userID);
         $date_of_joining = $userInfo['dateofjoining'];        
         $year = date('Y', strtotime($date_of_joining));
-        $month= date('m', strtotime($date_of_joining));;
-        $monthSummary = self::getDaysOfMonth($year, $month);
+        $month= date('m', strtotime($date_of_joining));
+        $monthSummary = self::getGenericMonthSummary($year, $month);
         $firstDay = $monthSummary['01']['full_date'];
 
         if($date_of_joining!=$firstDay) {
