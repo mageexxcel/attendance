@@ -1707,7 +1707,6 @@ class HR extends DATABASE {
         $return['error'] = $r_error;
         $r_data['message'] = $r_message;
         $return['data'] = $r_data;
-
         return $return;
     }
 
@@ -2123,7 +2122,6 @@ class HR extends DATABASE {
 
 
 
-
         return $return;
     }
 
@@ -2434,6 +2432,58 @@ class HR extends DATABASE {
 
     //end New Employee Welcome Email
 
+    //Leave of New Employee
+
+    public static function applyNewEmployeeLeaves($userID) {
+        $r_message3 = "";
+        $userInfo = self::getUserInfo($userID);
+       $date_of_joining = $userInfo['dateofjoining'];        
+        $year = date('Y', strtotime($date_of_joining));
+        $month= date('m', strtotime($date_of_joining));
+        $monthSummary = self::getGenericMonthSummary($year, $month);
+        $from_date = $to_date = "";
+        foreach($monthSummary as $var) {
+            
+                if($var['day_type'] == 'WORKING_DAY') {
+                    $from_date = $var['full_date'];
+                    break;
+                }
+            }
+           
+        if($date_of_joining!=$from_date) {
+            
+            foreach($monthSummary as $var) {        
+                if($var['day_type'] == 'WORKING_DAY') {
+                    if($var['full_date'] == $date_of_joining) {
+                        break;
+                    }
+                    $to_date = $var['full_date'];
+                }
+            }            
+            $data = self::getDaysBetweenLeaves($from_date, $to_date);
+            
+            $no_of_days = $data['data']['working_days'];
+            $reason = "Joining day was ".$date_of_joining;    
+            $day_status = "";
+            $leave_type = "Casual Leave";
+            $late_reason = "";
+            $res = HR::applyLeave($userID, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason);
+            if($res['error']==0) {
+                $leavedetails = self::getMyLeaves($userID);
+                $leaveid = $leavedetails['data']['leaves']['0']['id'];
+                $newstatus = "Approved";
+                $messagetouser = "Your Leaves has been approved!";
+                self::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
+                $r_message3 = "Leave Applied!!"; 
+            }
+            else {
+                $r_message3 = "Leave Not Applied!!";
+            }
+        }
+        return $r_message3;
+    }
+
+    // end Leave of New Employee
 
 
     public static function addNewEmployee($PARAMS) { //api call
@@ -2515,8 +2565,9 @@ class HR extends DATABASE {
 
                     // Added on 15-03-18 to send Welcome mail to new user
                     if (!empty($userID)) {
-                        $r_message2 = self::sendWelcomeMail($userID); // call welcome mail
-                        $r_message = $r_message." ".$r_message2;
+                        $r_message2 = self::sendWelcomeMail($userID); // call Welcome mail
+                        $r_message3 = self::applyNewEmployeeLeaves($userID); 
+                        $r_message = $r_message." ".$r_message2." ".$r_message3;
 
                         
                     }
