@@ -2437,22 +2437,32 @@ class HR extends DATABASE {
     public static function applyNewEmployeeLeaves($userID) {
         $r_message3 = "";
         $userInfo = self::getUserInfo($userID);
-        $date_of_joining = $userInfo['dateofjoining'];        
+       $date_of_joining = $userInfo['dateofjoining'];        
         $year = date('Y', strtotime($date_of_joining));
         $month= date('m', strtotime($date_of_joining));
         $monthSummary = self::getGenericMonthSummary($year, $month);
-        $firstDay = $monthSummary['01']['full_date'];
-
-        if($date_of_joining!=$firstDay) {
-            $to_date = date('Y-m-d', strtotime('-1 day', strtotime($date_of_joining)));            
-            $data = self::getDaysBetweenLeaves($firstDay, $to_date);
-            $from_date = "";
-            foreach($data['data']['days'] as $var) {
-                if($var['type'] == 'working') {
+        $from_date = $to_date = "";
+        foreach($monthSummary as $var) {
+            
+                if($var['day_type'] == 'WORKING_DAY') {
                     $from_date = $var['full_date'];
                     break;
                 }
             }
+           
+        if($date_of_joining!=$from_date) {
+            $d= date('d', strtotime($from_date))-1;            
+            $allDates = self::_getDatesBetweenTwoDates($from_date, $date_of_joining);
+            $dateSummary = array_slice($monthSummary,$d,count($allDates)-1);
+            $dateSummary_reversed = array_reverse($dateSummary);            
+            foreach($dateSummary_reversed as $inner) {
+                if($inner['day_type'] == 'WORKING_DAY') {
+                    $to_date = $inner['full_date'];
+                    break;
+                }
+            }
+            $data = self::getDaysBetweenLeaves($from_date, $to_date);
+            
             $no_of_days = $data['data']['working_days'];
             $reason = "Joining day was ".$date_of_joining;    
             $day_status = "";
