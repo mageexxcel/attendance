@@ -2451,16 +2451,15 @@ class HR extends DATABASE {
             }
            
         if($date_of_joining!=$from_date) {
-            $d= date('d', strtotime($from_date))-1;            
-            $allDates = self::_getDatesBetweenTwoDates($from_date, $date_of_joining);
-            $dateSummary = array_slice($monthSummary,$d,count($allDates)-1);
-            $dateSummary_reversed = array_reverse($dateSummary);            
-            foreach($dateSummary_reversed as $inner) {
-                if($inner['day_type'] == 'WORKING_DAY') {
-                    $to_date = $inner['full_date'];
-                    break;
+            
+            foreach($monthSummary as $var) {        
+                if($var['day_type'] == 'WORKING_DAY') {
+                    if($var['full_date'] == $date_of_joining) {
+                        break;
+                    }
+                    $to_date = $var['full_date'];
                 }
-            }
+            }            
             $data = self::getDaysBetweenLeaves($from_date, $to_date);
             
             $no_of_days = $data['data']['working_days'];
