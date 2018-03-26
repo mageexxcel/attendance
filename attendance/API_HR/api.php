@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 $request_body = file_get_contents('php://input');
 $PARAMS = json_decode($request_body, true);
 
+// var_dump($PARAMS);
 // this is added by arun to remove warning on 23 june 2017
 $GET_action = "";
 if( isset($_GET['action']) ){
@@ -329,6 +330,11 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getMachineDetail($id);
 } else if ($action == 'update_office_machine') {
     $res = HR::UpdateOfficeMachine($PARAMS);    
+} else if ($action == 'get_unapproved_machine_list') {
+    $res = HR::getUnapprovedMachineList();
+} else if ($action == 'approve_machine') {
+    $id = $PARAMS['id'];
+    $res = HR::approveUnapprovedMachine($id);
 } else if ($action == 'add_office_machine') {
     $res = HR::addOfficeMachine($PARAMS);
 } else if ($action == 'delete_machine_status') {

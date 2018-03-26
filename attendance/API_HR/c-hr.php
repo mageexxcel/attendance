@@ -3493,11 +3493,11 @@ class HR extends DATABASE {
 
     public static function getAllMachineDetail($sort = false, $status_sort = false) {
         if ($sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort'";
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort' and machines_list.approval_status = '1'";
         }if ($status_sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort'";
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort' and machines_list.approval_status = '1'";
         } else {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id ORDER BY machines_list.id DESC";
+            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.approval_status = '1' ORDER BY machines_list.id DESC";
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -3506,6 +3506,34 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $return['data'] = $row;
         return $return;
+    }
+
+    public static function getUnapprovedMachineList() {
+        
+        $q = "select * from machines_list where approval_status = '0' ORDER BY id DESC"; //
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $row;
+        return $return;
+    
+    }
+
+    public static function approveUnapprovedMachine($id) {
+            $machineID = $id;
+            $q = "UPDATE machines_list set approval_status = '1' where id = '$machineID'";
+            $runQuery = self::DBrunQuery($q);
+            $row = self::DBfetchRows($runQuery);
+
+            $r_error = 0;
+            $r_message = "Machine status updated successfully";
+
+            $return = array();
+            $return['message'] = $r_message;
+            $return['error'] = $r_error;
+            $return['data'] = $row;
+            return $return;
     }
 
     public static function removeMachineAssignToUser($data) {
