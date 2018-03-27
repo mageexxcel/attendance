@@ -982,7 +982,7 @@ trait Roles {
         return $return;
     }
 
-    public static function getGenericPagesForAllRoles( $roleid ){
+    public static function getGenericPagesForAllRoles( $roleid = false ){
         $return = array();
         $allPages = self::getAllPages();
         foreach( $allPages as $page ){
