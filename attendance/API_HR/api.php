@@ -308,6 +308,14 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'get_user_machine') {
     $userid = $PARAMS['user_id'];
     $res = HR::getUserMachine($userid);
+} else if ($action == 'add_user_comment') {
+    $machine_id = $PARAMS['machine_id'];
+    $user_id = $PARAMS['user_id'];
+    $comment = $PARAMS['comment'];
+    $res = HR::userCommentOnMachine($user_id,$machine_id,$comment);
+} else if ($action == 'get_machine_history') {
+    $machine_id = $PARAMS['machine_id'];
+    $res = HR::getMachineHistory($machine_id);
 } else if ($action == 'assign_user_machine') {
     $machine_id = $PARAMS['machine_id'];
     $user_id = $PARAMS['user_id'];
