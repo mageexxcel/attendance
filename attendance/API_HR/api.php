@@ -308,13 +308,17 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'get_user_machine') {
     $userid = $PARAMS['user_id'];
     $res = HR::getUserMachine($userid);
+} else if ($action == 'get_machine_history') {
+    $machine_id = $PARAMS['machine_id'];
+    $res = HR::getMachineHistory($machine_id);
 } else if ($action == 'assign_user_machine') {
     $machine_id = $PARAMS['machine_id'];
     $user_id = $PARAMS['user_id'];
     $res = HR::assignUserMachine($machine_id, $user_id);
 } else if ($action == 'remove_machine_detail') {
     $id = $PARAMS['id'];
-    $res = HR::removeMachineDetails($id);
+    $userid = $PARAMS['userid'];
+    $res = HR::removeMachineDetails($id,$userid);
 } else if ($action == 'get_machines_detail') {   
     if (isset($PARAMS['sort']) && $PARAMS['sort'] != "") {
         $sort = trim($PARAMS['sort']);
@@ -330,8 +334,6 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getMachineDetail($id);
 } else if ($action == 'update_office_machine') {
     $res = HR::UpdateOfficeMachine($PARAMS);    
-} else if ($action == 'get_unapproved_machine_list') {
-    $res = HR::getUnapprovedMachineList();
 } else if ($action == 'approve_machine') {
     $id = $PARAMS['id'];
     $res = HR::approveUnapprovedMachine($id);

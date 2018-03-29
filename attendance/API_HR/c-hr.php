@@ -3352,6 +3352,8 @@ class HR extends DATABASE {
             $userid = trim($PARAMS['user_id']);
         }
 
+        $userInfo = self::getUserInfo($userid);
+        if( strtolower( $userInfo['type'] ) === 'admin' ) {
         $data = array(
             "machine_type" => $PARAMS['machine_type'],
             "machine_name" => $PARAMS['machine_name'],
@@ -3402,7 +3404,10 @@ class HR extends DATABASE {
             $r_message = "Successfully Updated into table";
             $r_data['message'] = $r_message;
         }
-
+    }
+    else {
+        $r_message = "You are not Authorized!!";
+    }
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -3450,6 +3455,13 @@ class HR extends DATABASE {
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
             if ($row != false) {
+                //added to keep record of machine
+                $oldUserId = $row['user_Id'];
+                $q2 = "INSERT into machine_assign_record ( machine_id, user_Id, status, date ) VALUES ( $machine_id, $oldUserId, 'Removed', '$date')";
+                self::DBrunQuery($q2);
+                $q3 = "INSERT into machine_assign_record ( machine_id, user_Id, status, date ) VALUES ( $machine_id, $userid, 'Assigned', '$date')";
+                self::DBrunQuery($q3);
+                //
                 $q = "UPDATE machines_user SET  user_Id = '$userid', assign_date = '$date' where id =" . $row['id'];
             } else {
                 $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
@@ -3473,7 +3485,7 @@ class HR extends DATABASE {
     public static function getUserMachine($userid) {
         $r_error = 1;
         $r_message = "";
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machine_user.user_Id = '$userid'";
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_user.user_Id = '$userid'";
 
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -3487,7 +3499,7 @@ class HR extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_message;
-
+        print_r($return);die;
         return $return;
     }
 
@@ -3531,6 +3543,25 @@ class HR extends DATABASE {
             return $return;
     }
 
+    public static function getMachineHistory($machineId) {
+        $r_error = 1;
+        $r_message = "";
+        $q = "select machine_assign_record.*, user_profile.name,user_comment_machine.comment,user_comment_machine.comment_date from machine_assign_record left join user_profile on machine_assign_record.user_Id = user_profile.user_Id left join user_comment_machine on machine_assign_record.machine_id = user_comment_machine.machine_id where machine_assign_record.machine_id = 5 order by machine_assign_record.id desc";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if (sizeof($row) == 0) {
+            $r_message = "This Machine is not assigned to any employee!";
+        } else {
+            $r_error = 0;
+            $r_message = $row;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+        return $return;
+    } 
+
     public static function removeMachineAssignToUser($data) {
         $machine_info = self::getMachineDetail($data);
         if (!empty($machine_info['data']['user_Id'])) {
@@ -3550,15 +3581,36 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function removeMachineDetails($data) {
+    public static function getUnassignedMachineList() {
+        $q = "SELECT * FROM machines_list WHERE id not in (select machine_id from machines_user)";
+        $runQuery = self::DBrunQuery($query);
+        $row = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $row;
+        return $return;
+    }
+
+    public static function userAssignMachine($userid,$machineid) {
+
+    }
+
+    public static function removeMachineDetails($data,$userid) {
+        $userInfo = self::getUserInfo($userid);
+        if( strtolower( $userInfo['type'] ) === 'admin' ) {
         $q = "Delete from machines_list where id=$data";
         $runQuery = self::DBrunQuery($q);
 
         self::removeMachineAssignToUser($data);
+        $r_message = "Machine detail removed successfully";
+        }
 
+        else {
+            $r_message = "You are not Authorized to do that!!";
+        }
         $return = array();
         $return['error'] = 0;
-        $return['message'] = "Machine detail removed successfully";
+        $return['message'] = $r_message;
         return $return;
     }
 
