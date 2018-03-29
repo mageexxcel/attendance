@@ -246,6 +246,44 @@ class Salary extends DATABASE {
         return $row;
     }
 
+    public static function getUnapprovedMachineList() {        
+        $q = "select * from machines_list where approval_status = 0 ORDER BY id DESC"; //
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $row;
+        return $return;    
+    }
+
+    public static function userCommentOnMachine($userId,$serial_number,$comment) {
+        $r_error = 1;
+        $r_message = "";
+
+        $q = "select id from machines_list where serial_number = '$serial_number'";
+        $runQuery = self::DBrunQuery($q);
+        $machine_id = self::DBfetchRows($runQuery);
+
+        if(empty($comment)) {
+            $r_message = "Comment field must not be Empty!!";
+        }
+        else {
+            $comment = self::DBescapeString($comment);
+            $date = date('Y-m-d');
+            $q = "INSERT INTO user_comment_machine (user_Id,machine_id,comment,comment_date) VALUES ($userId,$machine_id,'$comment','$date')";
+            self::DBrunQuery($q);
+            $r_error = 0;            
+            $r_message = "Comment added Successfully !!";
+        }
+        $return = array();
+        $r_data = array();
+        $return['error'] = $r_error;
+        $r_data['message'] = $r_message;
+        $return['data'] = $r_data;
+
+        return $return;
+    }
+
     //Update employee salary details with slack notification message send to employee 
     public static function updateSalary($data) {
 
