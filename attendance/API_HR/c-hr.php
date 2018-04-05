@@ -774,10 +774,17 @@ class HR extends DATABASE {
         // added on 5jan2018----
         $genericMonthDays = self::getGenericMonthSummary($year, $month, $userid); // $userid added on 5jan2018 by arun so as to use user working hours
         
+        // userMonthLeaves is added to get the working hours for halfday
+        $userMonthLeaves = self::getUserMonthLeaves($userid,$year,$month);
+
         foreach ($allMonthAttendance as $pp_key => $pp) {
             $dayW_hours = false;
             if( isset($genericMonthDays[$pp_key]) && isset($genericMonthDays[$pp_key]['office_working_hours'])){
                 $dayW_hours = $genericMonthDays[$pp_key]['office_working_hours'];
+            }
+            // check if day is a leave and it is half day then daywhours will be 04:30 hours
+            if( isset($userMonthLeaves[$pp_key]) && isset($userMonthLeaves[$pp_key]['no_of_days']) && $userMonthLeaves[$pp_key]['no_of_days'] == '0.5' ){
+                $dayW_hours = '04:30';
             }
             $daySummary = self::_beautyDaySummary($pp, $dayW_hours);
             $list[$pp_key] = $daySummary;
