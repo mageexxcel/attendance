@@ -2593,6 +2593,8 @@ class HR extends DATABASE {
                         self::assignUserRole($userID,$defaultRoleId);
                     }
                     // end -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
+
+                    $r_data['user_id'] = $userID;
                 }
             }
         }
