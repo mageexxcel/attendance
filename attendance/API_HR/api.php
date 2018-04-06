@@ -1,5 +1,5 @@
 <?php
-$SHOW_ERROR = true;
+$SHOW_ERROR = false;
 if( $SHOW_ERROR ){
     error_reporting(E_ALL);
     ini_set('display_errors', 1); 
