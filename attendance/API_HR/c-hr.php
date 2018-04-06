@@ -4718,9 +4718,19 @@ class HR extends DATABASE {
     }
 
 
+    // inventory functions
+
+    // add inventory comment
+    public static function addInventoryComment( $inventory_id, $user_id,  $comment ){
+        $q = "INSERT into inventory_comments ( inventory_id, user_id, comment ) VALUES ( $inventory_id, $user_id,  '$comment' )";
+        self::DBrunQuery($q);
+        $return['error'] = 0;
+        $return['message'] = 'Comment added successfully!!';
+        $return['data'] = array();
+        return $return;
+    }
+
 }
-
-
 
 new HR();
 ?>

@@ -1,5 +1,5 @@
 <?php
-$SHOW_ERROR = false;
+$SHOW_ERROR = true;
 if( $SHOW_ERROR ){
     error_reporting(E_ALL);
     ini_set('display_errors', 1); 
@@ -554,5 +554,14 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'update_employee_life_cycle' ){
     $res = HR::updateELC( $PARAMS['stepid'], $PARAMS['userid'] );
 }
+
+// inventory actions
+else if ($action == 'add_inventory_comment' ){
+    $user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $comment = $PARAMS['comment'];
+    $res = HR::addInventoryComment($inventory_id, $user_id,  $comment);
+}
+
 echo json_encode($res);
 ?>
