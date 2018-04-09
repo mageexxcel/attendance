@@ -555,7 +555,11 @@ else if ($action == 'add_hr_comment') {
     $res = HR::updateELC( $PARAMS['stepid'], $PARAMS['userid'] );
 }
 
-// inventory actions
+/********************************/
+/****** inventory actions********/
+/********************************/
+
+// add inventory comment
 else if ($action == 'add_inventory_comment' ){
     $user_id = $loggedUserInfo['id'];
     $inventory_id = $PARAMS['inventory_id'];
