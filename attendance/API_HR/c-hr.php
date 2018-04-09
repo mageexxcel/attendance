@@ -3257,7 +3257,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function addOfficeMachine($PARAMS) {
+    public static function addOfficeMachine($PARAMS, $logged_user_id = false ) {
 
         $db = self::getInstance();
         $mysqli = $db->getConnection();
@@ -3266,6 +3266,7 @@ class HR extends DATABASE {
         $r_message = "";
 
         $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
+        $unassigned_comment = '';
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
         }
@@ -3308,6 +3309,9 @@ class HR extends DATABASE {
         if (isset($PARAMS['repair_comment']) && $PARAMS['repair_comment'] != '') {
             $repair_comment = trim($PARAMS['repair_comment']);
         }
+        if (isset($PARAMS['unassigned_comment']) && $PARAMS['unassigned_comment'] != '') {
+            $unassigned_comment = trim($PARAMS['unassigned_comment']);
+        }
         $row = false;
         //check user name exists
         if ($mac_addr != "") {
@@ -3333,7 +3337,14 @@ class HR extends DATABASE {
             $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
             self::DBrunQuery($q);
             $machine_id = mysqli_insert_id($mysqli);
-            self::assignUserMachine($machine_id, $userid);
+            
+            // if userid is assigned then only it will be assigned to a user else it will accepts a comment from FE and will be added as comment to the machine
+            if( $userid == '' || empty($userid) ){
+                self::addInventoryComment( $machine_id, $logged_user_id,  $unassigned_comment );
+            }else{
+                self::assignUserMachine($machine_id, $userid);    
+            }
+            
             $message = "New machine with following detail added:\n";
             $message.= "Machine Type=" . $m_type . "\n";
             $message.= "Machine Name=" . $m_name . "\n";
@@ -4735,7 +4746,13 @@ class HR extends DATABASE {
 
     // get inventory comments
     public static function getInventoryComments($inventory_id ){
-        $q = "SELECT * FROM inventory_comments WHERE inventory_id=$inventory_id ORDER BY updated_at DESC";
+        $q = "SELECT
+            inventory_comments.*,
+            user_profile.name,user_profile.jobtitle
+            FROM inventory_comments
+            LEFT JOIN user_profile ON inventory_comments.user_id = user_profile.user_id
+            where
+            inventory_id=$inventory_id ORDER BY updated_at DESC";
         $runQuery = self::DBrunQuery($q);
         $comments = self::DBfetchRows($runQuery);
         return $comments;

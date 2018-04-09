@@ -338,7 +338,8 @@ else if ($action == 'add_hr_comment') {
     $id = $PARAMS['id'];
     $res = HR::approveUnapprovedMachine($id);
 } else if ($action == 'add_office_machine') {
-    $res = HR::addOfficeMachine($PARAMS);
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::addOfficeMachine($PARAMS, $logged_user_id);
 } else if ($action == 'delete_machine_status') {
     $res = HR::deleteMachineStatus($PARAMS['status']);
 } else if ($action == 'get_machine_type_list') {
