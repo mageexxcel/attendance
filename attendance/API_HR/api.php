@@ -312,9 +312,10 @@ else if ($action == 'add_hr_comment') {
     $machine_id = $PARAMS['machine_id'];
     $res = HR::getMachineHistory($machine_id);
 } else if ($action == 'assign_user_machine') {
+    $logged_user_id = $loggedUserInfo['id'];
     $machine_id = $PARAMS['machine_id'];
     $user_id = $PARAMS['user_id'];
-    $res = HR::assignUserMachine($machine_id, $user_id);
+    $res = HR::assignUserMachine($machine_id, $user_id, $logged_user_id);
 } else if ($action == 'remove_machine_detail') {
     $id = $PARAMS['id'];
     $userid = $PARAMS['userid'];
