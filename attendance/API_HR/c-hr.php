@@ -3437,6 +3437,9 @@ class HR extends DATABASE {
         try {
             $row = self::DBfetchRow($runQuery);
             $r_error = 0;
+            // get inventory comments
+            $inventoryHistory = self::getInventoryHistory($id);
+            $row['history'] = $inventoryHistory;
         } catch (Exception $e) {
             $r_error = 1;
             $row = "Some error occured.";
@@ -4728,6 +4731,21 @@ class HR extends DATABASE {
         $return['message'] = 'Comment added successfully!!';
         $return['data'] = array();
         return $return;
+    }
+
+    // get inventory comments
+    public static function getInventoryComments($inventory_id ){
+        $q = "SELECT * FROM inventory_comments WHERE inventory_id=$inventory_id ORDER BY updated_at DESC";
+        $runQuery = self::DBrunQuery($q);
+        $comments = self::DBfetchRows($runQuery);
+        return $comments;
+    }
+
+    // get inventory history
+    public static function getInventoryHistory( $inventory_id ){
+        // this will combination of comments and history will be sorted by timestamp
+        $inventoryComments = self::getInventoryComments($inventory_id);
+        return $inventoryComments;
     }
 
 }
