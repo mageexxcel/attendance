@@ -4736,7 +4736,7 @@ class HR extends DATABASE {
 
     // add inventory comment
     public static function addInventoryComment( $inventory_id, $user_id,  $comment ){
-        $q = "INSERT into inventory_comments ( inventory_id, user_id, comment ) VALUES ( $inventory_id, $user_id,  '$comment' )";
+        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $user_id,  '$comment' )";
         self::DBrunQuery($q);
         $return['error'] = 0;
         $return['message'] = 'Comment added successfully!!';
@@ -4750,7 +4750,7 @@ class HR extends DATABASE {
             inventory_comments.*,
             user_profile.name,user_profile.jobtitle
             FROM inventory_comments
-            LEFT JOIN user_profile ON inventory_comments.user_id = user_profile.user_id
+            LEFT JOIN user_profile ON inventory_comments.updated_by_user_id = user_profile.user_id
             where
             inventory_id=$inventory_id ORDER BY updated_at DESC";
         $runQuery = self::DBrunQuery($q);
