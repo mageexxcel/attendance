@@ -4758,11 +4758,27 @@ class HR extends DATABASE {
         return $comments;
     }
 
+    // get inventory assigned history
+    public static function getInventoryAssignedUsersHistory($inventory_id ){
+        $q = "SELECT
+            machines_user.*,
+            user_profile.name,user_profile.jobtitle
+            FROM machines_user
+            LEFT JOIN user_profile ON machines_user.user_Id = user_profile.user_id
+            where
+            machine_id=$inventory_id ORDER BY updated_at DESC";
+        $runQuery = self::DBrunQuery($q);
+        $history = self::DBfetchRows($runQuery);
+        return $history;
+    }
+
     // get inventory history
     public static function getInventoryHistory( $inventory_id ){
         // this will combination of comments and history will be sorted by timestamp
         $inventoryComments = self::getInventoryComments($inventory_id);
-        return $inventoryComments;
+        $assignedUsersHistory = self::getInventoryAssignedUsersHistory( $inventory_id );
+        $history = array_merge($inventoryComments,$assignedUsersHistory);
+        return $history;
     }
 
 }
