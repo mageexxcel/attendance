@@ -3342,7 +3342,7 @@ class HR extends DATABASE {
             if( $userid == '' || empty($userid) ){
                 self::addInventoryComment( $machine_id, $logged_user_id,  $unassigned_comment );
             }else{
-                self::assignUserMachine($machine_id, $userid);    
+                self::assignUserMachine($machine_id, $userid, $logged_user_id);    
             }
             
             $message = "New machine with following detail added:\n";
@@ -3462,7 +3462,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function assignUserMachine($machine_id, $userid) {
+    public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
         if ($userid == "") {
@@ -3480,14 +3480,15 @@ class HR extends DATABASE {
             if ($row != false) {
                 //added to keep record of machine
                 $oldUserId = $row['user_Id'];
-                $q2 = "INSERT into machine_assign_record ( machine_id, user_Id, status, date ) VALUES ( $machine_id, $oldUserId, 'Removed', '$date')";
-                self::DBrunQuery($q2);
-                $q3 = "INSERT into machine_assign_record ( machine_id, user_Id, status, date ) VALUES ( $machine_id, $userid, 'Assigned', '$date')";
-                self::DBrunQuery($q3);
-                //
+
+                // maintained history in inventory_comments table
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Removed', $oldUserId );
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Assigned', $userid );
+
                 $q = "UPDATE machines_user SET  user_Id = '$userid', assign_date = '$date' where id =" . $row['id'];
             } else {
                 $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Assigned', $userid );
             }
             self::DBrunQuery($q);
             $r_error = 0;
@@ -4735,8 +4736,8 @@ class HR extends DATABASE {
     // inventory functions
 
     // add inventory comment
-    public static function addInventoryComment( $inventory_id, $user_id,  $comment ){
-        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $user_id,  '$comment' )";
+    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){
+        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
         self::DBrunQuery($q);
         $return['error'] = 0;
         $return['message'] = 'Comment added successfully!!';
@@ -4748,9 +4749,13 @@ class HR extends DATABASE {
     public static function getInventoryComments($inventory_id ){
         $q = "SELECT
             inventory_comments.*,
-            user_profile.name,user_profile.jobtitle
+            p1.name as updated_by_user,
+            p1.jobtitle as updated_by_user_job_title,
+            p2.name as assign_unassign_user_name,
+            p2.jobtitle as assign_unassign_job_title
             FROM inventory_comments
-            LEFT JOIN user_profile ON inventory_comments.updated_by_user_id = user_profile.user_id
+            LEFT JOIN user_profile as p1 ON inventory_comments.updated_by_user_id = p1.user_id
+            LEFT JOIN user_profile as p2 ON inventory_comments.assign_unassign_user_id = p2.user_id
             where
             inventory_id=$inventory_id ORDER BY updated_at DESC";
         $runQuery = self::DBrunQuery($q);
@@ -4776,9 +4781,7 @@ class HR extends DATABASE {
     public static function getInventoryHistory( $inventory_id ){
         // this will combination of comments and history will be sorted by timestamp
         $inventoryComments = self::getInventoryComments($inventory_id);
-        $assignedUsersHistory = self::getInventoryAssignedUsersHistory( $inventory_id );
-        $history = array_merge($inventoryComments,$assignedUsersHistory);
-        return $history;
+        return $inventoryComments;
     }
 
 }
