@@ -55,14 +55,18 @@ $url = '';
                 die;
             }
 //save file to google drive
-            $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
+            // commented by arun on 8th april 2018
+            // $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
 
-            if (sizeof($save) <= 0) {
-                echo "PLease provide refresh token";
-                die;
-            }
+            // if (sizeof($save) <= 0) {
+            //     echo "PLease provide refresh token";
+            //     die;
+            // }
 
-            $url = $save['url'];
+            // $url = $save['url'];
+
+$url = 'http://dev.hr.excellencetechnologies.in/hr/favicon.ico';
+
         }
        $l =  "<iframe src='$url'></iframe>";
     }
