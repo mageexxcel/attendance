@@ -3529,11 +3529,64 @@ class HR extends DATABASE {
 
     public static function getAllMachineDetail($sort = false, $status_sort = false) {
         if ($sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort' and machines_list.approval_status = 1";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email 
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.machine_type='$sort' and machines_list.approval_status = 1";
         }if ($status_sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort' and machines_list.approval_status = 1";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email,
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.status='$status_sort' and machines_list.approval_status = 1";
         } else {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.approval_status = 1 ORDER BY machines_list.id DESC";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email,
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.approval_status = 1 
+                    ORDER BY 
+                    machines_list.id DESC";
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
