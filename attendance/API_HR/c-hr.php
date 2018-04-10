@@ -4886,6 +4886,63 @@ class HR extends DATABASE {
         $return['data'] = array();
         return $return;
     }
+
+    public static function getManualAttendanceById( $id ){
+        $q = "SELECT * from attendance_manual WHERE id=$id ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if ($row == false) {
+            return false;
+        } else {
+            return $row;
+        }
+    }
+
+    // approve manual attendance 
+    public static function approveManualAttendance( $id ){
+        $message = '';
+        $row = self::getManualAttendanceById($id);
+        if( $row == false ){
+            $message = 'No Record found!!';
+        } else {
+            if( $row['status'] !== null ){
+                $message = 'Already processed!!';
+            }else{
+                $row_userid = $row['user_id'];
+                $row_manual_time = $row['manual_time'];
+                $q = "INSERT INTO attendance( id, user_id, timing ) VALUES ( 0, $row_userid, '$row_manual_time' )";
+                $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
+                self::DBrunQuery($q);  
+                $message = 'Approved Successfully!!';
+            }
+        }
+        $return['error'] = 0;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    // reject manual attendance
+    public static function rejectManualAttendance( $id ){
+        $message = '';
+        $row = self::getManualAttendanceById($id);
+        if( $row == false ){
+            $message = 'No Record found!!';
+        } else {
+            if( $row['status'] !== null ){
+                $message = 'Already processed!!';
+            }else{
+                $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
+                self::DBrunQuery($q);  
+                $message = 'Rejected Successfully!!';
+            }
+        }
+        $return['error'] = 0;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
 }
 
 new HR();
