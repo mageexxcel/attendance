@@ -1466,10 +1466,16 @@ class HR extends DATABASE {
 
     ///----slacks fns
 
-    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false) {
+    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
+        $paramMessage = $message;
+        
+        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
-        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
+        if( $actions != false ){
+            $message = '[{"text": "' . $paramMessage . '", "fallback": "Message Send to Employee", "color": "#36a64f", "actions": '.$actions.' }]';
+        }
+
         $message = str_replace("", "%20", $message);
 
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
@@ -4878,8 +4884,22 @@ class HR extends DATABASE {
         $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
-        // $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
-        // $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
+        $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+        $slackMessageActions = '[
+            {
+              "type": "button",
+              "text": "Approve",
+              "url": "https://flights.example.com/book/r123456",
+              "style": "primary"
+            }, 
+            {
+              "type": "button",
+              "text": "Reject",
+              "url": "https://flights.example.com/book/r123456",
+              "style": "danger"
+            }
+        ]';
+        $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
 
         $return['error'] = 0;
         $return['message'] = 'Successfully Updated!!';
