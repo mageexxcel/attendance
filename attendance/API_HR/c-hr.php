@@ -4784,6 +4784,28 @@ class HR extends DATABASE {
         return $inventoryComments;
     }
 
+    public static function addNewFile( $updated_by_user_id, $file_name, $google_drive_path = null ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        $q = "INSERT into files ( updated_by_user_id, file_name, google_drive_path ) VALUES ( $updated_by_user_id, '$file_name', '$google_drive_path')";
+        self::DBrunQuery($q);
+        $file_id = mysqli_insert_id($mysqli);
+        return $file_id;
+    }
+
+    public static function updateInventoryFileInvoice( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_invoice=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+    public static function updateInventoryFileWarranty( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_warranty=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+    public static function updateInventoryFilePhoto( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_photo=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+
 }
 
 new HR();
