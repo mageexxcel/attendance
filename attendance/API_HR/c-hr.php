@@ -4885,17 +4885,22 @@ class HR extends DATABASE {
         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
         $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+        
+        $baseURL =  self::getBasePath();
+        $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+        $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
+
         $slackMessageActions = '[
             {
               "type": "button",
               "text": "Approve",
-              "url": "https://flights.example.com/book/r123456",
+              "url": "'.$approveLink.'",
               "style": "primary"
             }, 
             {
               "type": "button",
               "text": "Reject",
-              "url": "https://flights.example.com/book/r123456",
+              "url": "'.$rejectLink.'",
               "style": "danger"
             }
         ]';
@@ -4934,6 +4939,14 @@ class HR extends DATABASE {
                 $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q);  
                 $message = 'Approved Successfully!!';
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is approved!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
             }
         }
         $return['error'] = 0;
@@ -4955,12 +4968,32 @@ class HR extends DATABASE {
                 $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q);  
                 $message = 'Rejected Successfully!!';
+
+                $row_userid = $row['user_id'];
+                $row_manual_time = $row['manual_time'];
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is Rejected!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
             }
         }
         $return['error'] = 0;
         $return['message'] = $message;
         $return['data'] = array();
         return $return;
+    }
+
+    public static function getBasePath(){
+        $url = (isset($_SERVER['HTTPS']) ? "https" : "http") ."://".$_SERVER['HTTP_HOST'];
+        if (strpos($url, 'dev.hr.') !== false) {
+            $url = "http://dev.hr.excellencetechnologies.in/hr";
+        }
+        return $url;
+
     }
 
 }
