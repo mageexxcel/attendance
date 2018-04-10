@@ -4944,7 +4944,7 @@ class HR extends DATABASE {
                 $userInfo_name = $userInfo['name'];
                 $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is approved!!";
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is approved!!";
                 $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
             }
@@ -4976,7 +4976,7 @@ class HR extends DATABASE {
                 $userInfo_name = $userInfo['name'];
                 $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is Rejected!!";
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is Rejected!!";
                 $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
             }
