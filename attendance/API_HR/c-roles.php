@@ -242,6 +242,7 @@ trait Roles {
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_working_hours_summary,'name' => 'working_hours_summary' ),
                     array( 'id' => self::$ACTION_update_day_working_hours, 'name' => 'update_day_working_hours' ),
+                    array( 'id' => self::$ACTION_add_manual_attendance,'name' => 'add_manual_attendance' ),
                 )
             ),
 
@@ -527,7 +528,7 @@ trait Roles {
 
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
             
-            array( 'id' => self::$ACTION_add_manual_attendance,'name' => 'add_manual_attendance' ),
+            
             // end - uncategorised actions
 
             // actions not required token
