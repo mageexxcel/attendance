@@ -4859,6 +4859,33 @@ class HR extends DATABASE {
         self::DBrunQuery($q);
     }
 
+    // add manual attendance
+    public static function addManualAttendance( $user_id, $time_type, $date, $manual_time, $reason ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        $raw_final_time = $date .' '.$manual_time;
+        $raw_timestamp = strtotime( $raw_final_time );
+        $raw_date = new DateTime($raw_final_time);
+        $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+        
+        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason')";
+        self::DBrunQuery($q);
+        $last_inserted_id = mysqli_insert_id($mysqli);
+        $userInfo = self::getUserInfo($user_id);
+        $userInfo_name = $userInfo['name'];
+        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+        $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+        // $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+        // $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
+
+        $return['error'] = 0;
+        $return['message'] = 'Successfully Updated!!';
+        $return['data'] = array();
+        return $return;
+    }
 }
 
 new HR();
