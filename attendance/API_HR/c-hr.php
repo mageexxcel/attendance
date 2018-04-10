@@ -1466,10 +1466,16 @@ class HR extends DATABASE {
 
     ///----slacks fns
 
-    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false) {
+    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
+        $paramMessage = $message;
+        
+        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
-        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
+        if( $actions != false ){
+            $message = '[{"text": "' . $paramMessage . '", "fallback": "Message Send to Employee", "color": "#36a64f", "actions": '.$actions.' }]';
+        }
+
         $message = str_replace("", "%20", $message);
 
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
@@ -4878,8 +4884,27 @@ class HR extends DATABASE {
         $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
-        // $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
-        // $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr);
+        $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+        
+        $baseURL =  self::getBasePath();
+        $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+        $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
+
+        $slackMessageActions = '[
+            {
+              "type": "button",
+              "text": "Approve",
+              "url": "'.$approveLink.'",
+              "style": "primary"
+            }, 
+            {
+              "type": "button",
+              "text": "Reject",
+              "url": "'.$rejectLink.'",
+              "style": "danger"
+            }
+        ]';
+        $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
 
         $return['error'] = 0;
         $return['message'] = 'Successfully Updated!!';
@@ -4914,6 +4939,14 @@ class HR extends DATABASE {
                 $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q);  
                 $message = 'Approved Successfully!!';
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is approved!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
             }
         }
         $return['error'] = 0;
@@ -4935,12 +4968,32 @@ class HR extends DATABASE {
                 $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q);  
                 $message = 'Rejected Successfully!!';
+
+                $row_userid = $row['user_id'];
+                $row_manual_time = $row['manual_time'];
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your $row_manual_time is Rejected!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
             }
         }
         $return['error'] = 0;
         $return['message'] = $message;
         $return['data'] = array();
         return $return;
+    }
+
+    public static function getBasePath(){
+        $url = (isset($_SERVER['HTTPS']) ? "https" : "http") ."://".$_SERVER['HTTP_HOST'];
+        if (strpos($url, 'dev.hr.') !== false) {
+            $url = "http://dev.hr.excellencetechnologies.in/hr";
+        }
+        return $url;
+
     }
 
 }
