@@ -34,7 +34,10 @@ if( isset($_GET['action']) ){
     $GET_action = $_GET['action'];
 }
 
-if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' || $GET_action == 'validate_unique_key') {
+if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' 
+    || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' 
+    || $GET_action == 'validate_unique_key'
+    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' ) {
     $PARAMS = $_GET;
 }
 
@@ -586,6 +589,16 @@ else if ($action == 'add_manual_attendance' ){
         $res = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
     }
 
+}
+
+else if ( $action == 'approve_manual_attendance'){
+    $manual_attendance_id = $PARAMS['id'];
+    $res = HR::approveManualAttendance( $manual_attendance_id );
+}
+
+else if ( $action == 'reject_manual_attendance'){
+    $manual_attendance_id = $PARAMS['id'];
+    $res = HR::rejectManualAttendance( $manual_attendance_id );   
 }
 
 

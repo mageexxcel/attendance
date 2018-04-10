@@ -184,6 +184,11 @@ trait Roles {
     static $NOTIFICATION_update_leave_status = 1002;
     static $NOTIFICATION_add_user_working_hours = 1003;
 
+    // action approve reject manual attendance
+    static $ACTION_add_manual_attendance = 11001;
+    static $ACTION_reject_manual_attendance = 11002;
+    static $ACTION_approve_manual_attendance = 11003;
+
 
     /////IMPORTANT
     /////name cannot be change since they are used in api calling from frontend
@@ -521,6 +526,8 @@ trait Roles {
             array( 'id' => self::$ACTION_get_user_manage_payslips_data,'name' => 'get_user_manage_payslips_data' ),
 
             array( 'id' => self::$ACTION_update_read_document,'name' => 'update_read_document' ),
+            
+            array( 'id' => self::$ACTION_add_manual_attendance,'name' => 'add_manual_attendance' ),
             // end - uncategorised actions
 
             // actions not required token
@@ -653,6 +660,8 @@ trait Roles {
             array( 'id' => self::$ACTION_get_lunch_stats, 'name' => 'get_lunch_stats' ),
             array( 'id' => self::$ACTION_get_lunch_break_detail, 'name' => 'get_lunch_break_detail' ),
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
+            array( 'id' => self::$ACTION_approve_manual_attendance, 'name' => 'approve_manual_attendance' ),
+            array( 'id' => self::$ACTION_reject_manual_attendance, 'name' => 'reject_manual_attendance' ),
         );
         return $array;
     }
