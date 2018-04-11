@@ -601,7 +601,12 @@ else if ( $action == 'reject_manual_attendance'){
     $res = HR::rejectManualAttendance( $manual_attendance_id );   
 }
 
-
+else if ( $action == 'update_inventory_status'){
+    $logged_user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $new_status = $PARAMS['new_status'];
+    $res = HR::updateInventoryStatus( $logged_user_id, $inventory_id, $new_status );   
+}
 
 echo json_encode($res);
 ?>
