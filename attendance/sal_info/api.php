@@ -133,6 +133,13 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     $res = Salary::updateEmailTemplate($PARAMS);
 } else if ($action == 'delete_email_template') {   //action to delete an email template
     $res = Salary::deleteEmailTemplate($PARAMS);
+}  else if ($action == 'get_unapproved_machine_list') {
+    $res = HR::getUnapprovedMachineList();
+} else if ($action == 'add_user_comment') {
+    $serial_number = $PARAMS['serial_number'];
+    $user_id = $PARAMS['user_id'];
+    $comment = $PARAMS['comment'];
+    $res = HR::userCommentOnMachine($user_id,$serial_number,$comment);
 } else if ($action == 'get_email_template_byId') { //aciton to get an email template by id
     $res = Salary::getEmailTemplateById($PARAMS);
 } else if ($action == 'add_team_list') {  //action to add or update team list

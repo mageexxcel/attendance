@@ -774,10 +774,17 @@ class HR extends DATABASE {
         // added on 5jan2018----
         $genericMonthDays = self::getGenericMonthSummary($year, $month, $userid); // $userid added on 5jan2018 by arun so as to use user working hours
         
+        // userMonthLeaves is added to get the working hours for halfday
+        $userMonthLeaves = self::getUserMonthLeaves($userid,$year,$month);
+
         foreach ($allMonthAttendance as $pp_key => $pp) {
             $dayW_hours = false;
             if( isset($genericMonthDays[$pp_key]) && isset($genericMonthDays[$pp_key]['office_working_hours'])){
                 $dayW_hours = $genericMonthDays[$pp_key]['office_working_hours'];
+            }
+            // check if day is a leave and it is half day then daywhours will be 04:30 hours
+            if( isset($userMonthLeaves[$pp_key]) && isset($userMonthLeaves[$pp_key]['no_of_days']) && $userMonthLeaves[$pp_key]['no_of_days'] == '0.5' ){
+                $dayW_hours = '04:30';
             }
             $daySummary = self::_beautyDaySummary($pp, $dayW_hours);
             $list[$pp_key] = $daySummary;
@@ -1459,10 +1466,16 @@ class HR extends DATABASE {
 
     ///----slacks fns
 
-    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false) {
+    public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
+        $paramMessage = $message;
+        
+        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
-        $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f "}]';
+        if( $actions != false ){
+            $message = '[{"text": "' . $paramMessage . '", "fallback": "Message Send to Employee", "color": "#36a64f", "actions": '.$actions.' }]';
+        }
+
         $message = str_replace("", "%20", $message);
 
         $message = stripslashes($message); // to remove \ which occurs during mysqk_real_escape_string
@@ -2586,6 +2599,8 @@ class HR extends DATABASE {
                         self::assignUserRole($userID,$defaultRoleId);
                     }
                     // end -- added on 5th jan 2018 - by arun - to add Employee as default role when new user is added
+
+                    $r_data['user_id'] = $userID;
                 }
             }
         }
@@ -3248,7 +3263,7 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function addOfficeMachine($PARAMS) {
+    public static function addOfficeMachine($PARAMS, $logged_user_id = false ) {
 
         $db = self::getInstance();
         $mysqli = $db->getConnection();
@@ -3257,6 +3272,7 @@ class HR extends DATABASE {
         $r_message = "";
 
         $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
+        $unassigned_comment = '';
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
         }
@@ -3299,6 +3315,9 @@ class HR extends DATABASE {
         if (isset($PARAMS['repair_comment']) && $PARAMS['repair_comment'] != '') {
             $repair_comment = trim($PARAMS['repair_comment']);
         }
+        if (isset($PARAMS['unassigned_comment']) && $PARAMS['unassigned_comment'] != '') {
+            $unassigned_comment = trim($PARAMS['unassigned_comment']);
+        }
         $row = false;
         //check user name exists
         if ($mac_addr != "") {
@@ -3324,7 +3343,14 @@ class HR extends DATABASE {
             $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
             self::DBrunQuery($q);
             $machine_id = mysqli_insert_id($mysqli);
-            self::assignUserMachine($machine_id, $userid);
+            
+            // if userid is assigned then only it will be assigned to a user else it will accepts a comment from FE and will be added as comment to the machine
+            if( $userid == '' || empty($userid) ){
+                self::addInventoryComment( $machine_id, $logged_user_id,  $unassigned_comment );
+            }else{
+                self::assignUserMachine($machine_id, $userid, $logged_user_id);    
+            }
+            
             $message = "New machine with following detail added:\n";
             $message.= "Machine Type=" . $m_type . "\n";
             $message.= "Machine Name=" . $m_name . "\n";
@@ -3352,6 +3378,8 @@ class HR extends DATABASE {
             $userid = trim($PARAMS['user_id']);
         }
 
+        $userInfo = self::getUserInfo($userid);
+        if( strtolower( $userInfo['type'] ) === 'admin' ) {
         $data = array(
             "machine_type" => $PARAMS['machine_type'],
             "machine_name" => $PARAMS['machine_name'],
@@ -3402,7 +3430,10 @@ class HR extends DATABASE {
             $r_message = "Successfully Updated into table";
             $r_data['message'] = $r_message;
         }
-
+    }
+    else {
+        $r_message = "You are not Authorized!!";
+    }
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -3423,6 +3454,9 @@ class HR extends DATABASE {
         try {
             $row = self::DBfetchRow($runQuery);
             $r_error = 0;
+            // get inventory comments
+            $inventoryHistory = self::getInventoryHistory($id);
+            $row['history'] = $inventoryHistory;
         } catch (Exception $e) {
             $r_error = 1;
             $row = "Some error occured.";
@@ -3434,11 +3468,11 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function assignUserMachine($machine_id, $userid) {
+    public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
         if ($userid == "") {
-            $return = self::removeMachineAssignToUser($machine_id);
+            $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
         } else {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
@@ -3450,9 +3484,17 @@ class HR extends DATABASE {
             $runQuery = self::DBrunQuery($q);
             $row = self::DBfetchRow($runQuery);
             if ($row != false) {
+                //added to keep record of machine
+                $oldUserId = $row['user_Id'];
+
+                // maintained history in inventory_comments table
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Removed', $oldUserId );
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Assigned', $userid );
+
                 $q = "UPDATE machines_user SET  user_Id = '$userid', assign_date = '$date' where id =" . $row['id'];
             } else {
                 $q = "INSERT INTO machines_user ( machine_id, user_Id, assign_date ) VALUES ( $machine_id, $userid, '$date') ";
+                self::addInventoryComment( $machine_id, $logged_user_id, 'Inventory Assigned', $userid );
             }
             self::DBrunQuery($q);
             $r_error = 0;
@@ -3473,7 +3515,7 @@ class HR extends DATABASE {
     public static function getUserMachine($userid) {
         $r_error = 1;
         $r_message = "";
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machine_user.user_Id = '$userid'";
+        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_user.user_Id = '$userid'";
 
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -3487,17 +3529,70 @@ class HR extends DATABASE {
         $return = array();
         $return['error'] = $r_error;
         $return['data'] = $r_message;
-
+        print_r($return);die;
         return $return;
     }
 
     public static function getAllMachineDetail($sort = false, $status_sort = false) {
         if ($sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.machine_type='$sort' and machines_list.approval_status = 1";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email 
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.machine_type='$sort' and machines_list.approval_status = 1";
         }if ($status_sort != false) {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.status='$status_sort' and machines_list.approval_status = 1";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email,
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.status='$status_sort' and machines_list.approval_status = 1";
         } else {
-            $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date,user_profile.name,user_profile.work_email from machines_list left join machines_user on machines_list.id = machines_user.machine_id left join user_profile on machines_user.user_Id = user_profile.user_Id where machines_list.approval_status = 1 ORDER BY machines_list.id DESC";
+            $q = "select 
+                    machines_list.*,
+                    machines_user.user_Id,
+                    machines_user.assign_date,
+                    user_profile.name,
+                    user_profile.work_email,
+                    f1.file_name as fileInventoryInvoice,
+                    f2.file_name as fileInventoryWarranty,
+                    f3.file_name as fileInventoryPhoto 
+                    from 
+                    machines_list 
+                    left join machines_user on machines_list.id = machines_user.machine_id 
+                    left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                    left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                    left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                    left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                    where 
+                    machines_list.approval_status = 1 
+                    ORDER BY 
+                    machines_list.id DESC";
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -3531,7 +3626,26 @@ class HR extends DATABASE {
             return $return;
     }
 
-    public static function removeMachineAssignToUser($data) {
+    public static function getMachineHistory($machineId) {
+        $r_error = 1;
+        $r_message = "";
+        $q = "select machine_assign_record.*, user_profile.name,user_comment_machine.comment,user_comment_machine.comment_date from machine_assign_record left join user_profile on machine_assign_record.user_Id = user_profile.user_Id left join user_comment_machine on machine_assign_record.machine_id = user_comment_machine.machine_id where machine_assign_record.machine_id = 5 order by machine_assign_record.id desc";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if (sizeof($row) == 0) {
+            $r_message = "This Machine is not assigned to any employee!";
+        } else {
+            $r_error = 0;
+            $r_message = $row;
+        }
+
+        $return = array();
+        $return['error'] = $r_error;
+        $return['data'] = $r_message;
+        return $return;
+    } 
+
+    public static function removeMachineAssignToUser($data, $logged_user_id = false) {
         $machine_info = self::getMachineDetail($data);
         if (!empty($machine_info['data']['user_Id'])) {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
@@ -3539,6 +3653,9 @@ class HR extends DATABASE {
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
             $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+
+            // save to inventory history
+            self::addInventoryComment( $data, $logged_user_id, 'Inventory Removed', $machine_info['data']['user_Id'] );
         }
 
         $q = "Delete from machines_user where machine_id=$data";
@@ -3550,15 +3667,36 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function removeMachineDetails($data) {
+    public static function getUnassignedMachineList() {
+        $q = "SELECT * FROM machines_list WHERE id not in (select machine_id from machines_user)";
+        $runQuery = self::DBrunQuery($query);
+        $row = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $row;
+        return $return;
+    }
+
+    public static function userAssignMachine($userid,$machineid) {
+
+    }
+
+    public static function removeMachineDetails($data,$userid) {
+        $userInfo = self::getUserInfo($userid);
+        if( strtolower( $userInfo['type'] ) === 'admin' ) {
         $q = "Delete from machines_list where id=$data";
         $runQuery = self::DBrunQuery($q);
 
         self::removeMachineAssignToUser($data);
+        $r_message = "Machine detail removed successfully";
+        }
 
+        else {
+            $r_message = "You are not Authorized to do that!!";
+        }
         $return = array();
         $return['error'] = 0;
-        $return['message'] = "Machine detail removed successfully";
+        $return['message'] = $r_message;
         return $return;
     }
 
@@ -4657,9 +4795,272 @@ class HR extends DATABASE {
     }
 
 
+    // inventory functions
+
+    // add inventory comment
+    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){        
+        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, '$comment' )";
+        if( $assign_unassign_user_id != null ){
+            $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
+        }
+        self::DBrunQuery($q);
+        $return['error'] = 0;
+        $return['message'] = 'Comment added successfully!!';
+        $return['data'] = array();
+        return $return;
+    }
+
+    // get inventory comments
+    public static function getInventoryComments($inventory_id ){
+        $q = "SELECT
+            inventory_comments.*,
+            p1.name as updated_by_user,
+            p1.jobtitle as updated_by_user_job_title,
+            p2.name as assign_unassign_user_name,
+            p2.jobtitle as assign_unassign_job_title
+            FROM inventory_comments
+            LEFT JOIN user_profile as p1 ON inventory_comments.updated_by_user_id = p1.user_id
+            LEFT JOIN user_profile as p2 ON inventory_comments.assign_unassign_user_id = p2.user_id
+            where
+            inventory_id=$inventory_id ORDER BY updated_at DESC";
+        $runQuery = self::DBrunQuery($q);
+        $comments = self::DBfetchRows($runQuery);
+        return $comments;
+    }
+
+    // get inventory assigned history
+    public static function getInventoryAssignedUsersHistory($inventory_id ){
+        $q = "SELECT
+            machines_user.*,
+            user_profile.name,user_profile.jobtitle
+            FROM machines_user
+            LEFT JOIN user_profile ON machines_user.user_Id = user_profile.user_id
+            where
+            machine_id=$inventory_id ORDER BY updated_at DESC";
+        $runQuery = self::DBrunQuery($q);
+        $history = self::DBfetchRows($runQuery);
+        return $history;
+    }
+
+    // get inventory history
+    public static function getInventoryHistory( $inventory_id ){
+        // this will combination of comments and history will be sorted by timestamp
+        $inventoryComments = self::getInventoryComments($inventory_id);
+        return $inventoryComments;
+    }
+
+    public static function addNewFile( $updated_by_user_id, $file_name, $google_drive_path = null ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        $q = "INSERT into files ( updated_by_user_id, file_name, google_drive_path ) VALUES ( $updated_by_user_id, '$file_name', '$google_drive_path')";
+        self::DBrunQuery($q);
+        $file_id = mysqli_insert_id($mysqli);
+        return $file_id;
+    }
+
+    public static function updateInventoryFileInvoice( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_invoice=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+    public static function updateInventoryFileWarranty( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_warranty=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+    public static function updateInventoryFilePhoto( $inventory_id, $file_id ){
+        $q = "UPDATE machines_list set file_inventory_photo=$file_id WHERE id = $inventory_id ";
+        self::DBrunQuery($q);
+    }
+
+    // add manual attendance
+    public static function addManualAttendance( $user_id, $time_type, $date, $manual_time, $reason ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+        $raw_final_time = $date .' '.$manual_time;
+        $raw_timestamp = strtotime( $raw_final_time );
+        $raw_date = new DateTime($raw_final_time);
+        $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+        
+        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason')";
+        self::DBrunQuery($q);
+        $last_inserted_id = mysqli_insert_id($mysqli);
+        $userInfo = self::getUserInfo($user_id);
+        $userInfo_name = $userInfo['name'];
+        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+        $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+        $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+        
+        $baseURL =  self::getBasePath();
+        $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+        $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
+
+        $slackMessageActions = '[
+            {
+              "type": "button",
+              "text": "Approve",
+              "url": "'.$approveLink.'",
+              "style": "primary"
+            }, 
+            {
+              "type": "button",
+              "text": "Reject",
+              "url": "'.$rejectLink.'",
+              "style": "danger"
+            }
+        ]';
+        $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+
+        $return['error'] = 0;
+        $return['message'] = 'Successfully Updated!!';
+        $return['data'] = array();
+        return $return;
+    }
+
+    public static function getManualAttendanceById( $id ){
+        $q = "SELECT * from attendance_manual WHERE id=$id ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);
+        if ($row == false) {
+            return false;
+        } else {
+            return $row;
+        }
+    }
+
+    // approve manual attendance 
+    public static function approveManualAttendance( $id ){
+        $message = '';
+        $row = self::getManualAttendanceById($id);
+        if( $row == false ){
+            $message = 'No Record found!!';
+        } else {
+            if( $row['status'] !== null ){
+                $message = 'Already processed!!';
+            }else{
+                $row_userid = $row['user_id'];
+                $row_manual_time = $row['manual_time'];
+                $q = "INSERT INTO attendance( id, user_id, timing ) VALUES ( 0, $row_userid, '$row_manual_time' )";
+                $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
+                self::DBrunQuery($q);  
+                $message = 'Approved Successfully!!';
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is approved!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+            }
+        }
+        $return['error'] = 0;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    // reject manual attendance
+    public static function rejectManualAttendance( $id ){
+        $message = '';
+        $row = self::getManualAttendanceById($id);
+        if( $row == false ){
+            $message = 'No Record found!!';
+        } else {
+            if( $row['status'] !== null ){
+                $message = 'Already processed!!';
+            }else{
+                $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
+                self::DBrunQuery($q);  
+                $message = 'Rejected Successfully!!';
+
+                $row_userid = $row['user_id'];
+                $row_manual_time = $row['manual_time'];
+
+                $userInfo = self::getUserInfo($row_userid);
+                $userInfo_name = $userInfo['name'];
+                $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is Rejected!!";
+                $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+            }
+        }
+        $return['error'] = 0;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    public static function getBasePath(){
+        $url = (isset($_SERVER['HTTPS']) ? "https" : "http") ."://".$_SERVER['HTTP_HOST'];
+        if (strpos($url, 'dev.hr.') !== false) {
+            $url = "http://dev.hr.excellencetechnologies.in/hr";
+        }
+        return $url;
+    }
+
+    public static function updateInventoryStatus( $logged_user_id, $inventory_id, $new_status ){
+        $error = 0;
+        $message = '';
+        $inventory_detail = self::getMachineDetail($inventory_id);
+        if( isset( $inventory_detail['data'] ) && isset( $inventory_detail['data']['id'] ) ){
+            $old_status = $inventory_detail['data']['status'];
+            $q = "UPDATE machines_list SET status='$new_status' WHERE id = $inventory_id ";
+            self::DBrunQuery($q);
+            // update inventory history
+            $comment = "Status changed from $old_status to $new_status";
+            self::addInventoryComment( $inventory_id, $logged_user_id,  $comment );
+            $message = 'Updated successfully!!';
+
+
+            // if new status is Sold, then inventory should be unassigned ( remove from machines_user table ) if it assigned to any user and 
+            if( strtolower($new_status) == 'sold' ){
+                $comment = "Status changes to sold ";
+                self::removeMachineAssignToUser( $inventory_id , $logged_user_id );
+            }
+
+        } else{
+            $error = 1;
+            $message = 'Inventory not found';
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    public static function getUnapprovedInventoryList(){
+        $q = "select 
+                machines_list.*,
+                machines_user.user_Id,
+                machines_user.assign_date,
+                user_profile.name,
+                user_profile.work_email,
+                f1.file_name as fileInventoryInvoice,
+                f2.file_name as fileInventoryWarranty,
+                f3.file_name as fileInventoryPhoto 
+                from 
+                machines_list 
+                left join machines_user on machines_list.id = machines_user.machine_id 
+                left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                where 
+                machines_list.approval_status = 0
+                ORDER BY 
+                machines_list.id DESC";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $rows;
+        return $return;
+    }
+
 }
-
-
 
 new HR();
 ?>

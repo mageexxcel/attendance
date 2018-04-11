@@ -34,7 +34,10 @@ if( isset($_GET['action']) ){
     $GET_action = $_GET['action'];
 }
 
-if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' || $GET_action == 'validate_unique_key') {
+if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' 
+    || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' 
+    || $GET_action == 'validate_unique_key'
+    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' ) {
     $PARAMS = $_GET;
 }
 
@@ -308,13 +311,18 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'get_user_machine') {
     $userid = $PARAMS['user_id'];
     $res = HR::getUserMachine($userid);
+} else if ($action == 'get_machine_history') {
+    $machine_id = $PARAMS['machine_id'];
+    $res = HR::getMachineHistory($machine_id);
 } else if ($action == 'assign_user_machine') {
+    $logged_user_id = $loggedUserInfo['id'];
     $machine_id = $PARAMS['machine_id'];
     $user_id = $PARAMS['user_id'];
-    $res = HR::assignUserMachine($machine_id, $user_id);
+    $res = HR::assignUserMachine($machine_id, $user_id, $logged_user_id);
 } else if ($action == 'remove_machine_detail') {
     $id = $PARAMS['id'];
-    $res = HR::removeMachineDetails($id);
+    $userid = $PARAMS['userid'];
+    $res = HR::removeMachineDetails($id,$userid);
 } else if ($action == 'get_machines_detail') {   
     if (isset($PARAMS['sort']) && $PARAMS['sort'] != "") {
         $sort = trim($PARAMS['sort']);
@@ -330,13 +338,12 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getMachineDetail($id);
 } else if ($action == 'update_office_machine') {
     $res = HR::UpdateOfficeMachine($PARAMS);    
-} else if ($action == 'get_unapproved_machine_list') {
-    $res = HR::getUnapprovedMachineList();
 } else if ($action == 'approve_machine') {
     $id = $PARAMS['id'];
     $res = HR::approveUnapprovedMachine($id);
 } else if ($action == 'add_office_machine') {
-    $res = HR::addOfficeMachine($PARAMS);
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::addOfficeMachine($PARAMS, $logged_user_id);
 } else if ($action == 'delete_machine_status') {
     $res = HR::deleteMachineStatus($PARAMS['status']);
 } else if ($action == 'get_machine_type_list') {
@@ -552,5 +559,58 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == 'update_employee_life_cycle' ){
     $res = HR::updateELC( $PARAMS['stepid'], $PARAMS['userid'] );
 }
+
+/********************************/
+/****** inventory actions********/
+/********************************/
+
+// add inventory comment
+else if ($action == 'add_inventory_comment' ){
+    $user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $comment = $PARAMS['comment'];
+    $res = HR::addInventoryComment($inventory_id, $user_id,  $comment);
+}
+
+/****************************************/
+/****** manual attendacne actions********/
+/****************************************/
+
+else if ($action == 'add_manual_attendance' ){
+    $user_id = $loggedUserInfo['id'];
+    $reason = $PARAMS['reason'];
+    $date = $PARAMS['date'];    
+    if ( isset($PARAMS['entry_time']) && !empty($PARAMS['entry_time']) ){
+        $entry_time = $PARAMS['entry_time'];
+        $res = HR::addManualAttendance( $user_id, 'entry', $date, $entry_time, $reason );
+    }
+    if ( isset($PARAMS['exit_time']) && !empty($PARAMS['exit_time']) ){
+        $exit_time = $PARAMS['exit_time'];
+        $res = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
+    }
+
+}
+
+else if ( $action == 'approve_manual_attendance'){
+    $manual_attendance_id = $PARAMS['id'];
+    $res = HR::approveManualAttendance( $manual_attendance_id );
+}
+
+else if ( $action == 'reject_manual_attendance'){
+    $manual_attendance_id = $PARAMS['id'];
+    $res = HR::rejectManualAttendance( $manual_attendance_id );   
+}
+
+else if ( $action == 'update_inventory_status'){
+    $logged_user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $new_status = $PARAMS['new_status'];
+    $res = HR::updateInventoryStatus( $logged_user_id, $inventory_id, $new_status );   
+}
+
+else if ($action == 'get_unapproved_inventory_list') {
+    $res = HR::getUnapprovedInventoryList();
+}
+
 echo json_encode($res);
 ?>
