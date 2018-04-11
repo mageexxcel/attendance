@@ -1,5 +1,5 @@
 <?php
-$SHOW_ERROR = false;
+$SHOW_ERROR = true;
 if( $SHOW_ERROR ){
     error_reporting(E_ALL);
     ini_set('display_errors', 1); 
@@ -606,6 +606,10 @@ else if ( $action == 'update_inventory_status'){
     $inventory_id = $PARAMS['inventory_id'];
     $new_status = $PARAMS['new_status'];
     $res = HR::updateInventoryStatus( $logged_user_id, $inventory_id, $new_status );   
+}
+
+else if ($action == 'get_unapproved_inventory_list') {
+    $res = HR::getUnapprovedInventoryList();
 }
 
 echo json_encode($res);
