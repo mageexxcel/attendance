@@ -608,5 +608,9 @@ else if ( $action == 'update_inventory_status'){
     $res = HR::updateInventoryStatus( $logged_user_id, $inventory_id, $new_status );   
 }
 
+else if ($action == 'get_unapproved_inventory_list') {
+    $res = HR::getUnapprovedInventoryList();
+}
+
 echo json_encode($res);
 ?>

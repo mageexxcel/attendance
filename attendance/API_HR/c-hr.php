@@ -5031,6 +5031,35 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getUnapprovedInventoryList(){
+        $q = "select 
+                machines_list.*,
+                machines_user.user_Id,
+                machines_user.assign_date,
+                user_profile.name,
+                user_profile.work_email,
+                f1.file_name as fileInventoryInvoice,
+                f2.file_name as fileInventoryWarranty,
+                f3.file_name as fileInventoryPhoto 
+                from 
+                machines_list 
+                left join machines_user on machines_list.id = machines_user.machine_id 
+                left join user_profile on machines_user.user_Id = user_profile.user_Id 
+                left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                where 
+                machines_list.approval_status = 0
+                ORDER BY 
+                machines_list.id DESC";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $return = array();
+        $return['error'] = 0;
+        $return['data'] = $rows;
+        return $return;
+    }
+
 }
 
 new HR();
