@@ -3472,7 +3472,7 @@ class HR extends DATABASE {
         $r_error = 1;
         $r_message = "";
         if ($userid == "") {
-            $return = self::removeMachineAssignToUser($machine_id);
+            $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
         } else {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
@@ -3645,7 +3645,7 @@ class HR extends DATABASE {
         return $return;
     } 
 
-    public static function removeMachineAssignToUser($data) {
+    public static function removeMachineAssignToUser($data, $logged_user_id = false) {
         $machine_info = self::getMachineDetail($data);
         if (!empty($machine_info['data']['user_Id'])) {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
@@ -3653,6 +3653,9 @@ class HR extends DATABASE {
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
             $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+
+            // save to inventory history
+            self::addInventoryComment( $data, $logged_user_id, 'Inventory Removed', $machine_info['data']['user_Id'] );
         }
 
         $q = "Delete from machines_user where machine_id=$data";
@@ -4795,8 +4798,11 @@ class HR extends DATABASE {
     // inventory functions
 
     // add inventory comment
-    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){
-        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
+    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){        
+        $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, '$comment' )";
+        if( $assign_unassign_user_id != null ){
+            $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
+        }
         self::DBrunQuery($q);
         $return['error'] = 0;
         $return['message'] = 'Comment added successfully!!';
@@ -4993,7 +4999,36 @@ class HR extends DATABASE {
             $url = "http://dev.hr.excellencetechnologies.in/hr";
         }
         return $url;
+    }
 
+    public static function updateInventoryStatus( $logged_user_id, $inventory_id, $new_status ){
+        $error = 0;
+        $message = '';
+        $inventory_detail = self::getMachineDetail($inventory_id);
+        if( isset( $inventory_detail['data'] ) && isset( $inventory_detail['data']['id'] ) ){
+            $old_status = $inventory_detail['data']['status'];
+            $q = "UPDATE machines_list SET status='$new_status' WHERE id = $inventory_id ";
+            self::DBrunQuery($q);
+            // update inventory history
+            $comment = "Status changed from $old_status to $new_status";
+            self::addInventoryComment( $inventory_id, $logged_user_id,  $comment );
+            $message = 'Updated successfully!!';
+
+
+            // if new status is Sold, then inventory should be unassigned ( remove from machines_user table ) if it assigned to any user and 
+            if( strtolower($new_status) == 'sold' ){
+                $comment = "Status changes to sold ";
+                self::removeMachineAssignToUser( $inventory_id , $logged_user_id );
+            }
+
+        } else{
+            $error = 1;
+            $message = 'Inventory not found';
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
     }
 
 }
