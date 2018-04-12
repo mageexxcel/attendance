@@ -913,14 +913,17 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function createEmailTempPdf($data) {
+    public static function createEmailTempPdf($data, $include_header_footer = false ) {
 
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $html = ob_start();
+        
         require_once 'templatehead.php';
+        
         $html = ob_get_clean();
+
         $q = 'Select * from template_variables';
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
