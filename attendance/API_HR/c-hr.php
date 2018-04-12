@@ -3659,7 +3659,7 @@ class HR extends DATABASE {
         return $return;
     } 
 
-    public static function removeMachineAssignToUser($data, $logged_user_id = false) {
+    public static function removeMachineAssignToUser($data, $logged_user_id = false, $reason_of_removal = false) {
         $machine_info = self::getMachineDetail($data);
         if (!empty($machine_info['data']['user_Id'])) {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
@@ -3669,7 +3669,10 @@ class HR extends DATABASE {
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
 
             // save to inventory history
-            self::addInventoryComment( $data, $logged_user_id, 'Inventory Removed', $machine_info['data']['user_Id'] );
+            if( $reason_of_removal == false ){
+                $reason_of_removal = 'Inventory Removed';
+            }
+            self::addInventoryComment( $data, $logged_user_id, $reason_of_removal, $machine_info['data']['user_Id'] );
         }
 
         $q = "Delete from machines_user where machine_id=$data";
@@ -5032,7 +5035,7 @@ class HR extends DATABASE {
             // if new status is Sold, then inventory should be unassigned ( remove from machines_user table ) if it assigned to any user and 
             if( strtolower($new_status) == 'sold' ){
                 $comment = "Status changes to sold ";
-                self::removeMachineAssignToUser( $inventory_id , $logged_user_id );
+                self::removeMachineAssignToUser( $inventory_id , $logged_user_id, 'Inventory is sold, hence unassigned!' );
             }
 
         } else{

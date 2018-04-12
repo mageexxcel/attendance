@@ -612,5 +612,14 @@ else if ($action == 'get_unapproved_inventory_list') {
     $res = HR::getUnapprovedInventoryList();
 }
 
+// logges in user can unassigned his inventory
+else if ($action == 'unassigned_my_inventory' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $reason_of_removal = $PARAMS['comment'];
+    $res = HR::removeMachineAssignToUser( $inventory_id, $logged_user_id, $reason_of_removal );
+}
+
+
 echo json_encode($res);
 ?>
