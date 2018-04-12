@@ -357,7 +357,11 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $res['data']['message'] = 'Please give user_id ';
     }
 } else if ($action == 'create_pdf') {  //action to create a template varible
-    $res = Salary::createEmailTempPdf($PARAMS);
+    $include_header_footer = true;
+    if( isset($PARAMS['include_header_footer']) && $PARAMS['include_header_footer'] == 0 ){
+        $include_header_footer = false;
+    }
+    $res = Salary::createEmailTempPdf($PARAMS, $include_header_footer);
 } else if ($action == 'update_read_document') {    //action to create a template varible
     $doc_id = $PARAMS['document_id'];
     if ($user_id != "") {
