@@ -3441,6 +3441,7 @@ class HR extends DATABASE {
         return $return;
     }
 
+    
     public static function getMachineDetail($id) {
         $r_error = 1;
         $row = array();
@@ -5074,6 +5075,75 @@ class HR extends DATABASE {
         $return = array();
         $return['error'] = 0;
         $return['data'] = $rows;
+        return $return;
+    }
+
+
+    public static function getUserInventories($userid) {
+        $return = false;
+        $q = "SELECT * FROM machines_user WHERE user_Id=$userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    // arun use this getMachineDetail function for audit details also
+    public static function getInventoryFullDetails($id) {
+        $row = array();
+        $q = "select 
+                machines_list.*,
+                machines_user.user_Id,
+                machines_user.assign_date ,
+                f1.file_name as fileInventoryInvoice,
+                f2.file_name as fileInventoryWarranty,
+                f3.file_name as fileInventoryPhoto
+                from 
+                machines_list 
+                left join machines_user on machines_list.id = machines_user.machine_id
+                left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                where 
+                machines_list.id = $id";
+        $runQuery = self::DBrunQuery($q);
+        try {
+            $row = self::DBfetchRow($runQuery);
+            $r_error = 0;
+            // get inventory comments
+            $inventoryHistory = self::getInventoryHistory($id);
+            $row['history'] = $inventoryHistory;
+        } catch (Exception $e) {
+            $row = false;
+        }        
+        return $row;
+    }
+
+
+    public static function api_getMyInventories($userid){
+        $error = 0;
+        $message = '';
+        $data = array();
+        $userInventories = self::getUserInventories($userid);
+        if( $userInventories == false ){
+            $message = "No inventories assigned to user!!";
+        } else {
+            $user_assign_machine = array();
+            foreach( $userInventories as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['machine_id']);
+                $user_assign_machine[] = $i_details;
+            }
+            $data['user_assign_machine'] = $user_assign_machine;
+            $user_profile_detail = self::getUserInfo($userid);
+            unset($user_profile_detail['password']);
+            $data['user_profile_detail'] = $user_profile_detail;
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $data;
         return $return;
     }
 
