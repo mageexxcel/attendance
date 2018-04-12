@@ -3447,7 +3447,21 @@ class HR extends DATABASE {
         //check user name exists
         // $q = "select * from machines_list where id=" . $PARAMS['id'];
 
-        $q = "select machines_list.*,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_list.id = $id";
+        $q = "select 
+                machines_list.*,
+                machines_user.user_Id,
+                machines_user.assign_date ,
+                f1.file_name as fileInventoryInvoice,
+                f2.file_name as fileInventoryWarranty,
+                f3.file_name as fileInventoryPhoto
+                from 
+                machines_list 
+                left join machines_user on machines_list.id = machines_user.machine_id
+                left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                where 
+                machines_list.id = $id";
 
         $runQuery = self::DBrunQuery($q);
 
