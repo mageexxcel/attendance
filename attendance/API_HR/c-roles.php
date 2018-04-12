@@ -36,6 +36,7 @@ trait Roles {
     static $PAGE_manage_roles = 130;
     static $PAGE_manage_user_pending_hours = 131;
     static $PAGE_logout = 132;
+    static $PAGE_add_documents = 133;
 
 
 
@@ -114,6 +115,8 @@ trait Roles {
     static $ACTION_remove_machine_detail = 511;
     static $ACTION_assign_user_machine = 512;
     static $ACTION_get_user_machine = 513;
+
+    static $ACTION_unassigned_my_inventory = 514;
 
     //actions not required token
     static $ACTION_login = 601;
@@ -232,6 +235,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_assign_user_machine, 'name' => 'assign_user_machine' ),
                     array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
                     array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
+                    array( 'id' => self::$ACTION_unassigned_my_inventory, 'name' => 'unassigned_my_inventory' ),
                 )
             ),
 
@@ -369,7 +373,12 @@ trait Roles {
                 )
             ),
 
-
+            array(
+                'id' => self::$PAGE_add_documents,
+                'name' => 'add_documents',
+                'actions_list' => array(
+                )
+            ),
 
             array(
                 'id' => self::$PAGE_manage_clients,

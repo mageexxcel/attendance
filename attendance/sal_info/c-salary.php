@@ -913,14 +913,17 @@ class Salary extends DATABASE {
         return $return;
     }
 
-    public static function createEmailTempPdf($data) {
+    public static function createEmailTempPdf($data, $include_header_footer = false ) {
 
         $r_error = 1;
         $r_message = "";
         $r_data = array();
         $html = ob_start();
+        
         require_once 'templatehead.php';
+        
         $html = ob_get_clean();
+
         $q = 'Select * from template_variables';
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
@@ -2702,7 +2705,7 @@ class Salary extends DATABASE {
     }
     // get employee profile details with bank details.
     public static function getUserAssignMachines($userid) {
-        $q = "select machines_list.machine_type,machines_list.machine_name,machines_list.mac_address,machines_list.serial_number,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_user.user_Id = '$userid'";
+        $q = "select machines_list.id, machines_list.machine_type,machines_list.machine_name,machines_list.mac_address,machines_list.serial_number,machines_user.user_Id,machines_user.assign_date from machines_list left join machines_user on machines_list.id = machines_user.machine_id where machines_user.user_Id = '$userid'";
         
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
