@@ -36,6 +36,7 @@ trait Roles {
     static $PAGE_manage_roles = 130;
     static $PAGE_manage_user_pending_hours = 131;
     static $PAGE_logout = 132;
+    static $PAGE_add_documents = 133;
 
 
 
@@ -372,7 +373,12 @@ trait Roles {
                 )
             ),
 
-
+            array(
+                'id' => self::$PAGE_add_documents,
+                'name' => 'add_documents',
+                'actions_list' => array(
+                )
+            ),
 
             array(
                 'id' => self::$PAGE_manage_clients,
