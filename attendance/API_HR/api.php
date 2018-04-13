@@ -639,11 +639,11 @@ else if( $action == 'get_my_inventories' ){
     $res = HR::api_getMyInventories($logged_user_id);
 }
 
-else if ( $action == 'do_inventory_audit' ){
+else if ( $action == 'add_inventory_audit' ){
     $logged_user_id = $loggedUserInfo['id'];
     $inventory_id = $PARAMS['inventory_id'];
     $audit_message = $PARAMS['audit_message'];
-    $res = HR::api_doInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
+    $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
 }
 
 

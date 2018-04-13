@@ -5233,8 +5233,42 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function api_doInventoryAudit( $inventory_id, $logged_user_id, $audit_message ){
-        echo $inventory_id;
+    public static function addInventoryAudit( $inventory_id, $audit_done_by_user_id, $audit_message ){
+        $dateTimeData = self::_getDateTimeData();
+        $audit_month = $dateTimeData['current_month_number'];
+        $audit_year = $dateTimeData['current_year_number']; 
+        $res = self::addInventoryComment( $inventory_id, $audit_done_by_user_id,  $audit_message );
+        $inventory_comment_id = $res['last_inserted_id'];
+        $q = "INSERT 
+                INTO 
+                inventory_audit_month_wise
+                ( inventory_id, month, year, audit_done_by_user_id, inventory_comment_id )
+                VALUES
+                ( $inventory_id, $audit_month, $audit_year, $audit_done_by_user_id, $inventory_comment_id )
+                ";
+        self::DBrunQuery($q);
+        return true;
+    }
+
+    public static function api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message ){
+        self::addInventoryAudit( $inventory_id, $logged_user_id,  $audit_message );
+        $error = 0;
+        $message = 'Audit added for inventory successfully!!';
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    // this is a Generic function to get information related to date time
+    public static function _getDateTimeData(){
+        $data = array();
+        $currentTimeStamp = time();
+        $data['current_timestamp'] = $currentTimeStamp;
+        $data['current_date_number'] = date('d', $currentTimeStamp );
+        $data['current_month_number'] = date('m', $currentTimeStamp );
+        $data['current_year_number'] = date('Y', $currentTimeStamp );
+        return $data;
     }
 
 }
