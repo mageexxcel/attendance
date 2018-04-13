@@ -321,8 +321,9 @@ else if ($action == 'add_hr_comment') {
     $res = HR::assignUserMachine($machine_id, $user_id, $logged_user_id);
 } else if ($action == 'remove_machine_detail') {
     $id = $PARAMS['id'];
-    $userid = $PARAMS['userid'];
-    $res = HR::removeMachineDetails($id,$userid);
+    // $userid = $PARAMS['userid'];
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::removeMachineDetails($id,$logged_user_id);
 } else if ($action == 'get_machines_detail') {   
     if (isset($PARAMS['sort']) && $PARAMS['sort'] != "") {
         $sort = trim($PARAMS['sort']);

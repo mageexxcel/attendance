@@ -3699,17 +3699,29 @@ class HR extends DATABASE {
 
     }
 
-    public static function removeMachineDetails($data,$userid) {
-        $userInfo = self::getUserInfo($userid);
-        if( strtolower( $userInfo['type'] ) === 'admin' ) {
-        $q = "Delete from machines_list where id=$data";
+    public static function removeInventoryComments( $inventory_id ){
+        $q = "Delete from inventory_comments where inventory_id=$inventory_id";
         $runQuery = self::DBrunQuery($q);
+    }
 
-        self::removeMachineAssignToUser($data);
-        $r_message = "Machine detail removed successfully";
-        }
+    public static function removeMachineDetails($inventory_id,$logged_user_id) {
+        // before deletin a machine 
+        // 1. remove machine comments
+        // 2. remove mahine assign user
+        $logged_user_info = self::getUserInfo($logged_user_id);
+        if( strtolower( $logged_user_info['type'] ) === 'admin' ) {
+            
+            // remove machine comments
+            self::removeInventoryComments($inventory_id);
 
-        else {
+            // remove machine assign user
+            self::removeMachineAssignToUser($inventory_id);
+
+            $q = "Delete from machines_list where id=$inventory_id";
+            $runQuery = self::DBrunQuery($q);
+            
+            $r_message = "Machine detail removed successfully";
+        } else {
             $r_message = "You are not Authorized to do that!!";
         }
         $return = array();
