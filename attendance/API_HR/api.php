@@ -570,7 +570,7 @@ else if ($action == 'add_inventory_comment' ){
     $user_id = $loggedUserInfo['id'];
     $inventory_id = $PARAMS['inventory_id'];
     $comment = $PARAMS['comment'];
-    $res = HR::addInventoryComment($inventory_id, $user_id,  $comment);
+    $res = HR::api_addInventoryComment($inventory_id, $user_id,  $comment);
 }
 
 /****************************************/

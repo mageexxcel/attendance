@@ -4828,12 +4828,22 @@ class HR extends DATABASE {
     // inventory functions
 
     // add inventory comment
-    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){        
+    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();       
         $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, '$comment' )";
         if( $assign_unassign_user_id != null ){
             $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
         }
         self::DBrunQuery($q);
+        $last_inserted_id = mysqli_insert_id($mysqli);
+        $return = array();
+        $return['last_inserted_id'] = $last_inserted_id;
+        return $return;
+    }
+
+    public static function api_addInventoryComment( $inventory_id, $updated_by_user_id,  $comment ){
+        self::addInventoryComment($inventory_id, $updated_by_user_id,  $comment );   
         $return['error'] = 0;
         $return['message'] = 'Comment added successfully!!';
         $return['data'] = array();
