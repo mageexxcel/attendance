@@ -5119,13 +5119,16 @@ class HR extends DATABASE {
         $q = "select 
                 machines_list.*,
                 machines_user.user_Id,
-                machines_user.assign_date ,
+                machines_user.assign_date,
+                user_profile.name,
+                user_profile.work_email,
                 f1.file_name as fileInventoryInvoice,
                 f2.file_name as fileInventoryWarranty,
                 f3.file_name as fileInventoryPhoto
                 from 
                 machines_list 
                 left join machines_user on machines_list.id = machines_user.machine_id
+                left join user_profile on machines_user.user_Id = user_profile.user_Id
                 left join files as f1 ON machines_list.file_inventory_invoice = f1.id
                 left join files as f2 ON machines_list.file_inventory_warranty = f2.id
                 left join files as f3 ON machines_list.file_inventory_photo = f3.id
@@ -5138,6 +5141,23 @@ class HR extends DATABASE {
             // get inventory comments
             $inventoryHistory = self::getInventoryHistory($id);
             $row['history'] = $inventoryHistory;
+
+            $assignedUserInfo = array();
+            if( $row['user_Id'] && !empty($row['user_Id']) ){
+                $raw_assignedUserInfo = self::getUserInfo( $row['user_Id'] );
+                $assignedUserInfo['name'] = $raw_assignedUserInfo['name'];
+                $assignedUserInfo['jobtitle'] = $raw_assignedUserInfo['jobtitle'];
+                $assignedUserInfo['work_email'] = $raw_assignedUserInfo['work_email'];
+                $userProfileImage = '';
+                try {
+                    $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
+                } catch (Exception $e) {
+
+                }               
+                $assignedUserInfo['profileImage'] = $userProfileImage;
+            }
+
+            $row['assigned_user_info'] = $assignedUserInfo;
         } catch (Exception $e) {
             $row = false;
         }        
