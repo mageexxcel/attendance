@@ -5147,6 +5147,38 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getUnassignedInventories(){
+        // only retune inventories approved by admin        
+        $return = false;
+        $q = "select * from machines_list where id not in(select machine_id from machines_user) AND approval_status = 1";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    public static function api_getUnassignedInventories($userid){
+        $error = 0;
+        $message = '';
+        $unassignedInventories = array();
+        $unassignedInventoriesList = self::getUnassignedInventories($userid);
+        if( $unassignedInventoriesList == false ){
+            $message = "No unassigned inventories found!!";
+        } else {            
+            foreach( $unassignedInventoriesList as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['id']);
+                $unassignedInventories[] = $i_details;
+            }
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $unassignedInventories;
+        return $return;
+    }
+
 }
 
 new HR();

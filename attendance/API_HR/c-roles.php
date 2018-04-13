@@ -117,6 +117,7 @@ trait Roles {
     static $ACTION_get_user_machine = 513;
 
     static $ACTION_unassigned_my_inventory = 514;
+    static $ACTION_get_unassigned_inventories = 515;
 
     //actions not required token
     static $ACTION_login = 601;
@@ -236,6 +237,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_user_machine, 'name' => 'get_user_machine' ),
                     array( 'id' => self::$ACTION_get_machine, 'name' => 'get_machine' ),
                     array( 'id' => self::$ACTION_unassigned_my_inventory, 'name' => 'unassigned_my_inventory' ),
+                    array( 'id' => self::$ACTION_get_unassigned_inventories, 'name' => 'get_unassigned_inventories' ),
                 )
             ),
 

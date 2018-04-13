@@ -620,6 +620,12 @@ else if ($action == 'unassigned_my_inventory' ){
     $res = HR::removeMachineAssignToUser( $inventory_id, $logged_user_id, $reason_of_removal );
 }
 
+else if ( $action == 'get_unassigned_inventories' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::api_getUnassignedInventories($logged_user_id);
+}
+
+
 /****************************************/
 /****** Inventory audit******************/
 /****************************************/
