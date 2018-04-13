@@ -5201,6 +5201,42 @@ class HR extends DATABASE {
         return $return;
     }
 
+
+    public static function getUnapprovedInventories(){      
+        $return = false;
+        $q = "select * from machines_list where approval_status = 0";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    public static function api_getUnapprovedInventories($userid){
+        $error = 0;
+        $message = '';
+        $unapprovedInventories = array();
+        $unapprovedInventoriesList = self::getUnapprovedInventories($userid);
+        if( $unapprovedInventoriesList == false ){
+            $message = "No unapproved inventories found!!";
+        } else {            
+            foreach( $unapprovedInventoriesList as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['id']);
+                $unapprovedInventories[] = $i_details;
+            }
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $unapprovedInventories;
+        return $return;
+    }
+
+    public static function api_doInventoryAudit( $inventory_id, $logged_user_id, $audit_message ){
+        echo $inventory_id;
+    }
+
 }
 
 new HR();
