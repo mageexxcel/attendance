@@ -3359,7 +3359,7 @@ class HR extends DATABASE {
             $message.= "Machine Waranty=" . $warranty . "\n";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = "hr", $message);
             $r_error = 0;
-            $r_message = "Machine added Successfully !!";
+            $r_message = "Inventory added successfully and need to be approved by admin!!";
         }
 
         $return = array();
