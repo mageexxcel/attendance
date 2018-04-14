@@ -475,10 +475,8 @@ class Salary extends DATABASE {
                     $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack message
                 }
             }
-
-
             $r_error = 0;
-            $r_message = "Successfully Updated into table";
+            $r_message = "Employee details updated successfully!!";
             $r_data['message'] = $r_message;
         }
         $return = array();
