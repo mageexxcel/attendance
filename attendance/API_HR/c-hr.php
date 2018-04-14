@@ -3359,7 +3359,7 @@ class HR extends DATABASE {
             $message.= "Machine Waranty=" . $warranty . "\n";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = "hr", $message);
             $r_error = 0;
-            $r_message = "Machine added Successfully !!";
+            $r_message = "Inventory added successfully and need to be approved by admin!!";
         }
 
         $return = array();
@@ -3369,71 +3369,75 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function UpdateOfficeMachine($PARAMS) {
+    public static function UpdateOfficeMachine( $logged_user_id, $PARAMS) {
         $r_error = 1;
         $r_message = "";
-        $userid = "";
 
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != '') {
-            $userid = trim($PARAMS['user_id']);
-        }
-
-        $userInfo = self::getUserInfo($userid);
+        $userInfo = self::getUserInfo($logged_user_id);
         if( strtolower( $userInfo['type'] ) === 'admin' ) {
-        $data = array(
-            "machine_type" => $PARAMS['machine_type'],
-            "machine_name" => $PARAMS['machine_name'],
-            "machine_price" => $PARAMS['machine_price'],
-            "serial_number" => $PARAMS['serial_no'],
-            "mac_address" => $PARAMS['mac_address'],
-            "date_of_purchase" => $PARAMS['purchase_date'],
-            "operating_system" => $PARAMS['operating_system'],
-            "status" => $PARAMS['status'],
-            "comments" => $PARAMS['comment'],
-            "warranty_end_date" => $PARAMS['warranty'],
-            "bill_number" => $PARAMS['bill_no'],
-            "warranty_comment" => $PARAMS['warranty_comment'],
-            "repair_comment" => $PARAMS['repair_comment']
-        );
-        $machine_detail = self::getMachineDetail($PARAMS['id']);
-        self::assignUserMachine($PARAMS['id'], $userid);
-        $whereField = 'id';
-        $whereFieldVal = $PARAMS['id'];
-        foreach ($machine_detail['data'] as $key => $val) {
-            if (array_key_exists($key, $data)) {
-                if ($data[$key] != $machine_detail['data'][$key]) {
-                    $arr = array();
-                    $arr[$key] = $data[$key];
-                    $res = self::DBupdateBySingleWhere('machines_list', $whereField, $whereFieldVal, $arr);
-                    $msg[$key] = $data[$key];
-                }
-            }
-        }
-        if ($res == false) {
-            $r_error = 0;
-            $r_message = "No fields updated into table";
-            $r_data['message'] = $r_message;
-        } else {
+            $data = array(
+                "machine_type" => $PARAMS['machine_type'],
+                "machine_name" => $PARAMS['machine_name'],
+                "machine_price" => $PARAMS['machine_price'],
+                "serial_number" => $PARAMS['serial_no'],
+                "mac_address" => $PARAMS['mac_address'],
+                "date_of_purchase" => $PARAMS['purchase_date'],
+                "operating_system" => $PARAMS['operating_system'],
+                "status" => $PARAMS['status'],
+                "comments" => $PARAMS['comment'],
+                "warranty_end_date" => $PARAMS['warranty'],
+                "bill_number" => $PARAMS['bill_no'],
+                "warranty_comment" => $PARAMS['warranty_comment'],
+                "repair_comment" => $PARAMS['repair_comment']
+            );
 
-            if ($data['send_slack_msg'] == "") {
+            $inventory_id = $PARAMS['id'];
 
-                if (sizeof($msg > 0)) {
-                    $message = "Machine ".$machine_detail['data']['machine_name']." updated with following detail: \n";
-                    foreach ($msg as $key => $valu) {
-                        $message = $message . "$key = " . $valu . "\n";
+            $machine_detail = self::getMachineDetail($inventory_id);
+            
+            // don't know what was the reason on assigning machine when updating, arun commented this on 14th april since no need 
+            // self::assignUserMachine($PARAMS['id'], $userid);
+
+            // add this in inventory comment that invenoty is updated
+            self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory details are updated" );
+            
+            $whereField = 'id';
+            $whereFieldVal = $inventory_id ;
+            foreach ($machine_detail['data'] as $key => $val) {
+                if (array_key_exists($key, $data)) {
+                    if ($data[$key] != $machine_detail['data'][$key]) {
+                        $arr = array();
+                        $arr[$key] = $data[$key];
+                        $res = self::DBupdateBySingleWhere('machines_list', $whereField, $whereFieldVal, $arr);
+                        $msg[$key] = $data[$key];
                     }
-
-                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
                 }
             }
-            $r_error = 0;
-            $r_message = "Successfully Updated into table";
-            $r_data['message'] = $r_message;
+            if ($res == false) {
+                $r_error = 0;
+                $r_message = "No fields updated into table";
+                $r_data['message'] = $r_message;
+            } else {
+
+                if ($data['send_slack_msg'] == "") {
+
+                    if (sizeof($msg > 0)) {
+                        $message = "Machine ".$machine_detail['data']['machine_name']." updated with following detail: \n";
+                        foreach ($msg as $key => $valu) {
+                            $message = $message . "$key = " . $valu . "\n";
+                        }
+
+                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
+                    }
+                }
+                $r_error = 0;
+                $r_message = "Successfully Updated into table";
+                $r_data['message'] = $r_message;
+            }
         }
-    }
-    else {
-        $r_message = "You are not Authorized!!";
-    }
+        else {
+            $r_message = "You are not Authorized!!";
+        }
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -3441,6 +3445,7 @@ class HR extends DATABASE {
         return $return;
     }
 
+    
     public static function getMachineDetail($id) {
         $r_error = 1;
         $row = array();
@@ -3698,17 +3703,29 @@ class HR extends DATABASE {
 
     }
 
-    public static function removeMachineDetails($data,$userid) {
-        $userInfo = self::getUserInfo($userid);
-        if( strtolower( $userInfo['type'] ) === 'admin' ) {
-        $q = "Delete from machines_list where id=$data";
+    public static function removeInventoryComments( $inventory_id ){
+        $q = "Delete from inventory_comments where inventory_id=$inventory_id";
         $runQuery = self::DBrunQuery($q);
+    }
 
-        self::removeMachineAssignToUser($data);
-        $r_message = "Machine detail removed successfully";
-        }
+    public static function removeMachineDetails($inventory_id,$logged_user_id) {
+        // before deletin a machine 
+        // 1. remove machine comments
+        // 2. remove mahine assign user
+        $logged_user_info = self::getUserInfo($logged_user_id);
+        if( strtolower( $logged_user_info['type'] ) === 'admin' ) {
+            
+            // remove machine comments
+            self::removeInventoryComments($inventory_id);
 
-        else {
+            // remove machine assign user
+            self::removeMachineAssignToUser($inventory_id);
+
+            $q = "Delete from machines_list where id=$inventory_id";
+            $runQuery = self::DBrunQuery($q);
+            
+            $r_message = "Machine detail removed successfully";
+        } else {
             $r_message = "You are not Authorized to do that!!";
         }
         $return = array();
@@ -4815,12 +4832,22 @@ class HR extends DATABASE {
     // inventory functions
 
     // add inventory comment
-    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){        
+    public static function addInventoryComment( $inventory_id, $updated_by_user_id,  $comment, $assign_unassign_user_id = null ){
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();       
         $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, '$comment' )";
         if( $assign_unassign_user_id != null ){
             $q = "INSERT into inventory_comments ( inventory_id, updated_by_user_id, assign_unassign_user_id, comment ) VALUES ( $inventory_id, $updated_by_user_id, $assign_unassign_user_id, '$comment' )";
         }
         self::DBrunQuery($q);
+        $last_inserted_id = mysqli_insert_id($mysqli);
+        $return = array();
+        $return['last_inserted_id'] = $last_inserted_id;
+        return $return;
+    }
+
+    public static function api_addInventoryComment( $inventory_id, $updated_by_user_id,  $comment ){
+        self::addInventoryComment($inventory_id, $updated_by_user_id,  $comment );   
         $return['error'] = 0;
         $return['message'] = 'Comment added successfully!!';
         $return['data'] = array();
@@ -4875,17 +4902,20 @@ class HR extends DATABASE {
         return $file_id;
     }
 
-    public static function updateInventoryFileInvoice( $inventory_id, $file_id ){
+    public static function updateInventoryFileInvoice( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_invoice=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Invoice file is uploaded" );
     }
-    public static function updateInventoryFileWarranty( $inventory_id, $file_id ){
+    public static function updateInventoryFileWarranty( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_warranty=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Warranty file is uploaded" );
     }
-    public static function updateInventoryFilePhoto( $inventory_id, $file_id ){
+    public static function updateInventoryFilePhoto( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_photo=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Photo is uploaded" );
     }
 
     // add manual attendance
@@ -5074,6 +5104,266 @@ class HR extends DATABASE {
         $return = array();
         $return['error'] = 0;
         $return['data'] = $rows;
+        return $return;
+    }
+
+
+    public static function getUserInventories($userid) {
+        $return = false;
+        $q = "SELECT * FROM machines_user WHERE user_Id=$userid";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    // arun use this getMachineDetail function for audit details also
+    public static function getInventoryFullDetails($id) {
+        $row = array();
+        $q = "select 
+                machines_list.*,
+                machines_user.user_Id,
+                machines_user.assign_date,
+                user_profile.name,
+                user_profile.work_email,
+                f1.file_name as fileInventoryInvoice,
+                f2.file_name as fileInventoryWarranty,
+                f3.file_name as fileInventoryPhoto
+                from 
+                machines_list 
+                left join machines_user on machines_list.id = machines_user.machine_id
+                left join user_profile on machines_user.user_Id = user_profile.user_Id
+                left join files as f1 ON machines_list.file_inventory_invoice = f1.id
+                left join files as f2 ON machines_list.file_inventory_warranty = f2.id
+                left join files as f3 ON machines_list.file_inventory_photo = f3.id
+                where 
+                machines_list.id = $id";
+        $runQuery = self::DBrunQuery($q);
+        try {
+            $row = self::DBfetchRow($runQuery);
+            $r_error = 0;
+            // get inventory comments
+            $inventoryHistory = self::getInventoryHistory($id);
+            $row['history'] = $inventoryHistory;
+
+            $assignedUserInfo = array();
+            if( $row['user_Id'] && !empty($row['user_Id']) ){
+                $raw_assignedUserInfo = self::getUserInfo( $row['user_Id'] );
+                $assignedUserInfo['name'] = $raw_assignedUserInfo['name'];
+                $assignedUserInfo['jobtitle'] = $raw_assignedUserInfo['jobtitle'];
+                $assignedUserInfo['work_email'] = $raw_assignedUserInfo['work_email'];
+                $userProfileImage = '';
+                try {
+                    $userProfileImage = $userInfo['slack_profile']['profile']['image_192'];
+                } catch (Exception $e) {
+
+                }               
+                $assignedUserInfo['profileImage'] = $userProfileImage;
+            }
+
+            $row['assigned_user_info'] = $assignedUserInfo;
+
+            // get audit status of current year or month, if not exists will
+            $currentMonthAuditStatus = array();
+            $dateTimeData = self::_getDateTimeData();
+            $currentMonthAuditStatus['year'] = $dateTimeData['current_year_number'];
+            $currentMonthAuditStatus['month'] = $dateTimeData['current_month_number'];
+            // if not exists status will be empty / false / null else will be and object
+            $currentMonthAuditStatus['status'] = self::getInventoryAuditStatusforYearMonth( $id, $dateTimeData['current_year_number'], $dateTimeData['current_month_number'] );
+            $row['audit_current_month_status'] = $currentMonthAuditStatus;
+
+        } catch (Exception $e) {
+            $row = false;
+        }        
+        return $row;
+    }
+
+
+    public static function api_getMyInventories($userid){
+        $error = 0;
+        $message = '';
+        $data = array();
+        $userInventories = self::getUserInventories($userid);
+        if( $userInventories == false ){
+            $message = "No inventories assigned to user!!";
+        } else {
+            $user_assign_machine = array();
+            foreach( $userInventories as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['machine_id']);
+                $user_assign_machine[] = $i_details;
+            }
+            $data['user_assign_machine'] = $user_assign_machine;
+            $user_profile_detail = self::getUserInfo($userid);
+            
+            $upd = array();
+            $upd['name'] = $user_profile_detail['name'];
+            $upd['name'] = $user_profile_detail['name'];
+            $upd['jobtitle'] = $user_profile_detail['jobtitle'];
+            $upd['work_email'] = $user_profile_detail['work_email'];
+            $upd['slack_profile'] = $user_profile_detail['slack_profile'];
+            $upd['role_name'] = $user_profile_detail['role_name'];
+            $upd['gender'] = $user_profile_detail['gender'];
+            $upd['user_Id'] = $user_profile_detail['user_Id'];
+
+            $data['user_profile_detail'] = $upd;
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $data;
+        return $return;
+    }
+
+    public static function getUnassignedInventories(){
+        // only retune inventories approved by admin        
+        $return = false;
+        $q = "select * from machines_list where id not in(select machine_id from machines_user) AND approval_status = 1";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    public static function api_getUnassignedInventories($userid){
+        $error = 0;
+        $message = '';
+        $unassignedInventories = array();
+        $unassignedInventoriesList = self::getUnassignedInventories($userid);
+        if( $unassignedInventoriesList == false ){
+            $message = "No unassigned inventories found!!";
+        } else {            
+            foreach( $unassignedInventoriesList as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['id']);
+                $unassignedInventories[] = $i_details;
+            }
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $unassignedInventories;
+        return $return;
+    }
+
+
+    public static function getUnapprovedInventories(){      
+        $return = false;
+        $q = "select * from machines_list where approval_status = 0";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {            
+        } else {
+            $return = $rows;
+        }
+        return $return;
+    }
+
+    public static function api_getUnapprovedInventories($userid){
+        $error = 0;
+        $message = '';
+        $unapprovedInventories = array();
+        $unapprovedInventoriesList = self::getUnapprovedInventories($userid);
+        if( $unapprovedInventoriesList == false ){
+            $message = "No unapproved inventories found!!";
+        } else {            
+            foreach( $unapprovedInventoriesList as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['id']);
+                $unapprovedInventories[] = $i_details;
+            }
+        }
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = $unapprovedInventories;
+        return $return;
+    }
+
+    public static function addInventoryAudit( $inventory_id, $audit_done_by_user_id, $audit_message ){
+        $dateTimeData = self::_getDateTimeData();
+        $audit_month = $dateTimeData['current_month_number'];
+        $audit_year = $dateTimeData['current_year_number']; 
+        $res = self::addInventoryComment( $inventory_id, $audit_done_by_user_id,  $audit_message );
+        $inventory_comment_id = $res['last_inserted_id'];
+        $q = "INSERT 
+                INTO 
+                inventory_audit_month_wise
+                ( inventory_id, month, year, audit_done_by_user_id, inventory_comment_id )
+                VALUES
+                ( $inventory_id, $audit_month, $audit_year, $audit_done_by_user_id, $inventory_comment_id )
+                ";
+        self::DBrunQuery($q);
+        return true;
+    }
+
+    public static function api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message ){
+        self::addInventoryAudit( $inventory_id, $logged_user_id,  $audit_message );
+        $error = 0;
+        $message = 'Audit added for inventory successfully!!';
+        $return['error'] = $error;
+        $return['message'] = $message;
+        $return['data'] = array();
+        return $return;
+    }
+
+    // this is a Generic function to get information related to date time
+    public static function _getDateTimeData(){
+        $data = array();
+        $currentTimeStamp = time();
+        $data['current_timestamp'] = $currentTimeStamp;
+        $data['current_date_number'] = date('d', $currentTimeStamp );
+        $data['current_month_number'] = date('m', $currentTimeStamp );
+        $data['current_year_number'] = date('Y', $currentTimeStamp );
+        return $data;
+    }
+
+    /***************************************************/
+    /*****************AUDIT FUNCTIONS*******************/
+    /***************************************************/
+
+    public static function getInvenoryAuditFullDetails( $audit_id ) {
+        $return = array();
+        $q = "select 
+            inventory_audit_month_wise.id,
+            inventory_audit_month_wise.inventory_id,
+            inventory_audit_month_wise.month,
+            inventory_audit_month_wise.year,
+            inventory_audit_month_wise.updated_at,
+            user_profile.name as audit_done_by_user_name,
+            user_profile.work_email audit_done_by_user_email,
+            inventory_comments.comment as audit_comment
+            from 
+            inventory_audit_month_wise
+            left join user_profile on inventory_audit_month_wise.audit_done_by_user_id = user_profile.user_Id
+            left join inventory_comments on inventory_comments.id = inventory_audit_month_wise.inventory_comment_id
+            where 
+            inventory_audit_month_wise.id = $audit_id";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {
+
+        } else {
+            $return = $rows[0];
+        }
+        return $return;
+    }
+
+    public static function getInventoryAuditStatusforYearMonth( $inventory_id, $year, $month ){
+        // if audit not exist for the current month and year will return false else will send details as an array
+        $return = false;
+        $q = "SELECT 
+                * FROM inventory_audit_month_wise 
+                WHERE 
+                inventory_id = $inventory_id AND year = $year AND month = $month ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {
+
+        } else {
+            $row = $rows[0];
+            $return = self::getInvenoryAuditFullDetails( $row['id'] );
+        }
         return $return;
     }
 

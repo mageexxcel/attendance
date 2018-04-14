@@ -321,8 +321,9 @@ else if ($action == 'add_hr_comment') {
     $res = HR::assignUserMachine($machine_id, $user_id, $logged_user_id);
 } else if ($action == 'remove_machine_detail') {
     $id = $PARAMS['id'];
-    $userid = $PARAMS['userid'];
-    $res = HR::removeMachineDetails($id,$userid);
+    // $userid = $PARAMS['userid'];
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::removeMachineDetails($id,$logged_user_id);
 } else if ($action == 'get_machines_detail') {   
     if (isset($PARAMS['sort']) && $PARAMS['sort'] != "") {
         $sort = trim($PARAMS['sort']);
@@ -337,7 +338,8 @@ else if ($action == 'add_hr_comment') {
     $id = $PARAMS['id'];
     $res = HR::getMachineDetail($id);
 } else if ($action == 'update_office_machine') {
-    $res = HR::UpdateOfficeMachine($PARAMS);    
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::UpdateOfficeMachine( $logged_user_id, $PARAMS );    
 } else if ($action == 'approve_machine') {
     $id = $PARAMS['id'];
     $res = HR::approveUnapprovedMachine($id);
@@ -569,7 +571,7 @@ else if ($action == 'add_inventory_comment' ){
     $user_id = $loggedUserInfo['id'];
     $inventory_id = $PARAMS['inventory_id'];
     $comment = $PARAMS['comment'];
-    $res = HR::addInventoryComment($inventory_id, $user_id,  $comment);
+    $res = HR::api_addInventoryComment($inventory_id, $user_id,  $comment);
 }
 
 /****************************************/
@@ -618,6 +620,31 @@ else if ($action == 'unassigned_my_inventory' ){
     $inventory_id = $PARAMS['inventory_id'];
     $reason_of_removal = $PARAMS['comment'];
     $res = HR::removeMachineAssignToUser( $inventory_id, $logged_user_id, $reason_of_removal );
+}
+
+else if ( $action == 'get_unassigned_inventories' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::api_getUnassignedInventories($logged_user_id);
+}
+
+else if ( $action == 'get_unapproved_inventories' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::api_getUnapprovedInventories($logged_user_id);
+}
+
+/****************************************/
+/****** Inventory audit******************/
+/****************************************/
+else if( $action == 'get_my_inventories' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::api_getMyInventories($logged_user_id);
+}
+
+else if ( $action == 'add_inventory_audit' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $inventory_id = $PARAMS['inventory_id'];
+    $audit_message = $PARAMS['audit_message'];
+    $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
 }
 
 
