@@ -3369,71 +3369,75 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function UpdateOfficeMachine($PARAMS) {
+    public static function UpdateOfficeMachine( $logged_user_id, $PARAMS) {
         $r_error = 1;
         $r_message = "";
-        $userid = "";
 
-        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != '') {
-            $userid = trim($PARAMS['user_id']);
-        }
-
-        $userInfo = self::getUserInfo($userid);
+        $userInfo = self::getUserInfo($logged_user_id);
         if( strtolower( $userInfo['type'] ) === 'admin' ) {
-        $data = array(
-            "machine_type" => $PARAMS['machine_type'],
-            "machine_name" => $PARAMS['machine_name'],
-            "machine_price" => $PARAMS['machine_price'],
-            "serial_number" => $PARAMS['serial_no'],
-            "mac_address" => $PARAMS['mac_address'],
-            "date_of_purchase" => $PARAMS['purchase_date'],
-            "operating_system" => $PARAMS['operating_system'],
-            "status" => $PARAMS['status'],
-            "comments" => $PARAMS['comment'],
-            "warranty_end_date" => $PARAMS['warranty'],
-            "bill_number" => $PARAMS['bill_no'],
-            "warranty_comment" => $PARAMS['warranty_comment'],
-            "repair_comment" => $PARAMS['repair_comment']
-        );
-        $machine_detail = self::getMachineDetail($PARAMS['id']);
-        self::assignUserMachine($PARAMS['id'], $userid);
-        $whereField = 'id';
-        $whereFieldVal = $PARAMS['id'];
-        foreach ($machine_detail['data'] as $key => $val) {
-            if (array_key_exists($key, $data)) {
-                if ($data[$key] != $machine_detail['data'][$key]) {
-                    $arr = array();
-                    $arr[$key] = $data[$key];
-                    $res = self::DBupdateBySingleWhere('machines_list', $whereField, $whereFieldVal, $arr);
-                    $msg[$key] = $data[$key];
-                }
-            }
-        }
-        if ($res == false) {
-            $r_error = 0;
-            $r_message = "No fields updated into table";
-            $r_data['message'] = $r_message;
-        } else {
+            $data = array(
+                "machine_type" => $PARAMS['machine_type'],
+                "machine_name" => $PARAMS['machine_name'],
+                "machine_price" => $PARAMS['machine_price'],
+                "serial_number" => $PARAMS['serial_no'],
+                "mac_address" => $PARAMS['mac_address'],
+                "date_of_purchase" => $PARAMS['purchase_date'],
+                "operating_system" => $PARAMS['operating_system'],
+                "status" => $PARAMS['status'],
+                "comments" => $PARAMS['comment'],
+                "warranty_end_date" => $PARAMS['warranty'],
+                "bill_number" => $PARAMS['bill_no'],
+                "warranty_comment" => $PARAMS['warranty_comment'],
+                "repair_comment" => $PARAMS['repair_comment']
+            );
 
-            if ($data['send_slack_msg'] == "") {
+            $inventory_id = $PARAMS['id'];
 
-                if (sizeof($msg > 0)) {
-                    $message = "Machine ".$machine_detail['data']['machine_name']." updated with following detail: \n";
-                    foreach ($msg as $key => $valu) {
-                        $message = $message . "$key = " . $valu . "\n";
+            $machine_detail = self::getMachineDetail($inventory_id);
+            
+            // don't know what was the reason on assigning machine when updating, arun commented this on 14th april since no need 
+            // self::assignUserMachine($PARAMS['id'], $userid);
+
+            // add this in inventory comment that invenoty is updated
+            self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory details are updated" );
+            
+            $whereField = 'id';
+            $whereFieldVal = $inventory_id ;
+            foreach ($machine_detail['data'] as $key => $val) {
+                if (array_key_exists($key, $data)) {
+                    if ($data[$key] != $machine_detail['data'][$key]) {
+                        $arr = array();
+                        $arr[$key] = $data[$key];
+                        $res = self::DBupdateBySingleWhere('machines_list', $whereField, $whereFieldVal, $arr);
+                        $msg[$key] = $data[$key];
                     }
-
-                    $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
                 }
             }
-            $r_error = 0;
-            $r_message = "Successfully Updated into table";
-            $r_data['message'] = $r_message;
+            if ($res == false) {
+                $r_error = 0;
+                $r_message = "No fields updated into table";
+                $r_data['message'] = $r_message;
+            } else {
+
+                if ($data['send_slack_msg'] == "") {
+
+                    if (sizeof($msg > 0)) {
+                        $message = "Machine ".$machine_detail['data']['machine_name']." updated with following detail: \n";
+                        foreach ($msg as $key => $valu) {
+                            $message = $message . "$key = " . $valu . "\n";
+                        }
+
+                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
+                    }
+                }
+                $r_error = 0;
+                $r_message = "Successfully Updated into table";
+                $r_data['message'] = $r_message;
+            }
         }
-    }
-    else {
-        $r_message = "You are not Authorized!!";
-    }
+        else {
+            $r_message = "You are not Authorized!!";
+        }
         $return = array();
         $return['error'] = $r_error;
         $return['message'] = $r_message;
@@ -4898,17 +4902,20 @@ class HR extends DATABASE {
         return $file_id;
     }
 
-    public static function updateInventoryFileInvoice( $inventory_id, $file_id ){
+    public static function updateInventoryFileInvoice( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_invoice=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Invoice file is uploaded" );
     }
-    public static function updateInventoryFileWarranty( $inventory_id, $file_id ){
+    public static function updateInventoryFileWarranty( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_warranty=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Warranty file is uploaded" );
     }
-    public static function updateInventoryFilePhoto( $inventory_id, $file_id ){
+    public static function updateInventoryFilePhoto( $logged_user_id, $inventory_id, $file_id ){
         $q = "UPDATE machines_list set file_inventory_photo=$file_id WHERE id = $inventory_id ";
         self::DBrunQuery($q);
+        self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Photo is uploaded" );
     }
 
     // add manual attendance

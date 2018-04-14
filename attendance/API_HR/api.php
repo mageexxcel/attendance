@@ -338,7 +338,8 @@ else if ($action == 'add_hr_comment') {
     $id = $PARAMS['id'];
     $res = HR::getMachineDetail($id);
 } else if ($action == 'update_office_machine') {
-    $res = HR::UpdateOfficeMachine($PARAMS);    
+    $logged_user_id = $loggedUserInfo['id'];
+    $res = HR::UpdateOfficeMachine( $logged_user_id, $PARAMS );    
 } else if ($action == 'approve_machine') {
     $id = $PARAMS['id'];
     $res = HR::approveUnapprovedMachine($id);

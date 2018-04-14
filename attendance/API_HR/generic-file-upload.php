@@ -65,19 +65,19 @@ if( $_POST['file_upload_action'] ) {
 		//if inventory_invoice file
 		if( isset($_FILES['inventory_invoice']) && $_FILES['inventory_invoice']['error'] == 0 && $_FILES['inventory_invoice']['size'] > 0 ){
 			$file_id = uploadFile( $_FILES['inventory_invoice'] );
-			HR::updateInventoryFileInvoice( $inventory_id, $file_id );
+			HR::updateInventoryFileInvoice( $logged_user_id, $inventory_id, $file_id  );
 		}
 
 		//if inventory_warranty file
 		if( isset($_FILES['inventory_warranty']) && $_FILES['inventory_warranty']['error'] == 0 && $_FILES['inventory_warranty']['size'] > 0 ){
 			$file_id = uploadFile( $_FILES['inventory_warranty'] );
-			HR::updateInventoryFileWarranty( $inventory_id, $file_id );
+			HR::updateInventoryFileWarranty( $logged_user_id, $inventory_id, $file_id );
 		}
 
 		//if inventory_photo file
 		if( isset($_FILES['inventory_photo']) && $_FILES['inventory_photo']['error'] == 0 && $_FILES['inventory_photo']['size'] > 0 ){
 			$file_id = uploadFile( $_FILES['inventory_photo'] );
-			HR::updateInventoryFilePhoto( $inventory_id, $file_id );
+			HR::updateInventoryFilePhoto( $logged_user_id, $inventory_id, $file_id );
 		}
 	}
 }
