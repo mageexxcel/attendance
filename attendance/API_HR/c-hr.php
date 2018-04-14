@@ -5165,6 +5165,16 @@ class HR extends DATABASE {
             }
 
             $row['assigned_user_info'] = $assignedUserInfo;
+
+            // get audit status of current year or month, if not exists will
+            $currentMonthAuditStatus = array();
+            $dateTimeData = self::_getDateTimeData();
+            $currentMonthAuditStatus['year'] = $dateTimeData['current_year_number'];
+            $currentMonthAuditStatus['month'] = $dateTimeData['current_month_number'];
+            // if not exists status will be empty / false / null else will be and object
+            $currentMonthAuditStatus['status'] = self::getInventoryAuditStatusforYearMonth( $id, $dateTimeData['current_year_number'], $dateTimeData['current_month_number'] );
+            $row['audit_current_month_status'] = $currentMonthAuditStatus;
+
         } catch (Exception $e) {
             $row = false;
         }        
@@ -5187,8 +5197,18 @@ class HR extends DATABASE {
             }
             $data['user_assign_machine'] = $user_assign_machine;
             $user_profile_detail = self::getUserInfo($userid);
-            unset($user_profile_detail['password']);
-            $data['user_profile_detail'] = $user_profile_detail;
+            
+            $upd = array();
+            $upd['name'] = $user_profile_detail['name'];
+            $upd['name'] = $user_profile_detail['name'];
+            $upd['jobtitle'] = $user_profile_detail['jobtitle'];
+            $upd['work_email'] = $user_profile_detail['work_email'];
+            $upd['slack_profile'] = $user_profile_detail['slack_profile'];
+            $upd['role_name'] = $user_profile_detail['role_name'];
+            $upd['gender'] = $user_profile_detail['gender'];
+            $upd['user_Id'] = $user_profile_detail['user_Id'];
+
+            $data['user_profile_detail'] = $upd;
         }
         $return['error'] = $error;
         $return['message'] = $message;
@@ -5296,6 +5316,55 @@ class HR extends DATABASE {
         $data['current_month_number'] = date('m', $currentTimeStamp );
         $data['current_year_number'] = date('Y', $currentTimeStamp );
         return $data;
+    }
+
+    /***************************************************/
+    /*****************AUDIT FUNCTIONS*******************/
+    /***************************************************/
+
+    public static function getInvenoryAuditFullDetails( $audit_id ) {
+        $return = array();
+        $q = "select 
+            inventory_audit_month_wise.id,
+            inventory_audit_month_wise.inventory_id,
+            inventory_audit_month_wise.month,
+            inventory_audit_month_wise.year,
+            inventory_audit_month_wise.updated_at,
+            user_profile.name as audit_done_by_user_name,
+            user_profile.work_email audit_done_by_user_email,
+            inventory_comments.comment as audit_comment
+            from 
+            inventory_audit_month_wise
+            left join user_profile on inventory_audit_month_wise.audit_done_by_user_id = user_profile.user_Id
+            left join inventory_comments on inventory_comments.id = inventory_audit_month_wise.inventory_comment_id
+            where 
+            inventory_audit_month_wise.id = $audit_id";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {
+
+        } else {
+            $return = $rows[0];
+        }
+        return $return;
+    }
+
+    public static function getInventoryAuditStatusforYearMonth( $inventory_id, $year, $month ){
+        // if audit not exist for the current month and year will return false else will send details as an array
+        $return = false;
+        $q = "SELECT 
+                * FROM inventory_audit_month_wise 
+                WHERE 
+                inventory_id = $inventory_id AND year = $year AND month = $month ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {
+
+        } else {
+            $row = $rows[0];
+            $return = self::getInvenoryAuditFullDetails( $row['id'] );
+        }
+        return $return;
     }
 
 }
