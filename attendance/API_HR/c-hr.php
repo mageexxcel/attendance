@@ -3395,7 +3395,8 @@ class HR extends DATABASE {
                 "warranty_end_date" => $PARAMS['warranty'],
                 "bill_number" => $PARAMS['bill_no'],
                 "warranty_comment" => $PARAMS['warranty_comment'],
-                "repair_comment" => $PARAMS['repair_comment']
+                "repair_comment" => $PARAMS['repair_comment'],
+                "warranty_years" => $PARAMS['warranty_years']
             );
 
             $inventory_id = $PARAMS['id'];
