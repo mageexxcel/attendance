@@ -3273,6 +3273,7 @@ class HR extends DATABASE {
 
         $m_type = $m_name = $m_price = $serial_no = $date_purchase = $mac_addr = $os = $status = $userid = $comment = $warranty = $bill_no = $warranty_comment = $repair_comment = "";
         $unassigned_comment = '';
+        $warranty_years = 0;
         if (isset($PARAMS['machine_type']) && $PARAMS['machine_type'] != '') {
             $m_type = trim($PARAMS['machine_type']);
         }
@@ -3318,6 +3319,12 @@ class HR extends DATABASE {
         if (isset($PARAMS['unassigned_comment']) && $PARAMS['unassigned_comment'] != '') {
             $unassigned_comment = trim($PARAMS['unassigned_comment']);
         }
+        if (isset($PARAMS['warranty_years']) && $PARAMS['warranty_years'] != '') {
+            $warranty_years = trim($PARAMS['warranty_years']);
+        }
+
+        
+
         $row = false;
         //check user name exists
         if ($mac_addr != "") {
@@ -3340,7 +3347,7 @@ class HR extends DATABASE {
         if ($row != false) {
             $r_error = 1;
         } else {
-            $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment' ) ";
+            $q = "INSERT INTO machines_list ( machine_type, machine_name, machine_price, serial_number, date_of_purchase, mac_address, operating_system, status, comments,warranty_end_date,bill_number,warranty_comment, repair_comment, warranty_years ) VALUES ( '$m_type', '$m_name', '$m_price', '$serial_no','$date_purchase', '$mac_addr', '$os', '$status', '$comment','$warranty','$bill_no','$warranty_comment','$repair_comment', '$warranty_years' ) ";
             self::DBrunQuery($q);
             $machine_id = mysqli_insert_id($mysqli);
             
@@ -3388,7 +3395,8 @@ class HR extends DATABASE {
                 "warranty_end_date" => $PARAMS['warranty'],
                 "bill_number" => $PARAMS['bill_no'],
                 "warranty_comment" => $PARAMS['warranty_comment'],
-                "repair_comment" => $PARAMS['repair_comment']
+                "repair_comment" => $PARAMS['repair_comment'],
+                "warranty_years" => $PARAMS['warranty_years']
             );
 
             $inventory_id = $PARAMS['id'];
