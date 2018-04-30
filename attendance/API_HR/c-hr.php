@@ -2788,7 +2788,15 @@ class HR extends DATABASE {
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
 
-            } else {
+            } else {                
+                // get employee last salary
+                $user_id = $pp['id'];
+                $q = "select * from salary where user_Id = $user_id ORDER by id DESC";
+                $runQuery = self::DBrunQuery($q);
+                $row = self::DBfetchRows($runQuery);
+                if( sizeof($row) > 0 ){
+                    $pp['last_salary_details'] = $row[0];
+                }
 
                 $newRows[] = $pp;
             }
