@@ -49,24 +49,20 @@ $url = '';
                 echo "Please upload the document in correct format.";
                 die;
             }
-//upload file to demo folder on server.
+            //upload file to demo folder on server.
             if (!move_uploaded_file($file_tmp, "payslip/" . $file_name)) {
                 echo "File Not uploaded";
                 die;
             }
-//save file to google drive
-            // commented by arun on 8th april 2018
-            // $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
+            //save file to google drive
+            $save = Salary::saveDocumentToGoogleDrive($document_type, $userInfo_name, $userid, $file_name, $file_id = false);
 
-            // if (sizeof($save) <= 0) {
-            //     echo "PLease provide refresh token";
-            //     die;
-            // }
+            if (sizeof($save) <= 0) {
+                echo "PLease provide refresh token";
+                die;
+            }
 
-            // $url = $save['url'];
-
-$url = 'http://dev.hr.excellencetechnologies.in/hr/favicon.ico';
-
+            $url = $save['url'];
         }
        $l =  "<iframe src='$url'></iframe>";
     }
