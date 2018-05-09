@@ -10,6 +10,7 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
         <title>Header and Footer example</title>
+        <link rel="stylesheet" type="text/css" href="proxima-nova-web-fonts-master/fonts/fonts.min.css" /
         <style type="text/css">
             @page {
                 margin: 1cm 2cm 2cm;
@@ -17,6 +18,7 @@
             }
             body {
                 margin:55px 0px 10px;
+                font-family: 'Proxima Nova', Georgia, sans-serif;
             }
             .title {
                 font-size:28px;
