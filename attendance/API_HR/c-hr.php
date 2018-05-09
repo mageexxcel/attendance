@@ -5005,8 +5005,9 @@ class HR extends DATABASE {
                 $row_userid = $row['user_id'];
                 $row_manual_time = $row['manual_time'];
                 $q = "INSERT INTO attendance( id, user_id, timing ) VALUES ( 0, $row_userid, '$row_manual_time' )";
-                $q = "UPDATE attendance_manual set status=0 WHERE id = $id ";
-                self::DBrunQuery($q);  
+                $q1 = "UPDATE attendance_manual set status=0 WHERE id = $id ";
+                self::DBrunQuery($q); 
+                self::DBrunQuery($q1);  
                 $message = 'Approved Successfully!!';
 
                 $userInfo = self::getUserInfo($row_userid);
