@@ -4938,12 +4938,14 @@ class HR extends DATABASE {
     public static function addManualAttendance( $user_id, $time_type, $date, $manual_time, $reason ){
         $db = self::getInstance();
         $mysqli = $db->getConnection();
-        $raw_final_time = $date .' '.$manual_time;
-        $raw_timestamp = strtotime( $raw_final_time );
-        $raw_date = new DateTime($raw_final_time);
-        $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+        $final_date_time = $date .' '.$manual_time;
+        // $raw_timestamp = strtotime( $raw_final_time );
+        // $raw_date = new DateTime($raw_final_time);
+        // $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+
+        $reason_new = mysqli_real_escape_string($mysqli, $reason);
         
-        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason')";
+        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason_new')";
         self::DBrunQuery($q);
         $last_inserted_id = mysqli_insert_id($mysqli);
         $userInfo = self::getUserInfo($user_id);
