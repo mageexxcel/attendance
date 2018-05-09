@@ -19,6 +19,7 @@
             body {
                 font-family: 'Proxima Nova', Georgia, sans-serif;
                 margin:55px 0px 10px;
+                font-family: 'Proxima Nova', Georgia, sans-serif;
             }
             .title {
                 font-size:28px;
