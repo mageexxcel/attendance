@@ -1,5 +1,5 @@
 <?php
-$SHOW_ERROR = false;
+$SHOW_ERROR = true;
 if( $SHOW_ERROR ){
     error_reporting(E_ALL);
     ini_set('display_errors', 1); 
@@ -8,6 +8,7 @@ if( $SHOW_ERROR ){
     ini_set('display_errors', 0);
 }
 
+echo 123;die;
 require_once ("c-hr.php");
 
 $token = $_POST['token'];

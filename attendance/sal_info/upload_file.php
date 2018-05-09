@@ -2,10 +2,10 @@
 /* 
 Upload  employee documents on google drive 
 and send slack notification on success to employee. 
-  */
+ // */
 
-error_reporting(0);
-ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 require_once ("c-salary.php");
 
 if (isset($_POST['submit'])) {
@@ -40,6 +40,8 @@ $url = '';
 
             $file_name = $_FILES[$k]['name'];
             $file_size = $_FILES[$k]['size'];
+
+echo $file_size.'xxx';
             $file_tmp = $_FILES[$k]['tmp_name'];
             $file_type = $_FILES[$k]['type'];
 
