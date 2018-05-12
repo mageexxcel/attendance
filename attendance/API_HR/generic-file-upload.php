@@ -8,7 +8,6 @@ if( $SHOW_ERROR ){
     ini_set('display_errors', 0);
 }
 
-echo 123;die;
 require_once ("c-hr.php");
 
 $token = $_POST['token'];
