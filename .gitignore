@@ -4,3 +4,5 @@ connection.php
 /postman_collection.json
 /test
 /vendor
+/attendance/uploaded_files
+/attendance/upload
