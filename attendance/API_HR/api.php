@@ -648,5 +648,12 @@ else if ( $action == 'add_inventory_audit' ){
 }
 
 
+else if ( $action == 'update_user_eth_token' ){
+    $logged_user_id = $loggedUserInfo['id'];
+    $eth_token = $PARAMS['eth_token'];
+    $res = HR::updateUserEthToken( $logged_user_id, $eth_token );
+}
+
+
 echo json_encode($res);
 ?>

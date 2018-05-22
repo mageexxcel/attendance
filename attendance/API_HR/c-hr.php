@@ -154,7 +154,8 @@ class HR extends DATABASE {
                 "jobtitle" => $userInfo['jobtitle'],
                 "profileImage" => $userProfileImage,
                 "login_time" => time(),
-                "login_date_time" => date('d-M-Y H:i:s')
+                "login_date_time" => date('d-M-Y H:i:s'),
+                "eth_token" => $userInfo['eth_token']
             );
 
             // start - get user role and then role pages
@@ -5384,6 +5385,18 @@ class HR extends DATABASE {
             $row = $rows[0];
             $return = self::getInvenoryAuditFullDetails( $row['id'] );
         }
+        return $return;
+    }
+
+
+    // eth operations
+
+    public static function updateUserEthToken( $userid, $eth_token ){
+        $q2 = "UPDATE user_profile SET eth_token = '$eth_token' WHERE user_Id = $userid ";
+        $runQuery2 = self::DBrunQuery($q2);
+        $return['error'] = 0;
+        $return['message'] = "Eth Token Updated!!";
+        $return['data'] = array();
         return $return;
     }
 
