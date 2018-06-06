@@ -1335,16 +1335,28 @@ class Salary extends DATABASE {
         return $list;
     }
 
-    // get weekends off days list
+    // get weekends off list
     public static function getWeekendsOfMonth($year, $month) {
+        // echo $year.'-----'.$month.'*******';
         $list = array();
         $monthDays = self::getDaysOfMonth($year, $month);
-        $alternateSaturdayCheck = false;
+
+        $firstSatOff = false;
+
+        if( $year >= 2018 && $month >= 03 ){
+            $firstSatOff = true;            
+        }
+
+        $alternateSaturdayCheck = false; // this is change from false to true to make 1st saturday off
+        if($firstSatOff == true ){
+            $alternateSaturdayCheck = true;
+        }
+
         foreach ($monthDays as $k => $v) {
-            if ($v['day'] == self::$Sunday) {
+            if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
             }
-            if ($v['day'] == self::$Saturday) {
+            if ($v['day'] == 'Saturday') {
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -1353,12 +1365,13 @@ class Salary extends DATABASE {
                 }
             }
         }
-        //exclude working weekend from month weekends   
+        //exclude working weekend from month weekends
         $list2 = self::getWorkingHoursOfMonth($year, $month);
 
         $pop = array();
 
         $pop = array_diff_key($list, $list2);
+
         return $pop;
     }
 
