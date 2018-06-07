@@ -1220,7 +1220,7 @@ class Salary extends DATABASE {
                 $balance_leave = 0;
 
                 foreach( $res as $ps ){
-                    if( $ps['year'] ==  $balance_leave_check_of_year && $ps['month'] && $balance_leave_check_of_month ){
+                    if( $ps['year'] ==  $balance_leave_check_of_year && $ps['month'] == $balance_leave_check_of_month ){
                         if( $ps['final_leave_balance'] != '' ){
                             $balance_leave = $ps['final_leave_balance'];
                             break;
