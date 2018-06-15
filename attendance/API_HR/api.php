@@ -581,16 +581,20 @@ else if ($action == 'add_inventory_comment' ){
 else if ($action == 'add_manual_attendance' ){
     $user_id = $loggedUserInfo['id'];
     $reason = $PARAMS['reason'];
-    $date = $PARAMS['date'];    
+    $date = $PARAMS['date'];
+    $resMessageEntry = "";  
+    $resMessageExit = "";  
     if ( isset($PARAMS['entry_time']) && !empty($PARAMS['entry_time']) ){
         $entry_time = $PARAMS['entry_time'];
-        $res = HR::addManualAttendance( $user_id, 'entry', $date, $entry_time, $reason );
+        $resMessageEntry = HR::addManualAttendance( $user_id, 'entry', $date, $entry_time, $reason );
     }
     if ( isset($PARAMS['exit_time']) && !empty($PARAMS['exit_time']) ){
         $exit_time = $PARAMS['exit_time'];
-        $res = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
+        $resMessageExit = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
     }
-
+    $res['error'] = 0;
+    $res['message'] = "$resMessageEntry  $resMessageExit";
+    $res['data'] = array();
 }
 
 else if ( $action == 'approve_manual_attendance'){
