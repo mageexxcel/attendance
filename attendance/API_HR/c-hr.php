@@ -4935,53 +4935,86 @@ class HR extends DATABASE {
         self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Photo is uploaded" );
     }
 
+
+    // check if a like timings already exits in DB
+    public static function checkTimingExitsInAttendance( $userid, $timing ){
+        $q = "SELECT * FROM `attendance` WHERE `user_id` = $userid AND `timing` LIKE '%$timing%'";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            return true;
+        }
+        return false;
+    }
+
+
     // add manual attendance
     public static function addManualAttendance( $user_id, $time_type, $date, $manual_time, $reason ){
         $db = self::getInstance();
         $mysqli = $db->getConnection();
-        $final_date_time = $date .' '.$manual_time;
-        // $raw_timestamp = strtotime( $raw_final_time );
-        // $raw_date = new DateTime($raw_final_time);
-        // $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
 
-        $reason_new = mysqli_real_escape_string($mysqli, $reason);
-        
-        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason_new')";
-        self::DBrunQuery($q);
-        $last_inserted_id = mysqli_insert_id($mysqli);
-        $userInfo = self::getUserInfo($user_id);
-        $userInfo_name = $userInfo['name'];
-        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+        // check if timing already exists in db or not
+        $explodeTime = explode(" ",$manual_time);
+        $checkTime = $date.' '.$explodeTime[0];      
 
-        $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
-        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+        $checkIfTimingExits = self::checkTimingExitsInAttendance( $user_id, $checkTime );
 
-        $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
-        
-        $baseURL =  self::getBasePath();
-        $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
-        $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
 
-        $slackMessageActions = '[
-            {
-              "type": "button",
-              "text": "Approve",
-              "url": "'.$approveLink.'",
-              "style": "primary"
-            }, 
-            {
-              "type": "button",
-              "text": "Reject",
-              "url": "'.$rejectLink.'",
-              "style": "danger"
-            }
-        ]';
-        $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+        if( $checkIfTimingExits == false ){
 
-        $return['error'] = 0;
-        $return['message'] = 'Successfully Updated!!';
-        $return['data'] = array();
-        return $return;
+            $final_date_time = $date .' '.$manual_time;
+            // $raw_timestamp = strtotime( $raw_final_time );
+            // $raw_date = new DateTime($raw_final_time);
+            // $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+
+            $reason_new = mysqli_real_escape_string($mysqli, $reason);
+            
+            $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason_new')";
+            self::DBrunQuery($q);
+            $last_inserted_id = mysqli_insert_id($mysqli);
+            $userInfo = self::getUserInfo($user_id);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+            $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+            
+            $baseURL =  self::getBasePath();
+            $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+            $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
+
+            $slackMessageActions = '[
+                {
+                  "type": "button",
+                  "text": "Approve",
+                  "url": "'.$approveLink.'",
+                  "style": "primary"
+                }, 
+                {
+                  "type": "button",
+                  "text": "Reject",
+                  "url": "'.$rejectLink.'",
+                  "style": "danger"
+                }
+            ]';
+            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+
+            // $return['error'] = 0;
+            // $return['message'] = 'Successfully Updated!!';
+            // $return['data'] = array();
+            // return $return;
+
+            return "Time $final_date_time - Sent For Approval!!";
+
+        } else {
+            // $return['error'] = 0;
+            // $return['message'] = "$checkTimeTiming already exists. No Need to update!!";
+            // $return['data'] = array();
+            // return $return;
+            return "Time $checkTime already exists. No Need to update!!";
+        }
     }
 
     public static function getManualAttendanceById( $id ){
