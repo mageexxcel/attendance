@@ -1662,17 +1662,22 @@ class HR extends DATABASE {
 
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
         $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status,leave_type,late_reason ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status','$leave_type','$late_reason' )";
 
         $r_error = 0;
         $r_message = "";
+        $leave_id = "";
 
         try {
             self::DBrunQuery($q);
             $success = true;
             $r_message = "Leave applied.";
+            $leave_id = mysqli_insert_id($mysqli);
         } catch (Exception $e) {
             $r_error = 1;
             $r_message = "Error in applying leave.";
@@ -1719,6 +1724,7 @@ class HR extends DATABASE {
         $r_data = array();
         $return['error'] = $r_error;
         $r_data['message'] = $r_message;
+        $r_data['leave_id'] = $leave_id;
         $return['data'] = $r_data;
         return $return;
     }
