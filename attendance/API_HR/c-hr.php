@@ -5019,6 +5019,18 @@ class HR extends DATABASE {
             // $return['message'] = "$checkTimeTiming already exists. No Need to update!!";
             // $return['data'] = array();
             // return $return;
+
+            // also send message whatever time is already exist
+            $final_date_time = $date .' '.$manual_time;
+
+            $userInfo = self::getUserInfo($user_id);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            $message_to_hr = "Hi HR !!  \n $userInfo_name had requested manual $time_type time : $final_date_time which is already exist.";
+
+            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false);
+
             return "Time $checkTime already exists. No Need to update!!";
         }
     }
