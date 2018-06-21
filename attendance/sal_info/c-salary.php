@@ -595,6 +595,20 @@ class Salary extends DATABASE {
         if (empty(self::$isAdmin)) {
             unset($row['holding_comments']);
         }
+        // addition on 21st june 2018 by arun to return profile image also. i.e slack image
+        $slack_image = "";
+        $allSlackUsers = self::getSlackUsersList();
+        foreach ($allSlackUsers as $s) {
+            if ($s['profile']['email'] == $row['work_email']) {
+                $sl = $s;
+                break;
+            }
+        }
+        if (sizeof($sl) > 0) {
+            $slack_image = $sl['profile']['image_192'];
+        }
+        $row['profileImage'] = $slack_image;
+
         $arr = "";
         $arr = $row;
         return $arr;
