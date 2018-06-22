@@ -172,6 +172,8 @@ function notification_compensation_time(){
 					$slackMessageForUser .= $txt['text']. "\n";
 				}
 
+				//sleep for 1 seconds to delay SLACK call -- added on 22june2018 by arun
+    		sleep(1);
 				$aa = HR::sendSlackMessageToUser($slack_userChannelid, $slackMessageForUser);
 				echo '<hr>';
 			}
