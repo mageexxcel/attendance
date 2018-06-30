@@ -4989,6 +4989,7 @@ class HR extends DATABASE {
             
             $baseURL =  self::getBasePath();
             $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+            $approveLinkMinutesLess = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id&deductminutes=30";
             $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
 
             $slackMessageActions = '[
@@ -5004,7 +5005,18 @@ class HR extends DATABASE {
                   "url": "'.$rejectLink.'",
                   "style": "danger"
                 }
-            ]';
+            ';
+
+            if( $time_type == 'exit' ){
+                $slackMessageActions .= ',{
+                  "type": "button",
+                  "text": "Approve With 30 Minutes Less",
+                  "url": "'.$approveLinkMinutesLess.'",
+                  "style": "primary"
+                }';
+            }
+            $slackMessageActions .= "]";
+
             $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
 
             // $return['error'] = 0;
@@ -5047,9 +5059,10 @@ class HR extends DATABASE {
     }
 
     // approve manual attendance 
-    public static function approveManualAttendance( $id ){
+    public static function approveManualAttendance( $id, $deductminutes ){
         $message = '';
         $row = self::getManualAttendanceById($id);
+        $approvedWithLessTimeText = "";
         if( $row == false ){
             $message = 'No Record found!!';
         } else {
@@ -5058,6 +5071,23 @@ class HR extends DATABASE {
             }else{
                 $row_userid = $row['user_id'];
                 $row_manual_time = $row['manual_time'];
+                if( $deductminutes != false ){
+                    $explodeActualTime = explode(" ", $row_manual_time);
+                    $explodeActualTime_Date = $explodeActualTime[0];
+                    $explodeActualTime_Time = $explodeActualTime[1];
+                    $explodeActualTime_AMPM = $explodeActualTime[2];                    
+                    $explodeDate = explode("-", $explodeActualTime_Date);
+                    $n_month = $explodeDate[0];
+                    $n_date = $explodeDate[1];
+                    $n_year = $explodeDate[2];
+                    $actualTimeModified = "$n_date-$n_month-$n_year $explodeActualTime_Time $explodeActualTime_AMPM";
+                    $actualTimestamp = strtotime($actualTimeModified);
+                    $deductSeconds = $deductminutes * 60;
+                    $newTimestamp = $actualTimestamp - $deductSeconds;
+                    $row_manual_time = date('m-d-Y h:i A', $newTimestamp);
+
+                    $approvedWithLessTimeText = ": $deductminutes Minutes Less, ";
+                }
                 $q = "INSERT INTO attendance( id, user_id, timing ) VALUES ( 0, $row_userid, '$row_manual_time' )";
                 $q1 = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q); 
@@ -5068,7 +5098,7 @@ class HR extends DATABASE {
                 $userInfo_name = $userInfo['name'];
                 $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is approved!!";
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $approvedWithLessTimeText $row_manual_time is approved!!";
                 $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
             }

@@ -599,7 +599,11 @@ else if ($action == 'add_manual_attendance' ){
 
 else if ( $action == 'approve_manual_attendance'){
     $manual_attendance_id = $PARAMS['id'];
-    $res = HR::approveManualAttendance( $manual_attendance_id );
+    $deductminutes = false;
+    if( isset( $PARAMS['deductminutes']) ){
+        $deductminutes = $PARAMS['deductminutes'];
+    }
+    $res = HR::approveManualAttendance( $manual_attendance_id, $deductminutes );
 }
 
 else if ( $action == 'reject_manual_attendance'){
