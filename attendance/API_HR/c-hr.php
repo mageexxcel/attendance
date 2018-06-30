@@ -562,11 +562,18 @@ class HR extends DATABASE {
             $alternateSaturdayCheck = true;
         }
 
+        $saturdayCount = 0; // to make 5th saturday working
+
         foreach ($monthDays as $k => $v) {
             if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
             }
-            if ($v['day'] == 'Saturday') {
+            if ($v['day'] == 'Saturday') { 
+                $saturdayCount++; // to make 5th saturday working
+                if( $saturdayCount == 5 ){ // to make 5th saturday working
+                    $alternateSaturdayCheck = false; // to make 5th saturday working
+                } // to make 5th saturday working
+
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -575,6 +582,7 @@ class HR extends DATABASE {
                 }
             }
         }
+
         //exclude working weekend from month weekends
         $list2 = self::getWorkingHoursOfMonth($year, $month);
 
