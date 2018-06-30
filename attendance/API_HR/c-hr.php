@@ -184,6 +184,13 @@ class HR extends DATABASE {
             }
             //end - check if policy docs are read
 
+            // start - check audit is pending or not
+            $u['is_inventory_audit_pending'] = 0;            
+            if( HR::isInventoryAuditPending($userid) ){
+                $u['is_inventory_audit_pending'] = 1;
+            }
+            // end - check audit is pending or not
+
             // echo '<pre>';
             // print_r( $u );
 
@@ -5280,6 +5287,23 @@ class HR extends DATABASE {
             $row = false;
         }        
         return $row;
+    }
+
+    // return true or false is audit of inventory is pending for passed userid
+    public static function isInventoryAuditPending( $userid ){
+        $isAuditPending = false;
+        $userInventories = self::getUserInventories($userid);
+        if( $userInventories == false ){
+            
+        } else {
+            foreach( $userInventories as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['machine_id']);
+                if( isset($i_details['audit_current_month_status'] ) &&  $i_details['audit_current_month_status']['status'] == false){
+                    $isAuditPending = true;
+                }
+            }
+        }
+        return $isAuditPending;
     }
 
 
