@@ -171,26 +171,27 @@ class HR extends DATABASE {
             // print_r( $u) ;
             // end - get user role and then role pages
 
-            //start - check if policy docs are read
+            
             $u['is_policy_documents_read_by_user'] = 1;
+            $u['is_inventory_audit_pending'] = 0; 
             if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
 
             }else{
+                //start - check if policy docs are read
                 $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
                 if( $is_policy_documents_read_by_user == false ){
                     $u['is_policy_documents_read_by_user'] = 0;
                     $u['role_pages'] = self::getGenericPagesForAllRoles('');
                 }
-            }
-            //end - check if policy docs are read
+                //end - check if policy docs are read
 
-            // start - check audit is pending or not
-            $u['is_inventory_audit_pending'] = 0;            
-            if( HR::isInventoryAuditPending($userid) ){
-                $u['is_inventory_audit_pending'] = 1;
+                // start - check audit is pending or not                       
+                if( HR::isInventoryAuditPending($userid) ){
+                    $u['is_inventory_audit_pending'] = 1;
+                }
+                // end - check audit is pending or not
             }
-            // end - check audit is pending or not
-
+   
             // echo '<pre>';
             // print_r( $u );
 
