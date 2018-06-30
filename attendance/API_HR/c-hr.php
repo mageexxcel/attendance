@@ -188,6 +188,7 @@ class HR extends DATABASE {
                 // start - check audit is pending or not                       
                 if( HR::isInventoryAuditPending($userid) ){
                     $u['is_inventory_audit_pending'] = 1;
+                    $u['role_pages'] = self::getGenericPagesForAllRoles('');
                 }
                 // end - check audit is pending or not
             }
