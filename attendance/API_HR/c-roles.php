@@ -196,6 +196,7 @@ trait Roles {
     static $ACTION_add_manual_attendance = 11001;
     static $ACTION_reject_manual_attendance = 11002;
     static $ACTION_approve_manual_attendance = 11003;
+    static $ACTION_get_average_working_hours = 11004;
 
 
     /////IMPORTANT
@@ -682,6 +683,7 @@ trait Roles {
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
             array( 'id' => self::$ACTION_approve_manual_attendance, 'name' => 'approve_manual_attendance' ),
             array( 'id' => self::$ACTION_reject_manual_attendance, 'name' => 'reject_manual_attendance' ),
+            array( 'id' => self::$ACTION_get_average_working_hours, 'name' => 'get_average_working_hours' ),
         );
         return $array;
     }
