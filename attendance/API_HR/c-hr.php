@@ -481,7 +481,31 @@ class HR extends DATABASE {
         $return['seconds_actual_worked_time'] = $r_total_time;
         $return['seconds_extra_time'] = $r_extra_time;
 
+        // calulate active hours, i.e the time user was in the office
+        $insideOfficeTime =  self::getInsideOfficeTime($dayRaw);
+        $return['office_time_inside'] = $insideOfficeTime['inside_time_seconds'];
+
         return $return;
+    }
+
+    //
+    public static function getInsideOfficeTime( $dayPunches ){
+        $totalInsideTime = 0;
+        if( sizeOf( $dayPunches ) > 1 ){
+            $b = array_chunk($dayPunches,2);            
+            foreach( $b as $break ){
+                if( sizeof($break) == 2 ){
+                    $startInside = $break[0]['timestamp'];
+                    $endInside = $break[1]['timestamp'];
+                    $timeInside = $endInside - $startInside;
+                    $totalInsideTime += $timeInside;                    
+                }
+            }
+           
+        }
+        $ret = array();
+        $ret['inside_time_seconds'] = $totalInsideTime;
+        return $ret;
     }
 
     // get generic month days will have date, day, and full date
@@ -901,6 +925,7 @@ class HR extends DATABASE {
                 $v['seconds_actual_working_time'] = $userMonthPunching[$k]['seconds_actual_working_time'];
                 $v['seconds_actual_worked_time'] = $userMonthPunching[$k]['seconds_actual_worked_time'];
                 $v['seconds_extra_time'] = $userMonthPunching[$k]['seconds_extra_time'];
+                $v['office_time_inside'] = $userMonthPunching[$k]['office_time_inside'];
 
                 $return[$k] = $v;
             } else {
@@ -5500,6 +5525,144 @@ class HR extends DATABASE {
             $return = self::getInvenoryAuditFullDetails( $row['id'] );
         }
         return $return;
+    }
+
+    // api call
+    public static function api_getAverageWorkingHours( $startDate, $endDate ){
+        if( $startDate == null || $endDate == null ){
+            $d = self::_getDateTimeData();
+            $endDate = $d['current_year_number'].'-'.$d['current_month_number'].'-'.$d['current_date_number'];
+            $startDate = date("Y-m-d", strtotime($endDate . '-7 day'));
+        }
+
+        // echo '<pre>';
+        // from_date:"2018-07-25" date format
+
+        $DATA = array();
+
+        // $startDate = "2018-06-25";
+        // $endDate = "2018-07-11";
+
+        // echo $startDate.'<br>';
+        // echo $endDate.'<br>';
+        // die;
+
+        $dates = self::_getDatesBetweenTwoDates( $startDate, $endDate );
+
+        // print_r( $dates )
+        
+        $enabledUsersList = self::getEnabledUsersList();
+        foreach ($enabledUsersList as $u) {
+
+            // print_r( $u );
+
+
+            $userid = $u['user_Id'];
+
+            $timings = array();
+
+            foreach($dates as $d ){
+                $m = date('m', strtotime($d));
+                $y = date('Y', strtotime($d));
+                $d = date('d', strtotime($d));
+
+                $nd = $m.'-'.$d.'-'.$y;
+
+
+
+                $q = "select * from attendance where user_id=$userid AND timing like '%$nd%'";
+                $runQuery = self::DBrunQuery($q);
+                $rows = self::DBfetchRows($runQuery);
+                $allMonthAttendance = array();
+                foreach ($rows as $key => $d) {
+                    $d_timing = $d['timing'];
+                    $d_timing = str_replace("-", "/", $d_timing);
+
+                    // check if date and time are not there in string
+                    if( strlen($d_timing) < 10 ){
+
+                    } else {
+                        $d_full_date = date("Y-m-d", strtotime($d_timing));
+                        $d_timestamp = strtotime($d_timing);
+                        $d_month = date("m", $d_timestamp);
+                        $d_year = date("Y", $d_timestamp);
+                        $d_date = date("d", $d_timestamp);
+                        //$d_date = (int)$d_date;
+                        // if ($d_year == $year && $d_month == $month) {
+                            $d['timestamp'] = $d_timestamp;
+                            $timings[$nd][] = $d;
+                        // }
+                    }
+                }
+            }
+
+
+            if( sizeof($timings ) > 0 ){
+
+
+                $totalPresentDays = 0;
+                $totalInsideTimeInSeconds = 0;
+
+                foreach( $timings as $pp ){
+                    $aa = self::getInsideOfficeTime( $pp );
+                    if( $aa['inside_time_seconds'] > 0 ){
+                        $totalPresentDays++;
+                        $totalInsideTimeInSeconds += $aa['inside_time_seconds'];
+                    }
+
+
+                    // print_r( $aa );
+                }
+
+                // echo "totalPresentDays :: $totalPresentDays<br>";
+                // echo "totalInsideTimeInSeconds :: $totalInsideTimeInSeconds<br>";
+
+                $average_seconds = $totalInsideTimeInSeconds / $totalPresentDays;
+
+                // echo "avg :: $average_seconds<br>";
+                // echo "avg :: $average_seconds<br>";
+
+                $DATA[$userid] = array();
+                $DATA[$userid]['name'] = $u['name'];
+                $DATA[$userid]['jobtitle'] = $u['jobtitle'];
+                $DATA[$userid]['totalPresentDays'] = $totalPresentDays;
+                $DATA[$userid]['totalInsideTimeInSeconds'] = $totalInsideTimeInSeconds;
+                $DATA[$userid]['average_inside_seconds'] = $average_seconds;
+
+                $aaa = self::_secondsToTime( $average_seconds);
+                $average_inside_hours = $aaa['h']. ' Hrs ' . $aaa['m'] . ' Mins';
+
+                $DATA[$userid]['average_inside_hours'] = $average_inside_hours;
+
+                // print_r($aaa);
+
+
+                
+                // die;
+            }
+
+        }
+        
+        // echo '<pre>';
+        // print_r( $DATA );
+
+        $sort_average_inside_seconds  = array_column($DATA, 'average_inside_seconds');
+
+        // print_r($sort_average_inside_seconds);
+
+        // array_multisort($price, SORT_DESC, $inventory);
+        array_multisort($sort_average_inside_seconds, SORT_ASC, $DATA);
+
+        // print_r( $DATA );
+        
+
+        $error = 0;
+        $return['error'] = $error;
+        $return['message'] = "";
+        $return['data'] = $DATA;
+        return $return;
+
+
     }
 
 }

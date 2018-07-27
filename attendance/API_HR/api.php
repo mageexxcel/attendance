@@ -37,7 +37,8 @@ if( isset($_GET['action']) ){
 if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' 
     || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' 
     || $GET_action == 'validate_unique_key'
-    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' ) {
+    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' 
+    || $GET_action == 'get_average_working_hours') {
     $PARAMS = $_GET;
 }
 
@@ -653,6 +654,16 @@ else if ( $action == 'add_inventory_audit' ){
     $inventory_id = $PARAMS['inventory_id'];
     $audit_message = $PARAMS['audit_message'];
     $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
+}
+
+/****************************************/
+/*******AVERAGE WORKING HOURS************/
+/****************************************/
+
+else if( $action == 'get_average_working_hours' ){
+    $start_date = $PARAMS['start_date'];
+    $end_date = $PARAMS['end_date'];
+    $res = HR::api_getAverageWorkingHours( $start_date, $end_date );
 }
 
 
