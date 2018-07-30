@@ -5535,7 +5535,7 @@ class HR extends DATABASE {
             $startDate = date("Y-m-d", strtotime($endDate . '-7 day'));
         }
         $DATA = array();
-        $dates = self::_getDatesBetweenTwoDates( $startDate, $endDate );        
+        $dates = self::_getDatesBetweenTwoDates( $startDate, $endDate );       
         $enabledUsersList = self::getEnabledUsersList();
 
         $hideUsersArray = array('302','300','415','420');
@@ -5546,7 +5546,6 @@ class HR extends DATABASE {
             if( in_array($userid, $hideUsersArray, true)){
                 continue;
             }
-
 
             $timings = array();
             foreach($dates as $d ){
@@ -5586,20 +5585,27 @@ class HR extends DATABASE {
                         $totalInsideTimeInSeconds += $aa['inside_time_seconds'];
                     }
                 }
+
                 $average_seconds = $totalInsideTimeInSeconds / $totalPresentDays;
-                $DATA[$userid] = array();
-                $DATA[$userid]['name'] = $u['name'];
-                $DATA[$userid]['jobtitle'] = $u['jobtitle'];
-                $DATA[$userid]['totalPresentDays'] = $totalPresentDays;
-                $DATA[$userid]['totalInsideTimeInSeconds'] = $totalInsideTimeInSeconds;
-                $DATA[$userid]['average_inside_seconds'] = $average_seconds;
-                $aaa = self::_secondsToTime( $average_seconds);
-                $average_inside_hours = $aaa['h']. ' Hrs ' . $aaa['m'] . ' Mins';
-                $DATA[$userid]['average_inside_hours'] = $average_inside_hours;
+
+                if( is_nan( $average_seconds) ){
+
+                } else {
+                    $DATA[$userid] = array();
+                    $DATA[$userid]['name'] = $u['name'];
+                    $DATA[$userid]['jobtitle'] = $u['jobtitle'];
+                    $DATA[$userid]['totalPresentDays'] = $totalPresentDays;
+                    $DATA[$userid]['totalInsideTimeInSeconds'] = $totalInsideTimeInSeconds;
+                    $DATA[$userid]['average_inside_seconds'] = $average_seconds;
+                    $aaa = self::_secondsToTime( $average_seconds);
+                    $average_inside_hours = $aaa['h']. ' Hrs ' . $aaa['m'] . ' Mins';
+                    $DATA[$userid]['average_inside_hours'] = $average_inside_hours;
+                }
             }
         }
 
         $sort_average_inside_seconds  = array_column($DATA, 'average_inside_seconds');
+        
         array_multisort($sort_average_inside_seconds, SORT_ASC, $DATA);
 
         $error = 0;
