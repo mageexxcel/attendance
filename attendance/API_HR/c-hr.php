@@ -2827,11 +2827,13 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getDisabledUsersList() {
-
+    public static function getDisabledUsersList($page, $limit) {
+        
         $q = "SELECT users.*,user_profile.*,user_bank_details.bank_account_no as bank_no FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_bank_details ON users.id = user_bank_details.user_Id where users.status = 'Disabled'";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
+
+        $rows = self::pagination($page, $limit, $q);
+        // $runQuery = self::DBrunQuery($q);
+        // $rows = self::DBfetchRows($runQuery);
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -2849,9 +2851,24 @@ class HR extends DATABASE {
                 $newRows[] = $pp;
             }
         }
-
-
+        
         return $newRows;
+    }
+
+    public static function pagination($page, $limit, $sqlQuery) {
+        
+        if($page == 1){
+            $query = $sqlQuery . " LIMIT " . $limit;   
+
+        } else {
+            $offset = ($page - 1) * $limit;
+            $query = $sqlQuery . " LIMIT " . $limit . " OFFSET " . $offset;
+        }
+        
+        $runQuery = self::DBrunQuery($query);
+        $rows = self::DBfetchRows($runQuery);
+        
+        return $rows;
     }
 
     public static function getUserInfofromSlack($userid) {
