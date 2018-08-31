@@ -43,8 +43,8 @@ if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GE
 }
 
 $action = false;
-$page = 1;
-$limit = 10;
+$pagination_page = 1;
+$pagination_limit = 10;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -52,12 +52,17 @@ if (isset($PARAMS['action'])) {
 if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
-if(isset($PARAMS['page'])){
-    $page = $PARAMS['page'];
+if(isset($PARAMS['pagination_page'])){
+    $pagination_page = $PARAMS['pagination_page'];
 }
-if(isset($PARAMS['limit'])){
-    $limit = $PARAMS['limit'];
+if(isset($PARAMS['pagination_limit'])){
+    $pagination_limit = $PARAMS['pagination_limit'];
 }
+
+$pagination = array(
+    'page' => $pagination_page,
+    'limit' => $pagination_limit
+);
 
 $res = array(
     'error' => 1,
@@ -403,7 +408,7 @@ else if ($action == 'add_hr_comment') {
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
 } else if ($action == 'show_disabled_users') {  
-    $res = HR::getDisabledUsersList($page, $limit);
+    $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
