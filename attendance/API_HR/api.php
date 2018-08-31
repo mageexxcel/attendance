@@ -43,6 +43,8 @@ if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GE
 }
 
 $action = false;
+$pagination_page = 1;
+$pagination_limit = 10;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
@@ -50,6 +52,17 @@ if (isset($PARAMS['action'])) {
 if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
+if(isset($PARAMS['pagination_page'])){
+    $pagination_page = $PARAMS['pagination_page'];
+}
+if(isset($PARAMS['pagination_limit'])){
+    $pagination_limit = $PARAMS['pagination_limit'];
+}
+
+$pagination = array(
+    'page' => $pagination_page,
+    'limit' => $pagination_limit
+);
 
 $res = array(
     'error' => 1,
@@ -394,8 +407,8 @@ else if ($action == 'add_hr_comment') {
     }    
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
-} else if ($action == 'show_disabled_users') {
-    $res = HR::getDisabledUsersList();
+} else if ($action == 'show_disabled_users') {  
+    $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
@@ -654,6 +667,11 @@ else if ( $action == 'add_inventory_audit' ){
     $inventory_id = $PARAMS['inventory_id'];
     $audit_message = $PARAMS['audit_message'];
     $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
+}
+
+else if( $action == 'get_inventory_audit_status_month_wise' ){
+    $month = $PARAMS['month'];
+    $res = HR::getInventoriesAuditStatusForYearMonth( $month );
 }
 
 /****************************************/
