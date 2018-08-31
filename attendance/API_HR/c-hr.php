@@ -4643,6 +4643,11 @@ class HR extends DATABASE {
                 'id' => 5525,
                 'text' => 'Training Service Agreement'
             ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5526,
+                'text' => 'Update RH Leave'
+            ),
 
 
             array(
@@ -4692,6 +4697,12 @@ class HR extends DATABASE {
                 'id' => 5618,
                 'text' => 'Update fingerprint (if required)',
                 'sort' => 8
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5619,
+                'text' => 'Issue Training Certificate',
+                'sort' => 9
             ),
 
 
