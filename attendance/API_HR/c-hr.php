@@ -5597,6 +5597,35 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getInventoriesAuditStatusForYearMonth( $month ){
+
+        $year = date('Y');
+        $return = false;
+        $q = "SELECT 
+            inventory_audit_month_wise.id,
+            inventory_audit_month_wise.inventory_id,
+            inventory_audit_month_wise.month,
+            inventory_audit_month_wise.year,
+            machines_list.machine_type as type,
+            machines_list.machine_name as name,
+            machines_list.status as status
+            FROM 
+            inventory_audit_month_wise
+            left join machines_list on inventory_audit_month_wise.inventory_id = machines_list.id
+            WHERE 
+            inventory_audit_month_wise.month = $month AND inventory_audit_month_wise.year = $year";
+        
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if (sizeof($rows) == 0) {
+
+        } else {
+            $return = $rows;
+        }
+        
+        return $return;
+    }
+
     // api call
     public static function api_getAverageWorkingHours( $startDate, $endDate ){
         if( $startDate == null || $endDate == null ){
