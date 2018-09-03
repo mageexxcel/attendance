@@ -656,6 +656,12 @@ else if ( $action == 'add_inventory_audit' ){
     $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
 }
 
+else if( $action == 'get_inventory_audit_status_month_wise' ){
+    $month = $PARAMS['month'];
+    $year = $PARAMS['year'];
+    $res = HR::getInventoriesAuditStatusForYearMonth( $month, $year );
+}
+
 /****************************************/
 /*******AVERAGE WORKING HOURS************/
 /****************************************/

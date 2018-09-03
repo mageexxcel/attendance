@@ -5538,6 +5538,57 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getInventoriesAuditStatusForYearMonth( $month, $year ){
+
+        $return = array();
+        $error = 0;
+        $message = "Inventory Audit list";
+        $inventory_list = self::getAllMachineDetail();  
+        $audit_list = array();      
+
+        for($i = 0; $i < count($inventory_list['data']); $i++){
+
+            $inventory_id = $inventory_list['data'][$i]['id'];
+            $machine_name = $inventory_list['data'][$i]['machine_name'];
+            $machine_type = $inventory_list['data'][$i]['machine_type'];
+            
+            $q = "SELECT 
+            inventory_audit_month_wise.id,
+            inventory_audit_month_wise.inventory_id,
+            inventory_audit_month_wise.month,
+            inventory_audit_month_wise.year,
+            inventory_comments.comment
+            FROM 
+            inventory_audit_month_wise
+            left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+            WHERE 
+            inventory_audit_month_wise.month = $month AND inventory_audit_month_wise.year = $year AND inventory_audit_month_wise.inventory_id = $inventory_id";
+
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+
+            $audit_list[] = [
+                'id' => $inventory_id,
+                'name' => $machine_name,
+                'type' => $machine_type,
+                'audit' => $rows
+            ];
+
+        }
+        
+        if (sizeof($audit_list) == 0) {
+
+        } else {
+            $return = [
+                'error' => $error,
+                'message' => $message,
+                'month_wise_audit' => $audit_list
+            ];
+        }
+        
+        return $return;
+    }
+
     // api call
     public static function api_getAverageWorkingHours( $startDate, $endDate ){
         if( $startDate == null || $endDate == null ){
