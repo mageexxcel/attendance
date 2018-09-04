@@ -5542,7 +5542,7 @@ class HR extends DATABASE {
 
         $return = array();
         $error = 0;
-        $message = "";
+        $message = ""; 
 
         $q = "SELECT 
         machines_list.id, 
@@ -5567,7 +5567,6 @@ class HR extends DATABASE {
         $rows = self::DBfetchRows($runQuery);
 
         if (sizeof($rows) == 0) {
-            $error = 1;
             $message = "No Records Found.";
             
         } else {
@@ -5577,7 +5576,7 @@ class HR extends DATABASE {
         $return = [
             'error' => $error,
             'message' => $message,
-            'audit_list' => $rows
+            'data' => $rows
         ];
         
         return $return;
