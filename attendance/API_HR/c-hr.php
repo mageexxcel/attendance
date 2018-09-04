@@ -5542,49 +5542,43 @@ class HR extends DATABASE {
 
         $return = array();
         $error = 0;
-        $message = "Inventory Audit list";
-        $inventory_list = self::getAllMachineDetail();  
-        $audit_list = array();      
+        $message = "";
 
-        for($i = 0; $i < count($inventory_list['data']); $i++){
+        $q = "SELECT 
+        machines_list.id, 
+        machines_list.machine_type, 
+        machines_list.machine_name, 
+        files.file_name, 
+        inventory_audit_month_wise.id as audit_id, 
+        inventory_audit_month_wise.inventory_id, 
+        inventory_audit_month_wise.month, 
+        inventory_audit_month_wise.year, 
+        inventory_comments.comment 
+        FROM 
+        machines_list 
+        left join files on machines_list.file_inventory_photo = files.id 
+        left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
+        AND inventory_audit_month_wise.month = $month 
+        AND inventory_audit_month_wise.year = $year 
+        left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+        ORDER BY id DESC";
 
-            $inventory_id = $inventory_list['data'][$i]['id'];
-            $machine_name = $inventory_list['data'][$i]['machine_name'];
-            $machine_type = $inventory_list['data'][$i]['machine_type'];
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+
+        if (sizeof($rows) == 0) {
+            $error = 1;
+            $message = "No Records Found.";
             
-            $q = "SELECT 
-            inventory_audit_month_wise.id,
-            inventory_audit_month_wise.inventory_id,
-            inventory_audit_month_wise.month,
-            inventory_audit_month_wise.year,
-            inventory_comments.comment
-            FROM 
-            inventory_audit_month_wise
-            left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
-            WHERE 
-            inventory_audit_month_wise.month = $month AND inventory_audit_month_wise.year = $year AND inventory_audit_month_wise.inventory_id = $inventory_id";
-
-            $runQuery = self::DBrunQuery($q);
-            $rows = self::DBfetchRows($runQuery);
-
-            $audit_list[] = [
-                'id' => $inventory_id,
-                'name' => $machine_name,
-                'type' => $machine_type,
-                'audit' => $rows
-            ];
-
-        }
-        
-        if (sizeof($audit_list) == 0) {
-
         } else {
-            $return = [
-                'error' => $error,
-                'message' => $message,
-                'month_wise_audit' => $audit_list
-            ];
+            $message = "Inventory Audit List";
         }
+
+        $return = [
+            'error' => $error,
+            'message' => $message,
+            'audit_list' => $rows
+        ];
         
         return $return;
     }
