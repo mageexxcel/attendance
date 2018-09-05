@@ -5538,6 +5538,54 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getInventoriesAuditStatusForYearMonth( $month, $year ){
+
+        $return = array();
+        $data = array();
+        $error = 0;
+        $message = ""; 
+
+        $q = "SELECT 
+        machines_list.id, 
+        machines_list.machine_type, 
+        machines_list.machine_name, 
+        files.file_name, 
+        inventory_audit_month_wise.id as audit_id, 
+        inventory_audit_month_wise.inventory_id, 
+        inventory_audit_month_wise.month, 
+        inventory_audit_month_wise.year, 
+        inventory_comments.comment 
+        FROM 
+        machines_list 
+        left join files on machines_list.file_inventory_photo = files.id 
+        left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
+        AND inventory_audit_month_wise.month = $month 
+        AND inventory_audit_month_wise.year = $year 
+        left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+        ORDER BY id DESC";
+
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+
+        if (sizeof($rows) == 0) {
+            $message = "No Records Found.";
+            
+        } else {
+            $message = "Inventory Audit List";
+            $data = [
+                'audit_list' => $rows
+            ];
+        }
+        
+        $return = [
+            'error' => $error,
+            'message' => $message,
+            'data' => $data
+        ];
+        
+        return $return;
+    }
+
     // api call
     public static function api_getAverageWorkingHours( $startDate, $endDate ){
         if( $startDate == null || $endDate == null ){
