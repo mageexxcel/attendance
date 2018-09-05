@@ -5541,6 +5541,7 @@ class HR extends DATABASE {
     public static function getInventoriesAuditStatusForYearMonth( $month, $year ){
 
         $return = array();
+        $data = array();
         $error = 0;
         $message = ""; 
 
@@ -5571,12 +5572,15 @@ class HR extends DATABASE {
             
         } else {
             $message = "Inventory Audit List";
+            $data = [
+                'audit_list' => $rows
+            ];
         }
-
+        
         $return = [
             'error' => $error,
             'message' => $message,
-            'data' => $rows
+            'data' => $data
         ];
         
         return $return;
