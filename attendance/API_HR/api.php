@@ -657,12 +657,20 @@ else if ( $action == 'add_inventory_audit' ){
 }
 
 else if( $action == 'get_inventory_audit_status_month_wise' ){
+    $currentTime = HR::_getDateTimeData();
+
     if( isset($PARAMS['month']) && $PARAMS['month'] != "" ){
         $month = $PARAMS['month'];
     } else {
-        $month = date('n');
+        $month = $currentTime['current_month_number'];
     }
-    $year = $PARAMS['year'];
+
+    if( isset($PARAMS['year']) && $PARAMS['year'] != "" ){
+        $year = $PARAMS['year'];
+    } else {
+        $year = $currentTime['current_year_number'];
+    }
+    
     $res = HR::getInventoriesAuditStatusForYearMonth( $month, $year );
 }
 
