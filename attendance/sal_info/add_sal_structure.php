@@ -7,6 +7,7 @@ Add Salary and salary structure of employee.
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once ("c-salary.php");
+require_once 'c-jwt.php';
 
 // constants define
 define("admin", "admin");
@@ -149,8 +150,22 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
 
     $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
     $userinfo = Salary::getUserDetail($tuserid); // get user details
+    // added on 7th oct 2018 by arun -to get logged user details( role ) from token
+    $decodedUserInfo = JWT::decode($PARAMS['token'], Salary::JWT_SECRET_KEY);
+    $decodedUserInfo = json_decode(json_encode($decodedUserInfo), true);
+    $LOGGED_USER_ROLE = $decodedUserInfo['role'];
+
+    $userExistingSalries = Salary::getSalaryInfo( $PARAMS['user_id'] );
+
+    $HR_CAN_ADD_SALARY = false;
+    if( strtolower($LOGGED_USER_ROLE) == 'hr' && sizeOf($userExistingSalries) == 0 ){
+        $HR_CAN_ADD_SALARY = true;
+    }
+
     if ($userinfo['type'] != admin && $userinfo['type'] != hr) {
-        $result['error'][] = "You are not authorise to update salary information";
+        if( $HR_CAN_ADD_SALARY == false ){
+            $result['error'][] = "You are not authorise to update salary information";    
+        }
     }
     if (sizeof($result['error']) <= 0) {
         $re = Salary::updateSalary($PARAMS); // update salary details
