@@ -1129,19 +1129,11 @@ class HR extends DATABASE {
         $r_data['nextMonth'] = $nextMonth;
         $r_data['previousMonth'] = $previousMonth;
         $r_data['attendance'] = $beautyMonthAttendance;
-
-        $joining_month = date('m', strtotime($userDetails['dateofjoining']));
-        $joining_year = date('Y', strtotime($userDetails['dateofjoining']));
-
-        $analyseCompensationTime = array();
-        if( $joining_month == date('m') && $joining_year == date('Y') ) {
-
-        } else {
-            // added to calculate compensation times added by arun on 29th jan 2018
-            $analyseCompensationTime = self::_analyseCompensationTime($beautyMonthAttendance);
-        }
-
-        $r_data['compensationSummary'] = $analyseCompensationTime;
+        
+        
+        // added to calculate compensation times added by arun on 29th jan 2018
+        $analyseCompensationTime = self::_analyseCompensationTime($beautyMonthAttendance);
+        $r_data['compensationSummary'] = $analyseCompensationTime;            
 
         $r_error = 0;
         $return = array();

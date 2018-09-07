@@ -60,6 +60,13 @@ function calculate_previous_month_pending_time(){
 		// print_r( $employee );
 		$previousMonthAttendaceDetails = HR::getUserMonthAttendaceComplete($employee_id, $prev_month_year, $prev_month);
 
+		$joining_month = date('m', strtotime($employee['dateofjoining']));
+        $joining_year = date('Y', strtotime($employee['dateofjoining']));
+
+		if( $joining_month == $prev_month && $joining_year == $prev_month_year ){
+			continue;
+		}
+
 		// calculation from compensated time summary
 		$c_seconds_to_be_compensate = 0;
 		if( isset($previousMonthAttendaceDetails['data']['compensationSummary']) ){
