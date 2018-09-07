@@ -42,7 +42,7 @@ $todayDate_Y_m_d = date('Y-m-d');
 // function to get previous month pending time and insert it to users_previous_month_time table 
 // which will be list on manage_user_pending_hours page on HR portal
 function calculate_previous_month_pending_time(){
-	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
+	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $current_year, $prev_month, $prev_month_year, $current_date;
 
 	// this will be run only manually by manish sir so below code is commented
 	// if( $current_date * 1 !== 2 ){
@@ -58,6 +58,14 @@ function calculate_previous_month_pending_time(){
 	foreach( $enabledUsersList as $employee ){
 		$employee_id = $employee['user_Id'];
 		// print_r( $employee );
+
+		$joining_month = date('m', strtotime($employee['dateofjoining']));
+		$joining_year = date('Y', strtotime($employee['dateofjoining']));
+
+		if( $joining_month == $current_month && $joining_year == $current_year ) {
+			continue;
+		}
+		
 		$previousMonthAttendaceDetails = HR::getUserMonthAttendaceComplete($employee_id, $prev_month_year, $prev_month);
 
 		// calculation from compensated time summary

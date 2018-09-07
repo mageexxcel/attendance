@@ -1129,11 +1129,11 @@ class HR extends DATABASE {
         $r_data['nextMonth'] = $nextMonth;
         $r_data['previousMonth'] = $previousMonth;
         $r_data['attendance'] = $beautyMonthAttendance;
-
-
+        
+        
         // added to calculate compensation times added by arun on 29th jan 2018
         $analyseCompensationTime = self::_analyseCompensationTime($beautyMonthAttendance);
-        $r_data['compensationSummary'] = $analyseCompensationTime;
+        $r_data['compensationSummary'] = $analyseCompensationTime;            
 
         $r_error = 0;
         $return = array();
