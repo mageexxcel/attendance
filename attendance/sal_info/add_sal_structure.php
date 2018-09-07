@@ -150,16 +150,27 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
 
     $tuserid = Salary::getIdUsingToken($PARAMS['token']); // get userid through login token.
     $userinfo = Salary::getUserDetail($tuserid); // get user details
+    
     // added on 7th oct 2018 by arun -to get logged user details( role ) from token
     $decodedUserInfo = JWT::decode($PARAMS['token'], Salary::JWT_SECRET_KEY);
     $decodedUserInfo = json_decode(json_encode($decodedUserInfo), true);
     $LOGGED_USER_ROLE = $decodedUserInfo['role'];
 
-    $userExistingSalries = Salary::getSalaryInfo( $PARAMS['user_id'] );
+    // $userExistingSalries = Salary::getSalaryInfo( $PARAMS['user_id'] );
 
     $HR_CAN_ADD_SALARY = false;
-    if( strtolower($LOGGED_USER_ROLE) == 'hr' && sizeOf($userExistingSalries) == 0 ){
-        $HR_CAN_ADD_SALARY = true;
+    //check if employee total months in employment
+    if( strtolower($LOGGED_USER_ROLE) == 'hr'){
+        $employeeDetails = Salary::getUserDetail( $PARAMS['user_id'] );
+        $joining_date = $employeeDetails['date_of_joining'];
+        $current_date = date("Y-m-d");
+        $endDate = strtotime($current_date);
+        $startDate = strtotime($joining_date);
+
+        $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
+        if( $numberOfMonths < 6 && $PARAMS['total_salary'] <= 10000 ){
+            $HR_CAN_ADD_SALARY = true;
+        }
     }
 
     if ($userinfo['type'] != admin && $userinfo['type'] != hr) {
