@@ -975,6 +975,43 @@ class HR extends DATABASE {
         return $finalReturn;
     }
 
+    public static function getAllYearAttendance() {
+
+        $r_error = 0;
+        $r_message = "";
+        $return = array();
+        $years = array();
+        $attendance_rows = array();
+
+        $q = "SELECT * from attendance";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        
+        for ( $i = 0; $i < count($rows); $i++ ){            
+            $full_date = explode(" ", $rows[$i]['timing']);
+            $explode_full_date = explode("-", $full_date[0]);
+            $year = $explode_full_date[2];            
+            if($year && !in_array($year, $years)){
+                $years[] = $year;
+            }
+        }
+        
+        for( $k = 0; $k < count($years); $k++ ){
+            $q = "SELECT * from attendance where timing like '%$years[$k]%'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            $attendance_rows[$years[$k]] = count($rows);
+        }
+
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message,
+            'data' => $attendance_rows
+        ];
+
+        return $return;
+    }
+
     public static function _beautyMonthSummary($monthAttendace) {
 
         // print_r( $monthAttendace );
