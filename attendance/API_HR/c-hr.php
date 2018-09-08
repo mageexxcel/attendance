@@ -975,38 +975,36 @@ class HR extends DATABASE {
         return $finalReturn;
     }
 
-    public static function getAllYearAttendance() {
+    public static function API_getStatsAttendanceSummary() {
 
         $r_error = 0;
         $r_message = "";
+        $r_data = array();
         $return = array();
-        $years = array();
         $attendance_rows = array();
 
         $q = "SELECT * from attendance";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-        
-        for ( $i = 0; $i < count($rows); $i++ ){            
-            $full_date = explode(" ", $rows[$i]['timing']);
+
+        foreach($rows as $date){
+            $full_date = explode(" ", $date['timing']);
             $explode_full_date = explode("-", $full_date[0]);
-            $year = $explode_full_date[2];            
-            if($year && !in_array($year, $years)){
-                $years[] = $year;
+            $year = $explode_full_date[2];
+            
+            if(isset($attendance_rows[$year])){
+                $attendance_rows[$year] += 1;
+            } else {
+                $attendance_rows[$year] = 1;
             }
         }
-        
-        for( $k = 0; $k < count($years); $k++ ){
-            $q = "SELECT * from attendance where timing like '%$years[$k]%'";
-            $runQuery = self::DBrunQuery($q);
-            $rows = self::DBfetchRows($runQuery);
-            $attendance_rows[$years[$k]] = count($rows);
-        }
+
+        $r_data['attendance_rows'] = $attendance_rows;
 
         $return = [
             'error' => $r_error,
             'message' => $r_message,
-            'data' => $attendance_rows
+            'data' => $r_data
         ];
 
         return $return;
