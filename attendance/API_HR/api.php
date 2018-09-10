@@ -428,6 +428,9 @@ else if ($action == 'add_hr_comment') {
     $res = HR::getUserMonthAttendaceComplete($userid, $year, $month);
 } else if ($action == 'get_stats_attendance_summary') {   
     $res = HR::API_getStatsAttendanceSummary();
+} else if ($action == 'delete_attendance_stats_summary') {   
+    $year = $PARAMS['year'];
+    $res = HR::API_deleteAttendanceStatsSummary($year);
 } else if ($action == "attendance_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];

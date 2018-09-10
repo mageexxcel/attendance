@@ -1010,6 +1010,64 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function API_deleteAttendanceStatsSummary($year) {
+
+        $r_error = 0;
+        $r_message = "";
+        $return = array();
+        $current_year = date('Y');
+        $previous_year = $current_year - 1;
+        
+        if ( isset($year) && $year != "" ) {
+
+            if ( $year == $current_year || $year == $previous_year ) {
+                $r_error = 1;
+                $r_message = "Can't delete current or previous year attendance.";
+    
+            } else {
+    
+                $q = "SELECT * from attendance where timing like '%$year%'";
+                $runQuery = self::DBrunQuery($q);
+                $rows = self::DBfetchRows($runQuery);
+                
+                if( count($rows) > 1 ){
+                    
+                    $q = "DELETE FROM attendance WHERE timing like '%$year%'";
+                    $runQuery = self::DBrunQuery($q);
+                    $r_message = "Records deleted for " . $year;
+    
+                } else {
+                    $r_error = 1;
+                    $r_message = "Records not found for " . $year;
+                }
+    
+            }
+    
+        } else {
+            $q = "SELECT * from attendance where timing like '__:%'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            
+            if ( count($rows) > 1 ) {
+                $q = "DELETE FROM attendance WHERE timing like '__:%'";
+                $runQuery = self::DBrunQuery($q);
+                $r_message = "Junk Records deleted";
+
+            } else {
+                $r_error = 1;
+                $r_message = "No Junk Records Found";
+            }
+        }
+
+        
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+
+        return $return;        
+    }
+
     public static function _beautyMonthSummary($monthAttendace) {
 
         // print_r( $monthAttendace );
