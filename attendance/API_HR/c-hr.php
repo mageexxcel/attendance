@@ -2041,6 +2041,38 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function revertLeaveStatus($leaveid){
+
+        $return = array();
+        $r_error = 0;
+        $r_message = "";
+        $leaveDetails = self::getLeaveDetails($leaveid);
+
+        if(count($leaveDetails) > 0){
+
+            if ( $leaveDetails['status'] == "Approved" || $leaveDetails['status'] == "Rejected" ) {
+                $newstatus = "Pending";
+                self::changeLeaveStatus($leaveid, $newstatus);                
+                $r_message = "Leave Status Reverted Successfully.";
+                $r_data['status'] = true;
+
+            } else {
+                $r_error = 1;
+                $r_message = "Status is Pending yet.";
+            }
+
+        } else {            
+            $r_message = "No such leave found";
+        }
+        
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+
+        return $return;
+    }
+
     public static function addExtraLeaveDay($leaveid, $extra_day) {
         $r_error = 0;
         $r_message = "";

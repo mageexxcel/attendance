@@ -293,6 +293,9 @@ else if ($action == 'add_hr_comment') {
     $newstatus = $PARAMS['newstatus'];
     $messagetouser = $PARAMS['messagetouser'];
     $res = HR::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
+} else if ($action == 'revert_leave_status') {
+    $leaveid = $PARAMS['leaveid'];
+    $res = HR::revertLeaveStatus($leaveid);
 } else if ($action == "get_managed_user_working_hours") {
     $userid = $PARAMS['userid'];
     $res = HR::geManagedUserWorkingHours($userid);
