@@ -2835,17 +2835,19 @@ class HR extends DATABASE {
         $total_rows = self::DBfetchRows($runQuery);
         $rowCount = count($total_rows);
         
-        if($pagination['page'] == 1){
-            $query = $q . " LIMIT " . $pagination['limit'];  
-
-        } else {
-            $offset = ($pagination['page'] - 1) * $pagination['limit'];
-            $query = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            if($pagination['page'] == 1){
+                $q = $q . " LIMIT " . $pagination['limit'];  
+    
+            } else {
+                $offset = ($pagination['page'] - 1) * $pagination['limit'];
+                $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
+            }
         }
-
-        $runQuery = self::DBrunQuery($query);
-        $rows = self::DBfetchRows($runQuery);        
-
+        
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        
         $pagination = self::pagination($pagination, $rowCount);        
         
         $newRows = array();
@@ -2878,8 +2880,13 @@ class HR extends DATABASE {
         $total_pages = $previous_page = $next_page = "";        
         $prev = false;
         $next = false;
-        $page = $pagination['page'];
-        $limit = $pagination['limit'];
+        $limit = 1;
+        $page = "";
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            $page = $pagination['page'];
+            $limit = $pagination['limit'];
+        }
 
         $total_pages = ceil($count / $limit);
 
@@ -2888,6 +2895,10 @@ class HR extends DATABASE {
 
         } else if ( $page == $total_pages ) {
             $prev = true;
+            $next = false;
+
+        } else if ( $page == "" ) {
+            $prev = false;
             $next = false;
 
         } else {

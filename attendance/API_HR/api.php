@@ -43,8 +43,6 @@ if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GE
 }
 
 $action = false;
-$pagination_page = 1;
-$pagination_limit = 10;
 $slack_id = "";
 if (isset($PARAMS['action'])) {
     $action = $PARAMS['action'];
