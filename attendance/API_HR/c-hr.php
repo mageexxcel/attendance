@@ -2952,11 +2952,29 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getDisabledUsersList() {
-
+    public static function getDisabledUsersList($pagination) {
+        
         $q = "SELECT users.*,user_profile.*,user_bank_details.bank_account_no as bank_no FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_bank_details ON users.id = user_bank_details.user_Id where users.status = 'Disabled'";
+
+        $runQuery = self::DBrunQuery($q);
+        $total_rows = self::DBfetchRows($runQuery);
+        $rowCount = count($total_rows);
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            if($pagination['page'] == 1){
+                $q = $q . " LIMIT " . $pagination['limit'];  
+    
+            } else {
+                $offset = ($pagination['page'] - 1) * $pagination['limit'];
+                $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
+            }
+        }
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+        
+        $pagination = self::pagination($pagination, $rowCount);        
+        
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -2975,8 +2993,60 @@ class HR extends DATABASE {
             }
         }
 
+        $return = array();
+        $return['disabled_employees'] = $newRows;
+        $return['pagination'] = $pagination;
+        
+        return $return;
+    }
 
-        return $newRows;
+    public static function pagination($pagination, $count) {
+
+        $total_pages = $previous_page = $next_page = "";        
+        $prev = false;
+        $next = false;
+        $limit = 1;
+        $page = "";
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            $page = $pagination['page'];
+            $limit = $pagination['limit'];
+        }
+
+        $total_pages = ceil($count / $limit);
+
+        if ( $page == 1 ) {
+            $next = true;
+
+        } else if ( $page == $total_pages ) {
+            $prev = true;
+            $next = false;
+
+        } else if ( $page == "" ) {
+            $prev = false;
+            $next = false;
+
+        } else {
+            $prev = true;
+            $next = true;
+        }
+
+        if ($prev) {
+            $previous_page = $page - 1;
+        }
+
+        if($next) {
+            $next_page = $page + 1;
+        }
+        
+        $res_pagination = array(
+            'total_pages' => $total_pages,
+            'current_page' => $page,
+            'previous_page' => $previous_page,
+            'next_page' => $next_page
+        );
+
+        return $res_pagination;
     }
 
     public static function getUserInfofromSlack($userid) {
