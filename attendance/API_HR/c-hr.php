@@ -3,6 +3,7 @@
 require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
+require_once '../sal_info/c-salary.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -2677,6 +2678,21 @@ class HR extends DATABASE {
         $r_message = "";
         $r_data = array();
 
+        $PARAMS['total_salary'] = "5000";
+        $PARAMS['special_allowance'] = "1000";
+        $PARAMS['medical_allowance']= "1000";
+        $PARAMS['conveyance'] = "1000";
+        $PARAMS['hra'] = "1000";
+        $PARAMS['basic'] = "1000";
+        $PARAMS['arrear'] = "0";
+        $PARAMS['tds'] = "0";
+        $PARAMS['misc_deduction'] = "0";
+        $PARAMS['advance'] = "0";
+        $PARAMS['loan'] = "0";
+        $PARAMS['epf'] = "0";
+        
+        $PARAMS['leave'] = "0";
+
         $f_dateofjoining = $f_name = $f_jobtitle = $f_gender = $f_dob = $f_username = $f_workemail = "";
         $f_training_month = 0;
 
@@ -2705,10 +2721,7 @@ class HR extends DATABASE {
             $f_training_month = trim($PARAMS['training_month']);
         }
 
-
-
-
-
+        
         if ($f_dateofjoining == '') {
             $r_message = "Date of joining is empty";
         } else if ($f_name == '') {
@@ -2745,6 +2758,11 @@ class HR extends DATABASE {
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
+                    $PARAMS['applicable_from'] = $f_dateofjoining;
+                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_till'] = $applicable_till;
+                    $PARAMS['user_id'] = $userID;
+                    Salary::updateSalary($PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
