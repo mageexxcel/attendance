@@ -2671,48 +2671,21 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
-    public static function getUserName($data) {
-        $q = "select login_tokens.userid,user_profile.name from login_tokens LEFT JOIN user_profile ON login_tokens.userid = user_profile.user_Id where login_tokens.token='$data'";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRow($runQuery);
-        if ($rows['name'] != "") {
-            return $rows['name'];
-        } else {
-            return false;
-        }
-    }
-
-    public static function addNewEmployeeFirstSalary($PARAMS){
-
+    public static function addNewSalary($PARAMS){
+        
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
-        $total_salary = "5000";
-        $special_allowance = "1000";
-        $medical_allowance = "1000";
-        $conveyance = "1000";
-        $hra = "1000";
-        $basic = "1000";
-        $arrear = "0";
-        $tds = "0";
-        $misc_deduction = "0";
-        $advance = "0";
-        $loan = "0";
-        $epf = "0";
-        $leave = "0";
-
         $token = $PARAMS['token'];
-        $update_by = self::getUserName($token);
-        if ($update_by == false) {
-            return "Invalid token";
-        }
-
+        $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
+        $update_by = $loggedUserInfo->name;
+        
         $ins_salary = array(
             'user_Id' => $PARAMS['user_id'],
-            'total_salary' => $total_salary,
+            'total_salary' => $PARAMS['total_salary'],
             'last_updated_on' => date("Y-m-d"),
             'updated_by' => $update_by,
-            'leaves_allocated' => $leave,
+            'leaves_allocated' => $PARAMS['leave'],
             'applicable_from' => $PARAMS['applicable_from'],
             'applicable_till' => $PARAMS['applicable_till']
         );
@@ -2721,17 +2694,17 @@ class HR extends DATABASE {
         $salary_id = mysqli_insert_id($mysqli);        
 
         $ins_salary_details = array(
-            'Special_Allowance' => $special_allowance,
-            'Medical_Allowance' => $medical_allowance,
-            'Conveyance' => $conveyance,
-            'HRA' => $hra,
-            'Basic' => $basic,
-            'Arrears' => $arrear,
-            'TDS' => $tds,
-            'Misc_Deductions' => $misc_deduction,
-            'Advance' => $advance,
-            'Loan' => $loan,
-            'EPF' => $epf
+            'Special_Allowance' => $PARAMS['special_allowance'],
+            'Medical_Allowance' => $PARAMS['medical_allowance'],
+            'Conveyance' => $PARAMS['conveyance'],
+            'HRA' => $PARAMS['hra'],
+            'Basic' => $PARAMS['basic'],
+            'Arrears' => $PARAMS['arrear'],
+            'TDS' => $PARAMS['tds'],
+            'Misc_Deductions' => $PARAMS['misc_deduction'],
+            'Advance' => $PARAMS['advance'],
+            'Loan' => $PARAMS['loan'],
+            'EPF' => $PARAMS['epf']
         );
 
         $type = 1;
@@ -2745,7 +2718,42 @@ class HR extends DATABASE {
         }
         
         return "Salary Inserted Successfully.";
+    }
 
+    public static function addNewEmployeeFirstSalary($PARAMS){
+
+        $special_allowance = "1000";
+        $medical_allowance = "1000";
+        $conveyance = "1000";
+        $hra = "1000";
+        $basic = "1000";
+        $arrear = "0";
+        $tds = "0";
+        $misc_deduction = "0";
+        $advance = "0";
+        $loan = "0";
+        $epf = "0";
+        $leave = "0";
+
+        $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
+        
+        $PARAMS['total_salary'] = $total_salary;
+        $PARAMS['special_allowance'] = $special_allowance;
+        $PARAMS['medical_allowance'] = $medical_allowance;
+        $PARAMS['conveyance'] = $conveyance;
+        $PARAMS['hra'] = $hra;
+        $PARAMS['basic'] = $basic;
+        $PARAMS['arrear'] = $arrear;
+        $PARAMS['misc_deduction'] = $misc_deduction;
+        $PARAMS['advance'] = $advance;
+        $PARAMS['loan'] = $loan;
+        $PARAMS['tds'] = $tds;
+        $PARAMS['epf'] = $epf;
+        $PARAMS['leave'] = $leave;
+        
+        $addSalary = self::addNewSalary($PARAMS);
+        
+        return "Salary Inserted Successfully.";
     }
 
     public static function addNewEmployee($PARAMS) { //api call
