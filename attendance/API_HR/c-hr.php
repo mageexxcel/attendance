@@ -3,7 +3,6 @@
 require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
-require_once '../sal_info/c-salary.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -2672,26 +2671,87 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
+    public static function getUserName($data) {
+        $q = "select login_tokens.userid,user_profile.name from login_tokens LEFT JOIN user_profile ON login_tokens.userid = user_profile.user_Id where login_tokens.token='$data'";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRow($runQuery);
+        if ($rows['name'] != "") {
+            return $rows['name'];
+        } else {
+            return false;
+        }
+    }
+
+    public static function addNewEmployeeFirstSalary($PARAMS){
+
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
+        $total_salary = "5000";
+        $special_allowance = "1000";
+        $medical_allowance = "1000";
+        $conveyance = "1000";
+        $hra = "1000";
+        $basic = "1000";
+        $arrear = "0";
+        $tds = "0";
+        $misc_deduction = "0";
+        $advance = "0";
+        $loan = "0";
+        $epf = "0";
+        $leave = "0";
+
+        $token = $PARAMS['token'];
+        $update_by = self::getUserName($token);
+        if ($update_by == false) {
+            return "Invalid token";
+        }
+
+        $ins_salary = array(
+            'user_Id' => $PARAMS['user_id'],
+            'total_salary' => $total_salary,
+            'last_updated_on' => date("Y-m-d"),
+            'updated_by' => $update_by,
+            'leaves_allocated' => $leave,
+            'applicable_from' => $PARAMS['applicable_from'],
+            'applicable_till' => $PARAMS['applicable_till']
+        );
+
+        self::DBinsertQuery('salary', $ins_salary);
+        $salary_id = mysqli_insert_id($mysqli);        
+
+        $ins_salary_details = array(
+            'Special_Allowance' => $special_allowance,
+            'Medical_Allowance' => $medical_allowance,
+            'Conveyance' => $conveyance,
+            'HRA' => $hra,
+            'Basic' => $basic,
+            'Arrears' => $arrear,
+            'TDS' => $tds,
+            'Misc_Deductions' => $misc_deduction,
+            'Advance' => $advance,
+            'Loan' => $loan,
+            'EPF' => $epf
+        );
+
+        $type = 1;
+        foreach ($ins_salary_details as $key => $val) {
+            // change value of type on and after array key TDS    
+            if ($key == 'TDS') {
+                $type = 2;
+            }
+            $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
+            $runQuery = self::DBrunQuery($query);
+        }
+        
+        return "Salary Inserted Successfully.";
+
+    }
 
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
-
-        $PARAMS['total_salary'] = "5000";
-        $PARAMS['special_allowance'] = "1000";
-        $PARAMS['medical_allowance']= "1000";
-        $PARAMS['conveyance'] = "1000";
-        $PARAMS['hra'] = "1000";
-        $PARAMS['basic'] = "1000";
-        $PARAMS['arrear'] = "0";
-        $PARAMS['tds'] = "0";
-        $PARAMS['misc_deduction'] = "0";
-        $PARAMS['advance'] = "0";
-        $PARAMS['loan'] = "0";
-        $PARAMS['epf'] = "0";
-        
-        $PARAMS['leave'] = "0";
 
         $f_dateofjoining = $f_name = $f_jobtitle = $f_gender = $f_dob = $f_username = $f_workemail = "";
         $f_training_month = 0;
@@ -2762,7 +2822,7 @@ class HR extends DATABASE {
                     $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
                     $PARAMS['applicable_till'] = $applicable_till;
                     $PARAMS['user_id'] = $userID;
-                    Salary::updateSalary($PARAMS);
+                    self::addNewEmployeeFirstSalary($PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
