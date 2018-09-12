@@ -2671,6 +2671,90 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
+    public static function addNewSalary($userID, $PARAMS){
+        
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
+        $token = $PARAMS['token'];
+        $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
+        $update_by = $loggedUserInfo->name;
+        
+        $ins_salary = array(
+            'user_Id' => $userID,
+            'total_salary' => $PARAMS['total_salary'],
+            'last_updated_on' => date("Y-m-d"),
+            'updated_by' => $update_by,
+            'leaves_allocated' => $PARAMS['leave'],
+            'applicable_from' => $PARAMS['applicable_from'],
+            'applicable_till' => $PARAMS['applicable_till']
+        );
+
+        self::DBinsertQuery('salary', $ins_salary);
+        $salary_id = mysqli_insert_id($mysqli);        
+
+        $ins_salary_details = array(
+            'Special_Allowance' => $PARAMS['special_allowance'],
+            'Medical_Allowance' => $PARAMS['medical_allowance'],
+            'Conveyance' => $PARAMS['conveyance'],
+            'HRA' => $PARAMS['hra'],
+            'Basic' => $PARAMS['basic'],
+            'Arrears' => $PARAMS['arrear'],
+            'TDS' => $PARAMS['tds'],
+            'Misc_Deductions' => $PARAMS['misc_deduction'],
+            'Advance' => $PARAMS['advance'],
+            'Loan' => $PARAMS['loan'],
+            'EPF' => $PARAMS['epf']
+        );
+
+        $type = 1;
+        foreach ($ins_salary_details as $key => $val) {
+            // change value of type on and after array key TDS    
+            if ($key == 'TDS') {
+                $type = 2;
+            }
+            $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
+            $runQuery = self::DBrunQuery($query);
+        }
+        
+        return "Salary Inserted Successfully.";
+    }
+
+    public static function addNewEmployeeFirstSalary($userID, $PARAMS){
+
+        $special_allowance = "1000";
+        $medical_allowance = "1000";
+        $conveyance = "1000";
+        $hra = "1000";
+        $basic = "1000";
+        $arrear = "0";
+        $tds = "0";
+        $misc_deduction = "0";
+        $advance = "0";
+        $loan = "0";
+        $epf = "0";
+        $leave = "0";
+
+        $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
+        
+        $PARAMS['total_salary'] = $total_salary;
+        $PARAMS['special_allowance'] = $special_allowance;
+        $PARAMS['medical_allowance'] = $medical_allowance;
+        $PARAMS['conveyance'] = $conveyance;
+        $PARAMS['hra'] = $hra;
+        $PARAMS['basic'] = $basic;
+        $PARAMS['arrear'] = $arrear;
+        $PARAMS['misc_deduction'] = $misc_deduction;
+        $PARAMS['advance'] = $advance;
+        $PARAMS['loan'] = $loan;
+        $PARAMS['tds'] = $tds;
+        $PARAMS['epf'] = $epf;
+        $PARAMS['leave'] = $leave;
+        
+        $addSalary = self::addNewSalary($userID, $PARAMS);
+        
+        return "Salary Inserted Successfully.";
+    }
 
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
@@ -2705,10 +2789,7 @@ class HR extends DATABASE {
             $f_training_month = trim($PARAMS['training_month']);
         }
 
-
-
-
-
+        
         if ($f_dateofjoining == '') {
             $r_message = "Date of joining is empty";
         } else if ($f_name == '') {
@@ -2745,6 +2826,10 @@ class HR extends DATABASE {
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
+                    $PARAMS['applicable_from'] = $f_dateofjoining;
+                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_till'] = $applicable_till;
+                    self::addNewEmployeeFirstSalary($userID, $PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
