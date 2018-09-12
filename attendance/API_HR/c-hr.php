@@ -2671,7 +2671,7 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
-    public static function addNewSalary($PARAMS){
+    public static function addNewSalary($userID, $PARAMS){
         
         $db = self::getInstance();
         $mysqli = $db->getConnection();
@@ -2681,7 +2681,7 @@ class HR extends DATABASE {
         $update_by = $loggedUserInfo->name;
         
         $ins_salary = array(
-            'user_Id' => $PARAMS['user_id'],
+            'user_Id' => $userID,
             'total_salary' => $PARAMS['total_salary'],
             'last_updated_on' => date("Y-m-d"),
             'updated_by' => $update_by,
@@ -2720,7 +2720,7 @@ class HR extends DATABASE {
         return "Salary Inserted Successfully.";
     }
 
-    public static function addNewEmployeeFirstSalary($PARAMS){
+    public static function addNewEmployeeFirstSalary($userID, $PARAMS){
 
         $special_allowance = "1000";
         $medical_allowance = "1000";
@@ -2751,7 +2751,7 @@ class HR extends DATABASE {
         $PARAMS['epf'] = $epf;
         $PARAMS['leave'] = $leave;
         
-        $addSalary = self::addNewSalary($PARAMS);
+        $addSalary = self::addNewSalary($userID, $PARAMS);
         
         return "Salary Inserted Successfully.";
     }
@@ -2829,8 +2829,7 @@ class HR extends DATABASE {
                     $PARAMS['applicable_from'] = $f_dateofjoining;
                     $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
                     $PARAMS['applicable_till'] = $applicable_till;
-                    $PARAMS['user_id'] = $userID;
-                    self::addNewEmployeeFirstSalary($PARAMS);
+                    self::addNewEmployeeFirstSalary($userID, $PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
