@@ -8,22 +8,34 @@ trait Holiday {
         $r_data = array();
         $return = array();
 
-        $q = "SELECT * from holidays where date = '$date'";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        
-        if( count($rows) > 0 ){
-            $r_error = 1;
-            $r_data['message'] = "Date Already Exists.";
+        if(!isset($name) || $name == ""){
+            $r_data['message'] = "Please provide holiday name.";
+
+        } else if (!isset($date) || $date == ""){
+            $r_data['message'] = "Please provide a holiday date.";
+
+        } else if (!isset($type) || $type == ""){
+            $r_data['message'] = "Please provide holiday type.";
 
         } else {
-            $ins_holiday = array(
-                'name' => $name,
-                'date' => $date,
-                'type' => $type
-            );
-            $insert_holiday = self::DBinsertQuery('holidays', $ins_holiday);
-            $r_data['message'] = "Holiday inserted successfully.";
+            
+            $q = "SELECT * from holidays where date = '$date'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            
+            if( count($rows) > 0 ){
+                $r_error = 1;
+                $r_data['message'] = "Date Already Exists.";
+    
+            } else {
+                $ins_holiday = array(
+                    'name' => $name,
+                    'date' => $date,
+                    'type' => $type
+                );
+                $insert_holiday = self::DBinsertQuery('holidays', $ins_holiday);
+                $r_data['message'] = "Holiday inserted successfully.";
+            }
         }
 
         $return = [

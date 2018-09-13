@@ -1715,12 +1715,6 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function API_addHoliday($name, $date, $type){
-
-        return self::addHoliday($name, $date, $type);
-
-    }
-
     public static function API_getYearHolidays($year = false) {  //API
         if ($year == false) {
             $year = date('Y', time());
