@@ -3,12 +3,14 @@
 require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
+require_once 'c-holiday.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
 class HR extends DATABASE {
 
     use Roles;
+    use Holiday;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -1715,41 +1717,8 @@ class HR extends DATABASE {
 
     public static function API_addHoliday($name, $date, $type){
 
-        $r_error = 0;
-        $r_data = array();
-        $return = array();
-        $count = 0;
-        $date = date('Y-m-d', strtotime($date));        
-        $holidays = self::API_getYearHolidays();
+        return self::addHoliday($name, $date, $type);
 
-        if (strtolower($type) == 'rh'){
-            $holiday_type = self::RESTRICTED_HOLIDAY;
-        } else {
-            $holiday_type = self::NORMAL_HOLIDAY;
-        }
-        
-        foreach($holidays['data']['holidays'] as $holiday){                
-            if( $date == $holiday['date'] ){
-                $count++;
-            }
-        }
-
-        if( $count > 0 ){
-            $r_error = 1;
-            $r_data['message'] = "Date Already Exists.";
-
-        } else {
-            $q = "Insert into holidays ( name, date, type ) VALUES ( '$name', '$date', '$holiday_type' )";
-            $runQuery = self::DBrunQuery($q);
-            $r_data['message'] = "Holiday inserted successfully.";
-        }
-
-        $return = [
-            'error' => $r_error,
-            'data' => $r_data
-        ];
-        
-        return $return;
     }
 
     public static function API_getYearHolidays($year = false) {  //API
