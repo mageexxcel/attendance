@@ -408,6 +408,11 @@ else if ($action == 'add_hr_comment') {
     }    
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
+} else if ($action == "add_holiday") {
+    $date = $PARAMS['holiday_date'];
+    $name = $PARAMS['holiday_name'];
+    $type = $PARAMS['holiday_type'];
+    $res = HR::API_addHoliday($name, $date, $type);
 } else if ($action == 'show_disabled_users') {  
     $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {

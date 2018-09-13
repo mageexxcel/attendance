@@ -21,6 +21,10 @@ class HR extends DATABASE {
     const JWT_SECRET_KEY = 'HR_APP';
     const EMPLOYEE_FIRST_PASSWORD = "java@123";
 
+    // constants for normal and restricted holidays
+    const NORMAL_HOLIDAY = '0';
+    const RESTRICTED_HOLIDAY = '1';
+
     //-------------------------------------
     function __construct() {
         $q = "SELECT * from admin";
@@ -1706,6 +1710,45 @@ class HR extends DATABASE {
                 }
             }
         }
+        return $return;
+    }
+
+    public static function API_addHoliday($name, $date, $type){
+
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $count = 0;
+        $date = date('Y-m-d', strtotime($date));        
+        $holidays = self::API_getYearHolidays();
+
+        if (strtolower($type) == 'rh'){
+            $holiday_type = self::RESTRICTED_HOLIDAY;
+        } else {
+            $holiday_type = self::NORMAL_HOLIDAY;
+        }
+        
+        foreach($holidays['data']['holidays'] as $holiday){                
+            if( $date == $holiday['date'] ){
+                $count++;
+            }
+        }
+
+        if( $count > 0 ){
+            $r_error = 1;
+            $r_data['message'] = "Date Already Exists.";
+
+        } else {
+            $q = "Insert into holidays ( name, date, type ) VALUES ( '$name', '$date', '$holiday_type' )";
+            $runQuery = self::DBrunQuery($q);
+            $r_data['message'] = "Holiday inserted successfully.";
+        }
+
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        
         return $return;
     }
 
