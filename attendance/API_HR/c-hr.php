@@ -23,10 +23,6 @@ class HR extends DATABASE {
     const JWT_SECRET_KEY = 'HR_APP';
     const EMPLOYEE_FIRST_PASSWORD = "java@123";
 
-    // constants for normal and restricted holidays
-    const NORMAL_HOLIDAY = '0';
-    const RESTRICTED_HOLIDAY = '1';
-
     //-------------------------------------
     function __construct() {
         $q = "SELECT * from admin";

@@ -1,6 +1,10 @@
 <?php 
 
 trait Holiday {
+
+    // constants for normal and restricted holidays
+    static $NORAML_HOLIDAY = 0;
+    static $RESTRICTED_HOLIDAY = 1;
     
     public static function addHoliday($name, $date, $type){
 
