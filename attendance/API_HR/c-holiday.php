@@ -50,6 +50,32 @@ trait Holiday {
         return $return;
     }
 
+    public static function getHolidayTypesList(){
+
+        $list = array(
+            array('type' => self::$NORMAL_HOLIDAY, 'text' => 'Normal'),
+            array('type' => self::$RESTRICTED_HOLIDAY, 'text' => 'Restricted'),
+        );
+
+        return $list;
+    }
+
+    public static function API_getHolidayTypesList(){
+        
+        $r_error = 0;
+
+        $r_data = [
+            'holiday_type_list' => self::getHolidayTypesList()
+        ];
+
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        
+        return $return;
+    }
+
 }
 
 ?>

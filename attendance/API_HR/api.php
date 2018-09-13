@@ -413,6 +413,8 @@ else if ($action == 'add_hr_comment') {
     $name = $PARAMS['holiday_name'];
     $type = $PARAMS['holiday_type'];
     $res = HR::addHoliday($name, $date, $type);
+} else if ($action == "get_holiday_types_list") {
+    $res = HR::API_getHolidayTypesList();
 } else if ($action == 'show_disabled_users') {  
     $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
