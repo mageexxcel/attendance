@@ -51,16 +51,21 @@ trait Holiday {
     }
 
     public static function getHolidayTypesList(){
+
+        $list = array(
+            array('type' => self::$NORMAL_HOLIDAY, 'text' => 'Normal'),
+            array('type' => self::$RESTRICTED_HOLIDAY, 'text' => 'Restricted'),
+        );
+
+        return $list;
+    }
+
+    public static function API_getHolidayTypesList(){
         
         $r_error = 0;
 
-        $holidays_type_list = [
-            'normal' => self::$NORMAL_HOLIDAY,
-            'restricted' => self::$RESTRICTED_HOLIDAY
-        ];
-
         $r_data = [
-            'holiday_type_list' => $holidays_type_list
+            'holiday_type_list' => self::getHolidayTypesList()
         ];
 
         $return = [
