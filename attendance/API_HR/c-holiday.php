@@ -108,6 +108,34 @@ trait Holiday {
         return $return;
     }
 
+    public static function getHolidayDetails($holiday_id){
+        $q = " SELECT * from holidays WHERE id = '$holiday_id' ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    public static function API_deleteHoliday($holiday_id){
+        
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $holiday = self::getHolidayDetails($holiday_id);        
+        if( sizeof($holiday) > 0 ){
+            $q = " DELETE FROM holidays WHERE id = '$holiday_id' ";
+            $runQuery = self::DBrunQuery($q);
+            $r_data['message'] = "Holiday Deleted Successfully.";
+        } else {
+            $r_data['message'] = "Holiday not Found.";
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
     public static function getHolidayTypesList(){
 
         $list = array(
