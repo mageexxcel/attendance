@@ -3,12 +3,14 @@
 require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
+require_once 'c-holiday.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
 class HR extends DATABASE {
 
     use Roles;
+    use Holiday;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -973,6 +975,99 @@ class HR extends DATABASE {
 
 
         return $finalReturn;
+    }
+
+    public static function API_getStatsAttendanceSummary() {
+
+        $r_error = 0;
+        $r_message = "";
+        $r_data = array();
+        $return = array();
+        $attendance_rows = array();
+
+        $q = "SELECT * from attendance";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+
+        foreach($rows as $date){
+            $full_date = explode(" ", $date['timing']);
+            $explode_full_date = explode("-", $full_date[0]);
+            $year = $explode_full_date[2];
+            
+            if(isset($attendance_rows[$year])){
+                $attendance_rows[$year] += 1;
+            } else {
+                $attendance_rows[$year] = 1;
+            }
+        }
+
+        $r_data['attendance_rows'] = $attendance_rows;
+
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
+    public static function API_deleteAttendanceStatsSummary($year) {
+
+        $r_error = 0;
+        $r_message = "";
+        $return = array();
+        $current_year = date('Y');
+        $previous_year = $current_year - 1;
+        
+        if ( isset($year) && $year != "" ) {
+
+            if ( $year == $current_year || $year == $previous_year ) {
+                $r_error = 1;
+                $r_message = "Can't delete current or previous year attendance.";
+    
+            } else {
+    
+                $q = "SELECT * from attendance where timing like '%$year%'";
+                $runQuery = self::DBrunQuery($q);
+                $rows = self::DBfetchRows($runQuery);
+                
+                if( count($rows) > 1 ){
+                    
+                    $q = "DELETE FROM attendance WHERE timing like '%$year%'";
+                    $runQuery = self::DBrunQuery($q);
+                    $r_message = "Records deleted for " . $year;
+    
+                } else {
+                    $r_error = 1;
+                    $r_message = "Records not found for " . $year;
+                }
+    
+            }
+    
+        } else {
+            $q = "SELECT * from attendance where timing like '__:%'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            
+            if ( count($rows) > 1 ) {
+                $q = "DELETE FROM attendance WHERE timing like '__:%'";
+                $runQuery = self::DBrunQuery($q);
+                $r_message = "Junk Records deleted";
+
+            } else {
+                $r_error = 1;
+                $r_message = "No Junk Records Found";
+            }
+        }
+
+        
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+
+        return $return;        
     }
 
     public static function _beautyMonthSummary($monthAttendace) {
@@ -1948,6 +2043,38 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function revertLeaveStatus($leaveid){
+
+        $return = array();
+        $r_error = 0;
+        $r_message = "";
+        $leaveDetails = self::getLeaveDetails($leaveid);
+
+        if(count($leaveDetails) > 0){
+
+            if ( $leaveDetails['status'] == "Approved" || $leaveDetails['status'] == "Rejected" ) {
+                $newstatus = "Pending";
+                self::changeLeaveStatus($leaveid, $newstatus);                
+                $r_message = "Leave Status Reverted Successfully.";
+                $r_data['status'] = true;
+
+            } else {
+                $r_error = 1;
+                $r_message = "Status is Pending yet.";
+            }
+
+        } else {            
+            $r_message = "No such leave found";
+        }
+        
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+
+        return $return;
+    }
+
     public static function addExtraLeaveDay($leaveid, $extra_day) {
         $r_error = 0;
         $r_message = "";
@@ -2546,6 +2673,90 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
+    public static function addNewSalary($userID, $PARAMS){
+        
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
+        $token = $PARAMS['token'];
+        $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
+        $update_by = $loggedUserInfo->name;
+        
+        $ins_salary = array(
+            'user_Id' => $userID,
+            'total_salary' => $PARAMS['total_salary'],
+            'last_updated_on' => date("Y-m-d"),
+            'updated_by' => $update_by,
+            'leaves_allocated' => $PARAMS['leave'],
+            'applicable_from' => $PARAMS['applicable_from'],
+            'applicable_till' => $PARAMS['applicable_till']
+        );
+
+        self::DBinsertQuery('salary', $ins_salary);
+        $salary_id = mysqli_insert_id($mysqli);        
+
+        $ins_salary_details = array(
+            'Special_Allowance' => $PARAMS['special_allowance'],
+            'Medical_Allowance' => $PARAMS['medical_allowance'],
+            'Conveyance' => $PARAMS['conveyance'],
+            'HRA' => $PARAMS['hra'],
+            'Basic' => $PARAMS['basic'],
+            'Arrears' => $PARAMS['arrear'],
+            'TDS' => $PARAMS['tds'],
+            'Misc_Deductions' => $PARAMS['misc_deduction'],
+            'Advance' => $PARAMS['advance'],
+            'Loan' => $PARAMS['loan'],
+            'EPF' => $PARAMS['epf']
+        );
+
+        $type = 1;
+        foreach ($ins_salary_details as $key => $val) {
+            // change value of type on and after array key TDS    
+            if ($key == 'TDS') {
+                $type = 2;
+            }
+            $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
+            $runQuery = self::DBrunQuery($query);
+        }
+        
+        return "Salary Inserted Successfully.";
+    }
+
+    public static function addNewEmployeeFirstSalary($userID, $PARAMS){
+
+        $special_allowance = "1000";
+        $medical_allowance = "1000";
+        $conveyance = "1000";
+        $hra = "1000";
+        $basic = "1000";
+        $arrear = "0";
+        $tds = "0";
+        $misc_deduction = "0";
+        $advance = "0";
+        $loan = "0";
+        $epf = "0";
+        $leave = "0";
+
+        $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
+        
+        $PARAMS['total_salary'] = $total_salary;
+        $PARAMS['special_allowance'] = $special_allowance;
+        $PARAMS['medical_allowance'] = $medical_allowance;
+        $PARAMS['conveyance'] = $conveyance;
+        $PARAMS['hra'] = $hra;
+        $PARAMS['basic'] = $basic;
+        $PARAMS['arrear'] = $arrear;
+        $PARAMS['misc_deduction'] = $misc_deduction;
+        $PARAMS['advance'] = $advance;
+        $PARAMS['loan'] = $loan;
+        $PARAMS['tds'] = $tds;
+        $PARAMS['epf'] = $epf;
+        $PARAMS['leave'] = $leave;
+        
+        $addSalary = self::addNewSalary($userID, $PARAMS);
+        
+        return "Salary Inserted Successfully.";
+    }
 
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
@@ -2580,10 +2791,7 @@ class HR extends DATABASE {
             $f_training_month = trim($PARAMS['training_month']);
         }
 
-
-
-
-
+        
         if ($f_dateofjoining == '') {
             $r_message = "Date of joining is empty";
         } else if ($f_name == '') {
@@ -2620,6 +2828,10 @@ class HR extends DATABASE {
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
+                    $PARAMS['applicable_from'] = $f_dateofjoining;
+                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_till'] = $applicable_till;
+                    self::addNewEmployeeFirstSalary($userID, $PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
@@ -2827,11 +3039,29 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getDisabledUsersList() {
-
+    public static function getDisabledUsersList($pagination) {
+        
         $q = "SELECT users.*,user_profile.*,user_bank_details.bank_account_no as bank_no FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_bank_details ON users.id = user_bank_details.user_Id where users.status = 'Disabled'";
+
+        $runQuery = self::DBrunQuery($q);
+        $total_rows = self::DBfetchRows($runQuery);
+        $rowCount = count($total_rows);
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            if($pagination['page'] == 1){
+                $q = $q . " LIMIT " . $pagination['limit'];  
+    
+            } else {
+                $offset = ($pagination['page'] - 1) * $pagination['limit'];
+                $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
+            }
+        }
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+        
+        $pagination = self::pagination($pagination, $rowCount);        
+        
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -2850,8 +3080,60 @@ class HR extends DATABASE {
             }
         }
 
+        $return = array();
+        $return['disabled_employees'] = $newRows;
+        $return['pagination'] = $pagination;
+        
+        return $return;
+    }
 
-        return $newRows;
+    public static function pagination($pagination, $count) {
+
+        $total_pages = $previous_page = $next_page = "";        
+        $prev = false;
+        $next = false;
+        $limit = 1;
+        $page = "";
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            $page = $pagination['page'];
+            $limit = $pagination['limit'];
+        }
+
+        $total_pages = ceil($count / $limit);
+
+        if ( $page == 1 ) {
+            $next = true;
+
+        } else if ( $page == $total_pages ) {
+            $prev = true;
+            $next = false;
+
+        } else if ( $page == "" ) {
+            $prev = false;
+            $next = false;
+
+        } else {
+            $prev = true;
+            $next = true;
+        }
+
+        if ($prev) {
+            $previous_page = $page - 1;
+        }
+
+        if($next) {
+            $next_page = $page + 1;
+        }
+        
+        $res_pagination = array(
+            'total_pages' => $total_pages,
+            'current_page' => $page,
+            'previous_page' => $previous_page,
+            'next_page' => $next_page
+        );
+
+        return $res_pagination;
     }
 
     public static function getUserInfofromSlack($userid) {

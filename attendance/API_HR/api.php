@@ -50,6 +50,17 @@ if (isset($PARAMS['action'])) {
 if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
+if(isset($PARAMS['pagination_page'])){
+    $pagination_page = $PARAMS['pagination_page'];
+}
+if(isset($PARAMS['pagination_limit'])){
+    $pagination_limit = $PARAMS['pagination_limit'];
+}
+
+$pagination = array(
+    'page' => $pagination_page,
+    'limit' => $pagination_limit
+);
 
 $res = array(
     'error' => 1,
@@ -293,6 +304,9 @@ else if ($action == 'add_hr_comment') {
     $newstatus = $PARAMS['newstatus'];
     $messagetouser = $PARAMS['messagetouser'];
     $res = HR::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
+} else if ($action == 'revert_leave_status') {
+    $leaveid = $PARAMS['leaveid'];
+    $res = HR::revertLeaveStatus($leaveid);
 } else if ($action == "get_managed_user_working_hours") {
     $userid = $PARAMS['userid'];
     $res = HR::geManagedUserWorkingHours($userid);
@@ -394,8 +408,15 @@ else if ($action == 'add_hr_comment') {
     }    
 } else if ($action == "get_holidays_list") {
     $res = HR::API_getYearHolidays();
-} else if ($action == 'show_disabled_users') {
-    $res = HR::getDisabledUsersList();
+} else if ($action == "add_holiday") {
+    $date = $PARAMS['holiday_date'];
+    $name = $PARAMS['holiday_name'];
+    $type = $PARAMS['holiday_type'];
+    $res = HR::addHoliday($name, $date, $type);
+} else if ($action == "get_holiday_types_list") {
+    $res = HR::API_getHolidayTypesList();
+} else if ($action == 'show_disabled_users') {  
+    $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
@@ -426,6 +447,11 @@ else if ($action == 'add_hr_comment') {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
     $res = HR::getUserMonthAttendaceComplete($userid, $year, $month);
+} else if ($action == 'get_stats_attendance_summary') {   
+    $res = HR::API_getStatsAttendanceSummary();
+} else if ($action == 'delete_attendance_stats_summary') {   
+    $year = $PARAMS['year'];
+    $res = HR::API_deleteAttendanceStatsSummary($year);
 } else if ($action == "attendance_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
