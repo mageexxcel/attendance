@@ -419,6 +419,9 @@ else if ($action == 'add_hr_comment') {
     $type = $PARAMS['holiday_type'];
     $id = $PARAMS['holiday_id'];
     $res = HR::API_updateHoliday($id, $name, $date, $type);
+} else if ($action == "delete_holiday") {    
+    $id = $PARAMS['holiday_id'];
+    $res = HR::API_deleteHoliday($id);
 } else if ($action == "get_holiday_types_list") {
     $res = HR::API_getHolidayTypesList();
 } else if ($action == 'show_disabled_users') {  
