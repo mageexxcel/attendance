@@ -5836,13 +5836,17 @@ class HR extends DATABASE {
         inventory_audit_month_wise.inventory_id, 
         inventory_audit_month_wise.month, 
         inventory_audit_month_wise.year, 
-        inventory_comments.comment 
+        inventory_audit_month_wise.audit_done_by_user_id,
+        inventory_comments.comment, 
+        user_profile.user_Id,
+        user_profile.name
         FROM 
         machines_list 
         left join files on machines_list.file_inventory_photo = files.id 
         left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
         AND inventory_audit_month_wise.month = $month 
         AND inventory_audit_month_wise.year = $year 
+        left join user_profile on inventory_audit_month_wise.audit_done_by_user_id = user_profile.user_Id
         left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
         ORDER BY id DESC";
 
