@@ -569,7 +569,7 @@ class HR extends DATABASE {
                 $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
                 for($i = 0; $i < count($holiday_type); $i++){
                     if($pp['type'] == $holiday_type[$i]['type']){
-                        $pp['text'] = $holiday_type[$i]['text'];
+                        $pp['type_text'] = $holiday_type[$i]['text'];
                     }
                 }
                 $list[$h_date] = $pp;
