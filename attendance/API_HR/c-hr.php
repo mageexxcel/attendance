@@ -5855,26 +5855,32 @@ class HR extends DATABASE {
         $inventoriesCount = sizeof($rows);
         $auditDoneCount = 0;
         $auditPendingCount = 0;
-        $unassignedInventories = count(self::getUnassignedInventories());
+        $unassignedInventoriesCount = 0;
+        $unassignedInventories = self::getUnassignedInventories();
+        if($unassignedInventories){
+            $unassignedInventoriesCount = sizeof($unassignedInventories);
+        }
                 
         if ($inventoriesCount == 0) {
             $message = "No Records Found.";
             
-        } else {            
-            for($i = 0; $i < $inventoriesCount; $i++){
-                if(!isset($rows[$i]['audit_id']) && $rows[$i]['audit_id'] == ""){
+        } else {                       
+            foreach($rows as $row){
+                if(!isset($row['audit_id']) && $row['audit_id'] == ""){
                     $auditPendingCount++;
                 } else {
                     $auditDoneCount++;
-                }
+                } 
             }
             
             $message = "Inventory Audit List";
             $data = [
-                'total_inventories' => $inventoriesCount,
-                'audit_done' => $auditDoneCount,
-                'audit_pending' => $auditPendingCount,
-                'unassigned_inventories' => $unassignedInventories,
+                'stats' => [
+                    'total_inventories' => $inventoriesCount,
+                    'audit_done' => $auditDoneCount,
+                    'audit_pending' => $auditPendingCount,
+                    'unassigned_inventories' => $unassignedInventoriesCount
+                ],
                 'audit_list' => $rows
             ];
         }
