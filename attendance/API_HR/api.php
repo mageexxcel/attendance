@@ -407,7 +407,8 @@ else if ($action == 'add_hr_comment') {
         $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
     }    
 } else if ($action == "get_holidays_list") {
-    $res = HR::API_getYearHolidays();
+    $year = $PARAMS['year'];
+    $res = HR::API_getYearHolidays($year);
 } else if ($action == "add_holiday") {
     $date = $PARAMS['holiday_date'];
     $name = $PARAMS['holiday_name'];
