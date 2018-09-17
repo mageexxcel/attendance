@@ -556,6 +556,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM holidays";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+        $holiday_type = self::getHolidayTypesList();        
         $list = array();
         foreach ($rows as $pp) {
             $h_date = $pp['date'];
@@ -566,6 +567,11 @@ class HR extends DATABASE {
                 $h_date = date("d", strtotime($h_date));
                 $pp['date'] = $h_date;
                 $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                for($i = 0; $i < count($holiday_type); $i++){
+                    if($pp['type'] == $holiday_type[$i]['type']){
+                        $pp['text'] = $holiday_type[$i]['text'];
+                    }
+                }
                 $list[$h_date] = $pp;
             }
         }
