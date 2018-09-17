@@ -5849,16 +5849,32 @@ class HR extends DATABASE {
         left join user_profile on inventory_audit_month_wise.audit_done_by_user_id = user_profile.user_Id
         left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
         ORDER BY id DESC";
-
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-
-        if (sizeof($rows) == 0) {
+        $inventoriesCount = sizeof($rows);
+        $auditDoneCount = 0;
+        $auditPendingCount = 0;
+        $unassignedInventories = count(self::getUnassignedInventories());
+                
+        if ($inventoriesCount == 0) {
             $message = "No Records Found.";
             
-        } else {
+        } else {            
+            for($i = 0; $i < $inventoriesCount; $i++){
+                if(!isset($rows[$i]['audit_id']) && $rows[$i]['audit_id'] == ""){
+                    $auditPendingCount++;
+                } else {
+                    $auditDoneCount++;
+                }
+            }
+            
             $message = "Inventory Audit List";
             $data = [
+                'total_inventories' => $inventoriesCount,
+                'audit_done' => $auditDoneCount,
+                'audit_pending' => $auditPendingCount,
+                'unassigned_inventories' => $unassignedInventories,
                 'audit_list' => $rows
             ];
         }
