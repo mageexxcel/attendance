@@ -1725,7 +1725,7 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $list = array();
-
+        
         if ($year == false) {
             $list = $rows;
         } else {
@@ -1745,8 +1745,9 @@ class HR extends DATABASE {
             }
         }
 
-
+        
         $r_error = 0;
+        $r_data = array();
         $return = array();
         $return['error'] = $r_error;
         $r_data['message'] = "";
