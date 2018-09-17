@@ -556,6 +556,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM holidays";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+        $holiday_type = self::getHolidayTypesList();        
         $list = array();
         foreach ($rows as $pp) {
             $h_date = $pp['date'];
@@ -566,6 +567,11 @@ class HR extends DATABASE {
                 $h_date = date("d", strtotime($h_date));
                 $pp['date'] = $h_date;
                 $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                for($i = 0; $i < count($holiday_type); $i++){
+                    if($pp['type'] == $holiday_type[$i]['type']){
+                        $pp['type_text'] = $holiday_type[$i]['text'];
+                    }
+                }
                 $list[$h_date] = $pp;
             }
         }
@@ -1719,7 +1725,7 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $list = array();
-
+        
         if ($year == false) {
             $list = $rows;
         } else {
@@ -1739,8 +1745,9 @@ class HR extends DATABASE {
             }
         }
 
-
+        
         $r_error = 0;
+        $r_data = array();
         $return = array();
         $return['error'] = $r_error;
         $r_data['message'] = "";
@@ -5831,30 +5838,60 @@ class HR extends DATABASE {
         machines_list.id, 
         machines_list.machine_type, 
         machines_list.machine_name, 
+        machines_user.machine_id,
+        machines_user.user_Id as assigned_user_id,
         files.file_name, 
         inventory_audit_month_wise.id as audit_id, 
         inventory_audit_month_wise.inventory_id, 
         inventory_audit_month_wise.month, 
         inventory_audit_month_wise.year, 
-        inventory_comments.comment 
+        inventory_audit_month_wise.audit_done_by_user_id,
+        inventory_comments.comment, 
+        up_audit.name as audit_done_by,
+        up_assign.name as assigned_to
         FROM 
         machines_list 
         left join files on machines_list.file_inventory_photo = files.id 
         left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
         AND inventory_audit_month_wise.month = $month 
         AND inventory_audit_month_wise.year = $year 
+        left join user_profile as up_audit on inventory_audit_month_wise.audit_done_by_user_id = up_audit.user_Id
         left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+        left join machines_user on machines_list.id = machines_user.machine_id
+        left join user_profile as up_assign on machines_user.user_Id = up_assign.user_Id
         ORDER BY id DESC";
-
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-
-        if (sizeof($rows) == 0) {
+        $inventoriesCount = sizeof($rows);
+        $auditDoneCount = 0;
+        $auditPendingCount = 0;
+        $unassignedInventoriesCount = 0;
+        $unassignedInventories = self::getUnassignedInventories();
+        if($unassignedInventories){
+            $unassignedInventoriesCount = sizeof($unassignedInventories);
+        }
+                
+        if ($inventoriesCount == 0) {
             $message = "No Records Found.";
             
-        } else {
+        } else {                       
+            foreach($rows as $row){
+                if(!isset($row['audit_id']) && $row['audit_id'] == ""){
+                    $auditPendingCount++;
+                } else {
+                    $auditDoneCount++;
+                } 
+            }
+            
             $message = "Inventory Audit List";
             $data = [
+                'stats' => [
+                    'total_inventories' => $inventoriesCount,
+                    'audit_done' => $auditDoneCount,
+                    'audit_pending' => $auditPendingCount,
+                    'unassigned_inventories' => $unassignedInventoriesCount
+                ],
                 'audit_list' => $rows
             ];
         }
