@@ -5831,6 +5831,8 @@ class HR extends DATABASE {
         machines_list.id, 
         machines_list.machine_type, 
         machines_list.machine_name, 
+        machines_user.machine_id,
+        machines_user.user_Id as assigned_user_id,
         files.file_name, 
         inventory_audit_month_wise.id as audit_id, 
         inventory_audit_month_wise.inventory_id, 
@@ -5838,27 +5840,51 @@ class HR extends DATABASE {
         inventory_audit_month_wise.year, 
         inventory_audit_month_wise.audit_done_by_user_id,
         inventory_comments.comment, 
-        user_profile.user_Id,
-        user_profile.name
+        up_audit.name as audit_done_by,
+        up_assign.name as assigned_to
         FROM 
         machines_list 
         left join files on machines_list.file_inventory_photo = files.id 
         left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
         AND inventory_audit_month_wise.month = $month 
         AND inventory_audit_month_wise.year = $year 
-        left join user_profile on inventory_audit_month_wise.audit_done_by_user_id = user_profile.user_Id
+        left join user_profile as up_audit on inventory_audit_month_wise.audit_done_by_user_id = up_audit.user_Id
         left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+        left join machines_user on machines_list.id = machines_user.machine_id
+        left join user_profile as up_assign on machines_user.user_Id = up_assign.user_Id
         ORDER BY id DESC";
-
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-
-        if (sizeof($rows) == 0) {
+        $inventoriesCount = sizeof($rows);
+        $auditDoneCount = 0;
+        $auditPendingCount = 0;
+        $unassignedInventoriesCount = 0;
+        $unassignedInventories = self::getUnassignedInventories();
+        if($unassignedInventories){
+            $unassignedInventoriesCount = sizeof($unassignedInventories);
+        }
+                
+        if ($inventoriesCount == 0) {
             $message = "No Records Found.";
             
-        } else {
+        } else {                       
+            foreach($rows as $row){
+                if(!isset($row['audit_id']) && $row['audit_id'] == ""){
+                    $auditPendingCount++;
+                } else {
+                    $auditDoneCount++;
+                } 
+            }
+            
             $message = "Inventory Audit List";
             $data = [
+                'stats' => [
+                    'total_inventories' => $inventoriesCount,
+                    'audit_done' => $auditDoneCount,
+                    'audit_pending' => $auditPendingCount,
+                    'unassigned_inventories' => $unassignedInventoriesCount
+                ],
                 'audit_list' => $rows
             ];
         }
