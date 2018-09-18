@@ -37,6 +37,7 @@ trait Roles {
     static $PAGE_manage_user_pending_hours = 131;
     static $PAGE_logout = 132;
     static $PAGE_add_documents = 133;
+    static $PAGE_health_stats = 134;
 
 
 
@@ -500,6 +501,13 @@ trait Roles {
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_add_user_working_hours, 'name' => 'add_user_working_hours' ),
                     array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
+                )
+            ),
+            array(
+                'id' => self::$PAGE_health_stats,
+                'name' => 'health_stats',
+                'actions_list' => array(
+                    
                 )
             ),
 
