@@ -6008,11 +6008,12 @@ class HR extends DATABASE {
         $disabled_employees_list = array();
         $join = array();
         $terminate = array();
+        $joining_termination_stats = [];
         
         $all_employees_list = self::getAllUsers();
         $all_employees = count($all_employees_list);
         
-        foreach($all_employees_list as $key => $employee){
+        foreach($all_employees_list as $key => $employee){            
             $join_year = date('Y', strtotime($employee['dateofjoining']));
             $terminate_year = date('Y', strtotime($employee['termination_date']));
             
@@ -6028,12 +6029,27 @@ class HR extends DATABASE {
             } else {
                 $join[$join_year] = 1;
             }
-
+            
             if(array_key_exists($terminate_year, $terminate)) {
                 $terminate[$terminate_year]++;
             } else {
                 $terminate[$terminate_year] = 1;
             }
+        }
+        
+        $join_terminate = [];
+        $join_terminate = $join + $terminate;        
+        foreach($join_terminate as $key => $emp){
+            if(!isset($terminate[$key])) {
+                $terminate[$key] = 0;
+            }
+            if(!isset($join[$key])) {
+                $join[$key] = 0;
+            }
+            $joining_termination_stats[$key] = [
+                'joining' => $join[$key],
+                'termination' => $terminate[$key]
+            ]; 
         }
         
         $enabled_employees = count($enabled_employees_list);
@@ -6043,8 +6059,7 @@ class HR extends DATABASE {
                 'total_employees' => $all_employees,
                 'enabled_employees' => $enabled_employees,
                 'disabled_employees' => $disabled_employees,
-                'joined_employees' => $join,
-                'terminated_employees' => $terminate,
+                'joining_termination_stats' => $joining_termination_stats,
             ]
         ];
         $return = [
