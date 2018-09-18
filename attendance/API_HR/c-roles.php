@@ -122,6 +122,7 @@ trait Roles {
     static $ACTION_get_my_inventories = 517;
     static $ACTION_add_inventory_comment = 518;
     static $ACTION_add_inventory_audit = 519;
+    static $ACTION_get_inventory_audit_status_month_wise = 520;
 
     //actions not required token
     static $ACTION_login = 601;
@@ -247,6 +248,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_my_inventories, 'name' => 'get_my_inventories' ),
                     array( 'id' => self::$ACTION_add_inventory_comment, 'name' => 'add_inventory_comment' ),
                     array( 'id' => self::$ACTION_add_inventory_audit, 'name' => 'add_inventory_audit' ),
+                    array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' ),
                 )
             ),
 
