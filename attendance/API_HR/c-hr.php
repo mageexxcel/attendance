@@ -5993,6 +5993,69 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getAllUsers(){
+        $q = " SELECT users.*, user_profile.* FROM users left join user_profile on users.id = user_profile.user_Id ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function getEmployeesHistoryStats(){
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $enabled_employees_list = array();
+        $disabled_employees_list = array();
+        $join = array();
+        $terminate = array();
+        
+        $all_employees_list = self::getAllUsers();
+        $all_employees = count($all_employees_list);
+        
+        foreach($all_employees_list as $key => $employee){
+            $join_year = date('Y', strtotime($employee['dateofjoining']));
+            $terminate_year = date('Y', strtotime($employee['termination_date']));
+            
+            if($employee['status'] == 'Enabled') {
+                $enabled_employees_list[] = $employee;
+            }
+            if($employee['status'] == 'Disabled') {
+                $disabled_employees_list[] = $employee;
+            }
+
+            if(array_key_exists($join_year, $join)) {
+                $join[$join_year]++;
+            } else {
+                $join[$join_year] = 1;
+            }
+
+            if(array_key_exists($terminate_year, $terminate)) {
+                $terminate[$terminate_year]++;
+            } else {
+                $terminate[$terminate_year] = 1;
+            }
+        }
+        
+        $enabled_employees = count($enabled_employees_list);
+        $disabled_employees = count($disabled_employees_list);
+        $r_data = [
+            'stats' => [
+                'total_employees' => $all_employees,
+                'enabled_employees' => $enabled_employees,
+                'disabled_employees' => $disabled_employees,
+                'joined_employees' => $join,
+                'terminated_employees' => $terminate,
+            ]
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
+
 }
 
 new HR();

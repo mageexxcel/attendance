@@ -719,6 +719,9 @@ else if( $action == 'get_average_working_hours' ){
     $end_date = $PARAMS['end_date'];
     $res = HR::api_getAverageWorkingHours( $start_date, $end_date );
 }
+else if ( $action == 'get_employees_history_stats' ){  
+    $res = HR::getEmployeesHistoryStats();
+}
 
 
 echo json_encode($res);
