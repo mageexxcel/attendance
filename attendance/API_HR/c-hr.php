@@ -6014,7 +6014,7 @@ class HR extends DATABASE {
         $all_employees = count($all_employees_list);
         
         foreach($all_employees_list as $key => $employee){            
-            $join_year = date('Y', strtotime($employee['dateofjoining']));
+            $join_year = date('Y', strtotime($employee['dateofjoining']));        
             $terminate_year = date('Y', strtotime($employee['termination_date']));
             
             if($employee['status'] == 'Enabled') {
@@ -6030,10 +6030,12 @@ class HR extends DATABASE {
                 $join[$join_year] = 1;
             }
             
-            if(array_key_exists($terminate_year, $terminate)) {
-                $terminate[$terminate_year]++;
-            } else {
-                $terminate[$terminate_year] = 1;
+            if($terminate_year > 0){
+                if(array_key_exists($terminate_year, $terminate)) {
+                    $terminate[$terminate_year]++;
+                } else {
+                    $terminate[$terminate_year] = 1;
+                }
             }
         }
         
