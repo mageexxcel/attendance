@@ -1737,18 +1737,25 @@ class HR extends DATABASE {
         $rows = self::DBfetchRows($runQuery);
         $list = array();
         
+        $type_text = self::getHolidayTypesList();
+
         if ($year == false) {
             $list = $rows;
         } else {
             foreach ($rows as $pp) {
                 $h_date = $pp['date'];
                 $h_year = date('Y', strtotime($h_date));
+                foreach($type_text as $text){
+                    if( $pp['type'] == $text['type'] ){
+                        $pp['text'] = $text['text'];
+                    }
+                }
                 if ($h_year == $year) {
                     $list[] = $pp;
-                }
+                }                
             }
         }
-
+        
         if (sizeof($list) > 0) {
             foreach ($list as $key => $v) {
                 $list[$key]['month'] = date('F', strtotime($v['date']));
