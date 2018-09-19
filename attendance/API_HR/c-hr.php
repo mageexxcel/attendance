@@ -6004,65 +6004,50 @@ class HR extends DATABASE {
         $r_error = 0;
         $r_data = array();
         $return = array();
-        $enabled_employees_list = array();
-        $disabled_employees_list = array();
-        $join = array();
-        $terminate = array();
-        $joining_termination_stats = [];
+        $stats = array();
+        $jt_stats = array();
         
         $all_employees_list = self::getAllUsers();
-        $all_employees = count($all_employees_list);
-        
+
         foreach($all_employees_list as $key => $employee){            
             $join_year = date('Y', strtotime($employee['dateofjoining']));        
             $terminate_year = date('Y', strtotime($employee['termination_date']));
-            
+            $stats['total_employees']++;
             if($employee['status'] == 'Enabled') {
-                $enabled_employees_list[] = $employee;
+                $stats['enabled_employees']++;
             }
             if($employee['status'] == 'Disabled') {
-                $disabled_employees_list[] = $employee;
+                $stats['disabled_employees']++;
             }
-
-            if(array_key_exists($join_year, $join)) {
-                $join[$join_year]++;
-            } else {
-                $join[$join_year] = 1;
-            }
-            
-            if($terminate_year > 0){
-                if(array_key_exists($terminate_year, $terminate)) {
-                    $terminate[$terminate_year]++;
+            if( $join_year > 0 ){
+                if( isset($jt_stats[$join_year]) ){
+                    $jt_stats[$join_year]['joining']++;
                 } else {
-                    $terminate[$terminate_year] = 1;
+                    $jt_stats[$join_year]['joining'] = 0;
+                    $jt_stats[$join_year]['joining'] = 1;
+                }
+                if( !isset($jt_stats[$join_year]['termination']) ){
+                    $jt_stats[$join_year]['termination'] = 0;
+                }
+            }            
+
+            if( $terminate_year > 0 ){
+                if( isset($jt_stats[$terminate_year]) ){
+                    $jt_stats[$terminate_year]['termination']++;
+                } else {
+                    $jt_stats[$terminate_year]['termination'] = 0;
+                    $jt_stats[$terminate_year]['termination'] = 1;
+                }
+                if( !isset($jt_stats[$terminate_year]['joining']) ){
+                    $jt_stats[$terminate_year]['joining'] = 0;
                 }
             }
+            
         }
         
-        $join_terminate = [];
-        $join_terminate = $join + $terminate;        
-        foreach($join_terminate as $key => $emp){
-            if(!isset($terminate[$key])) {
-                $terminate[$key] = 0;
-            }
-            if(!isset($join[$key])) {
-                $join[$key] = 0;
-            }
-            $joining_termination_stats[$key] = [
-                'joining' => $join[$key],
-                'termination' => $terminate[$key]
-            ]; 
-        }
-        
-        $enabled_employees = count($enabled_employees_list);
-        $disabled_employees = count($disabled_employees_list);
+        $stats['joining_termination_stats'] = $jt_stats;
         $r_data = [
-            'stats' => [
-                'total_employees' => $all_employees,
-                'enabled_employees' => $enabled_employees,
-                'disabled_employees' => $disabled_employees,
-                'joining_termination_stats' => $joining_termination_stats,
-            ]
+            'stats' => $stats
         ];
         $return = [
             'error' => $r_error,
@@ -6071,7 +6056,6 @@ class HR extends DATABASE {
 
         return $return;
     }
-
 
 }
 
