@@ -991,24 +991,35 @@ class HR extends DATABASE {
         $return = array();
         $attendance_rows = array();
 
-        $q = "SELECT * from attendance";
+        $q = "SELECT * from attendance ORDER BY timing ASC";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
 
-        foreach($rows as $date){
+        foreach($rows as $key => $date){
             $full_date = explode(" ", $date['timing']);
             $explode_full_date = explode("-", $full_date[0]);
             $year = $explode_full_date[2];
-            
-            if(isset($attendance_rows[$year])){
-                $attendance_rows[$year] += 1;
-            } else {
-                $attendance_rows[$year] = 1;
+
+            $flag = false;
+            if(count($attendance_rows)){
+                foreach($attendance_rows as $key => $attendance){
+                    if($attendance['year'] == $year){
+                        $attendance_rows[$key]['count']++;
+                        $flag = true;
+                        break;
+                    } 
+                }
+            }
+            if($flag == false){
+                $attendance_rows[] = [
+                    'year' => $year,
+                    'count' => 1
+                ];
             }
         }
-
+        
         $r_data['attendance_rows'] = $attendance_rows;
-
+        
         $return = [
             'error' => $r_error,
             'message' => $r_message,
