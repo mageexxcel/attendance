@@ -126,6 +126,7 @@ trait Holiday {
             $runQuery = self::DBrunQuery($q);
             $r_data['message'] = "Holiday Deleted Successfully.";
         } else {
+            $r_error = 1;
             $r_data['message'] = "Holiday not Found.";
         }
         $return = [
