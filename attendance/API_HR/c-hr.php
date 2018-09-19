@@ -6023,7 +6023,6 @@ class HR extends DATABASE {
                 if( isset($jt_stats[$join_year]) ){
                     $jt_stats[$join_year]['joining']++;
                 } else {
-                    $jt_stats[$join_year]['joining'] = 0;
                     $jt_stats[$join_year]['joining'] = 1;
                 }
                 if( !isset($jt_stats[$join_year]['termination']) ){
@@ -6035,7 +6034,6 @@ class HR extends DATABASE {
                 if( isset($jt_stats[$terminate_year]) ){
                     $jt_stats[$terminate_year]['termination']++;
                 } else {
-                    $jt_stats[$terminate_year]['termination'] = 0;
                     $jt_stats[$terminate_year]['termination'] = 1;
                 }
                 if( !isset($jt_stats[$terminate_year]['joining']) ){
