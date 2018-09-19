@@ -1747,7 +1747,7 @@ class HR extends DATABASE {
                 $h_year = date('Y', strtotime($h_date));
                 foreach($type_text as $text){
                     if( $pp['type'] == $text['type'] ){
-                        $pp['text'] = $text['text'];
+                        $pp['type_text'] = $text['text'];
                     }
                 }
                 if ($h_year == $year) {
