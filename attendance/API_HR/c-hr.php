@@ -5993,6 +5993,68 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getAllUsers(){
+        $q = " SELECT users.*, user_profile.* FROM users left join user_profile on users.id = user_profile.user_Id ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function getEmployeesHistoryStats(){
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $stats = array();
+        $jt_stats = array();
+        
+        $all_employees_list = self::getAllUsers();
+
+        foreach($all_employees_list as $key => $employee){            
+            $join_year = date('Y', strtotime($employee['dateofjoining']));        
+            $terminate_year = date('Y', strtotime($employee['termination_date']));
+            $stats['total_employees']++;
+            if($employee['status'] == 'Enabled') {
+                $stats['enabled_employees']++;
+            }
+            if($employee['status'] == 'Disabled') {
+                $stats['disabled_employees']++;
+            }
+            if( $join_year > 0 ){
+                if( isset($jt_stats[$join_year]) ){
+                    $jt_stats[$join_year]['joining']++;
+                } else {
+                    $jt_stats[$join_year]['joining'] = 1;
+                }
+                if( !isset($jt_stats[$join_year]['termination']) ){
+                    $jt_stats[$join_year]['termination'] = 0;
+                }
+            }            
+
+            if( $terminate_year > 0 ){
+                if( isset($jt_stats[$terminate_year]) ){
+                    $jt_stats[$terminate_year]['termination']++;
+                } else {
+                    $jt_stats[$terminate_year]['termination'] = 1;
+                }
+                if( !isset($jt_stats[$terminate_year]['joining']) ){
+                    $jt_stats[$terminate_year]['joining'] = 0;
+                }
+            }
+            
+        }
+        
+        $stats['joining_termination_stats'] = $jt_stats;
+        $r_data = [
+            'stats' => $stats
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
 }
 
 new HR();
