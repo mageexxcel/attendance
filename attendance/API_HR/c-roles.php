@@ -88,6 +88,7 @@ trait Roles {
     static $ACTION_validate_unique_key = 241;
     static $ACTION_send_slack_msg = 242;
     static $ACTION_get_all_users_detail = 243;
+    static $ACTION_get_holiday_types_list = 244;    
 
     static $ACTION_get_all_clients = 301;
     static $ACTION_get_client_detail = 302;
@@ -694,6 +695,7 @@ trait Roles {
             array( 'id' => self::$ACTION_approve_manual_attendance, 'name' => 'approve_manual_attendance' ),
             array( 'id' => self::$ACTION_reject_manual_attendance, 'name' => 'reject_manual_attendance' ),
             array( 'id' => self::$ACTION_get_average_working_hours, 'name' => 'get_average_working_hours' ),
+            array( 'id' => self::$ACTION_get_holiday_types_list, 'name' => 'get_holiday_types_list' ),
         );
         return $array;
     }
