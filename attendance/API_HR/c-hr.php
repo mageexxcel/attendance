@@ -3080,13 +3080,12 @@ class HR extends DATABASE {
                 $offset = ($pagination['page'] - 1) * $pagination['limit'];
                 $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
             }
+            $pagination = self::pagination($pagination, $rowCount);   
         }
         
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-        
-        $pagination = self::pagination($pagination, $rowCount);        
-        
+                
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -3109,7 +3108,11 @@ class HR extends DATABASE {
         $return['disabled_employees'] = $newRows;
         $return['pagination'] = $pagination;
         
-        return $return;
+        if( isset($pagination['total_pages']) && $pagination['total_pages'] != "" ) {
+            return $return;
+        } else {
+            return $newRows;
+        }
     }
 
     public static function pagination($pagination, $count) {
