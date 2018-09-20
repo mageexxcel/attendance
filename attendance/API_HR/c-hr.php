@@ -991,24 +991,35 @@ class HR extends DATABASE {
         $return = array();
         $attendance_rows = array();
 
-        $q = "SELECT * from attendance";
+        $q = "SELECT * from attendance ORDER BY timing ASC";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
 
-        foreach($rows as $date){
+        foreach($rows as $key => $date){
             $full_date = explode(" ", $date['timing']);
             $explode_full_date = explode("-", $full_date[0]);
             $year = $explode_full_date[2];
-            
-            if(isset($attendance_rows[$year])){
-                $attendance_rows[$year] += 1;
-            } else {
-                $attendance_rows[$year] = 1;
+
+            $flag = false;
+            if(count($attendance_rows)){
+                foreach($attendance_rows as $key => $attendance){
+                    if($attendance['year'] == $year){
+                        $attendance_rows[$key]['count']++;
+                        $flag = true;
+                        break;
+                    } 
+                }
+            }
+            if($flag == false){
+                $attendance_rows[] = [
+                    'year' => $year,
+                    'count' => 1
+                ];
             }
         }
-
+        
         $r_data['attendance_rows'] = $attendance_rows;
-
+        
         $return = [
             'error' => $r_error,
             'message' => $r_message,
@@ -1726,18 +1737,25 @@ class HR extends DATABASE {
         $rows = self::DBfetchRows($runQuery);
         $list = array();
         
+        $type_text = self::getHolidayTypesList();
+
         if ($year == false) {
             $list = $rows;
         } else {
             foreach ($rows as $pp) {
                 $h_date = $pp['date'];
                 $h_year = date('Y', strtotime($h_date));
+                foreach($type_text as $text){
+                    if( $pp['type'] == $text['type'] ){
+                        $pp['type_text'] = $text['text'];
+                    }
+                }
                 if ($h_year == $year) {
                     $list[] = $pp;
-                }
+                }                
             }
         }
-
+        
         if (sizeof($list) > 0) {
             foreach ($list as $key => $v) {
                 $list[$key]['month'] = date('F', strtotime($v['date']));
@@ -3062,13 +3080,12 @@ class HR extends DATABASE {
                 $offset = ($pagination['page'] - 1) * $pagination['limit'];
                 $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
             }
+            $pagination = self::pagination($pagination, $rowCount);   
         }
         
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
-        
-        $pagination = self::pagination($pagination, $rowCount);        
-        
+                
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -3091,7 +3108,11 @@ class HR extends DATABASE {
         $return['disabled_employees'] = $newRows;
         $return['pagination'] = $pagination;
         
-        return $return;
+        if( isset($pagination['total_pages']) && $pagination['total_pages'] != "" ) {
+            return $return;
+        } else {
+            return $newRows;
+        }
     }
 
     public static function pagination($pagination, $count) {
@@ -5990,6 +6011,68 @@ class HR extends DATABASE {
         $return['error'] = $error;
         $return['message'] = "";
         $return['data'] = $DATA;
+        return $return;
+    }
+
+    public static function getAllUsers(){
+        $q = " SELECT users.*, user_profile.* FROM users left join user_profile on users.id = user_profile.user_Id ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function getEmployeesHistoryStats(){
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $stats = array();
+        $jt_stats = array();
+        
+        $all_employees_list = self::getAllUsers();
+
+        foreach($all_employees_list as $key => $employee){            
+            $join_year = date('Y', strtotime($employee['dateofjoining']));        
+            $terminate_year = date('Y', strtotime($employee['termination_date']));
+            $stats['total_employees']++;
+            if($employee['status'] == 'Enabled') {
+                $stats['enabled_employees']++;
+            }
+            if($employee['status'] == 'Disabled') {
+                $stats['disabled_employees']++;
+            }
+            if( $join_year > 0 ){
+                if( isset($jt_stats[$join_year]) ){
+                    $jt_stats[$join_year]['joining']++;
+                } else {
+                    $jt_stats[$join_year]['joining'] = 1;
+                }
+                if( !isset($jt_stats[$join_year]['termination']) ){
+                    $jt_stats[$join_year]['termination'] = 0;
+                }
+            }            
+
+            if( $terminate_year > 0 ){
+                if( isset($jt_stats[$terminate_year]) ){
+                    $jt_stats[$terminate_year]['termination']++;
+                } else {
+                    $jt_stats[$terminate_year]['termination'] = 1;
+                }
+                if( !isset($jt_stats[$terminate_year]['joining']) ){
+                    $jt_stats[$terminate_year]['joining'] = 0;
+                }
+            }
+            
+        }
+        
+        $stats['joining_termination_stats'] = $jt_stats;
+        $r_data = [
+            'stats' => $stats
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
         return $return;
     }
 
