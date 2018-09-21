@@ -2727,13 +2727,14 @@ class HR extends DATABASE {
             'HRA' => $PARAMS['hra'],
             'Basic' => $PARAMS['basic'],
             'Arrears' => $PARAMS['arrear'],
+            'Increment_Amount' => $PARAMS['increment_amount'],
             'TDS' => $PARAMS['tds'],
             'Misc_Deductions' => $PARAMS['misc_deduction'],
             'Advance' => $PARAMS['advance'],
             'Loan' => $PARAMS['loan'],
-            'EPF' => $PARAMS['epf']
+            'EPF' => $PARAMS['epf']            
         );
-
+        
         $type = 1;
         foreach ($ins_salary_details as $key => $val) {
             // change value of type on and after array key TDS    
@@ -2761,6 +2762,7 @@ class HR extends DATABASE {
         $loan = "0";
         $epf = "0";
         $leave = "0";
+        $increment_amount = "0";
 
         $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
         
@@ -2777,6 +2779,7 @@ class HR extends DATABASE {
         $PARAMS['tds'] = $tds;
         $PARAMS['epf'] = $epf;
         $PARAMS['leave'] = $leave;
+        $PARAMS['increment_amount'] = $increment_amount;
         
         $addSalary = self::addNewSalary($userID, $PARAMS);
         
