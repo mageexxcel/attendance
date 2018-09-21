@@ -4,6 +4,7 @@ require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
 require_once 'c-holiday.php';
+require_once 'c-salary-new.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -11,6 +12,7 @@ class HR extends DATABASE {
 
     use Roles;
     use Holiday;
+    use SalaryNew;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -2743,7 +2745,23 @@ class HR extends DATABASE {
             $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
             $runQuery = self::DBrunQuery($query);
         }
-        
+        $userid = $data['user_id'];
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+        $message = "Hey $userInfo_name !!  \n Your Salary details are updated \n Details: \n ";
+        $message = $message . "Total Salary = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Basic = " . $data['basic'] . " Rs \n";
+        $message = $message . "HRA = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Medical Allowance = " . $data['medical_allowance'] . " Rs \n";
+        $message = $message . "Special Allowance = " . $data['special_allowance'] . " Rs \n";
+        $message = $message . "Arrears = " . $data['arrear'] . " Rs \n";
+        $message = $message . "EPF = " . $data['epf'] . " Rs \n";
+        $message = $message . "Loan = " . $data['loan'] . " Rs \n";
+        $message = $message . "Advance = " . $data['advance'] . " Rs \n";
+        $message = $message . "Misc Deductions = " . $data['Misc_deduction'] . " Rs \n";
+        $message = $message . "TDS = " . $data['tds'] . " Rs \n";
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack notification.
         return "Salary Inserted Successfully.";
     }
 

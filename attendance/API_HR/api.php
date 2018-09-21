@@ -722,7 +722,9 @@ else if( $action == 'get_average_working_hours' ){
 else if ( $action == 'get_employees_history_stats' ){  
     $res = HR::getEmployeesHistoryStats();
 }
-
+else if ( $action == 'add_new_salary' ){  
+    $res = HR::add_salary_structure($PARAMS);
+}
 
 echo json_encode($res);
 ?>
