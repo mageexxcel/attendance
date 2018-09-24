@@ -4,6 +4,7 @@ require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
 require_once 'c-holiday.php';
+require_once 'c-salary-new.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -11,6 +12,7 @@ class HR extends DATABASE {
 
     use Roles;
     use Holiday;
+    use SalaryNew;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -2706,6 +2708,8 @@ class HR extends DATABASE {
         $token = $PARAMS['token'];
         $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
         $update_by = $loggedUserInfo->name;
+        $applicable_month = $PARAMS['applicable_month'];
+        $applicable_date = date('Y-m-d', strtotime("+$applicable_month months", strtotime($PARAMS['applicable_from'])));
         
         $ins_salary = array(
             'user_Id' => $userID,
@@ -2714,7 +2718,7 @@ class HR extends DATABASE {
             'updated_by' => $update_by,
             'leaves_allocated' => $PARAMS['leave'],
             'applicable_from' => $PARAMS['applicable_from'],
-            'applicable_till' => $PARAMS['applicable_till']
+            'applicable_till' => $applicable_date
         );
 
         self::DBinsertQuery('salary', $ins_salary);
@@ -2727,6 +2731,7 @@ class HR extends DATABASE {
             'HRA' => $PARAMS['hra'],
             'Basic' => $PARAMS['basic'],
             'Arrears' => $PARAMS['arrear'],
+            'Increment_Amount' => $PARAMS['increment_amount'],
             'TDS' => $PARAMS['tds'],
             'Misc_Deductions' => $PARAMS['misc_deduction'],
             'Advance' => $PARAMS['advance'],
@@ -2743,7 +2748,23 @@ class HR extends DATABASE {
             $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
             $runQuery = self::DBrunQuery($query);
         }
-        
+        $userid = $data['user_id'];
+        $userInfo = self::getUserInfo($userid);
+        $userInfo_name = $userInfo['name'];
+        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+        $message = "Hey $userInfo_name !!  \n Your Salary details are updated \n Details: \n ";
+        $message = $message . "Total Salary = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Basic = " . $data['basic'] . " Rs \n";
+        $message = $message . "HRA = " . $data['total_salary'] . " Rs \n";
+        $message = $message . "Medical Allowance = " . $data['medical_allowance'] . " Rs \n";
+        $message = $message . "Special Allowance = " . $data['special_allowance'] . " Rs \n";
+        $message = $message . "Arrears = " . $data['arrear'] . " Rs \n";
+        $message = $message . "EPF = " . $data['epf'] . " Rs \n";
+        $message = $message . "Loan = " . $data['loan'] . " Rs \n";
+        $message = $message . "Advance = " . $data['advance'] . " Rs \n";
+        $message = $message . "Misc Deductions = " . $data['Misc_deduction'] . " Rs \n";
+        $message = $message . "TDS = " . $data['tds'] . " Rs \n";
+        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message); // send slack notification.
         return "Salary Inserted Successfully.";
     }
 
@@ -2761,6 +2782,7 @@ class HR extends DATABASE {
         $loan = "0";
         $epf = "0";
         $leave = "0";
+        $increment_amount = "0";
 
         $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
         
@@ -2777,6 +2799,7 @@ class HR extends DATABASE {
         $PARAMS['tds'] = $tds;
         $PARAMS['epf'] = $epf;
         $PARAMS['leave'] = $leave;
+        $PARAMS['increment_amount'] = $increment_amount;
         
         $addSalary = self::addNewSalary($userID, $PARAMS);
         

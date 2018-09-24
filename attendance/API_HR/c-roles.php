@@ -184,6 +184,8 @@ trait Roles {
     static $ACTION_get_employee_life_cycle = 8021;
     static $ACTION_update_employee_life_cycle = 8022;
 
+    static $ACTION_add_new_salary = 8023;
+
 
 
 
@@ -340,6 +342,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
                     array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
                     array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+                    array( 'id' => self::$ACTION_add_new_salary,'name' => 'add_new_salary' ),
                 )
             ),
 
