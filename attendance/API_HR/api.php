@@ -732,6 +732,11 @@ else if ( $action == 'add_new_salary' ){
 else if ( $action == 'get_user_salary_info_by_id' ){  
     $res = HR::getUserSalaryInfoById($PARAMS);
 }
+else if ( $action == 'delete_salary' ){  
+    $userid = $PARAMS['user_id'];
+    $salaryid = $PARAMS['salary_id'];
+    $res = HR::API_deleteUserSalary($userid, $salaryid);
+}
 
 echo json_encode($res);
 ?>
