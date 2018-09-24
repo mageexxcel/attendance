@@ -2708,6 +2708,8 @@ class HR extends DATABASE {
         $token = $PARAMS['token'];
         $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
         $update_by = $loggedUserInfo->name;
+        $applicable_month = $PARAMS['applicable_month'];
+        $applicable_date = date('Y-m-d', strtotime("+$applicable_month months", strtotime($PARAMS['applicable_from'])));
         
         $ins_salary = array(
             'user_Id' => $userID,
@@ -2716,7 +2718,7 @@ class HR extends DATABASE {
             'updated_by' => $update_by,
             'leaves_allocated' => $PARAMS['leave'],
             'applicable_from' => $PARAMS['applicable_from'],
-            'applicable_till' => $PARAMS['applicable_till']
+            'applicable_till' => $applicable_date
         );
 
         self::DBinsertQuery('salary', $ins_salary);
@@ -2729,6 +2731,7 @@ class HR extends DATABASE {
             'HRA' => $PARAMS['hra'],
             'Basic' => $PARAMS['basic'],
             'Arrears' => $PARAMS['arrear'],
+            'Increment_Amount' => $PARAMS['increment_amount'],
             'TDS' => $PARAMS['tds'],
             'Misc_Deductions' => $PARAMS['misc_deduction'],
             'Advance' => $PARAMS['advance'],
@@ -2779,6 +2782,7 @@ class HR extends DATABASE {
         $loan = "0";
         $epf = "0";
         $leave = "0";
+        $increment_amount = "0";
 
         $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
         
@@ -2795,6 +2799,7 @@ class HR extends DATABASE {
         $PARAMS['tds'] = $tds;
         $PARAMS['epf'] = $epf;
         $PARAMS['leave'] = $leave;
+        $PARAMS['increment_amount'] = $increment_amount;
         
         $addSalary = self::addNewSalary($userID, $PARAMS);
         

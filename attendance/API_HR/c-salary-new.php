@@ -42,11 +42,11 @@ trait SalaryNew {
         if (isset($PARAMS['applicable_from']) && $PARAMS['applicable_from'] == "") {
             $result['error'][] = "Please insert a valid applicable_from date";
         }
-        if (!isset($PARAMS['applicable_till'])) {
-            $result['error'][] = "Please add applicable_till ";
+        if (!isset($PARAMS['applicable_month'])) {
+            $result['error'][] = "Please add applicable_month ";
         }
-        if (isset($PARAMS['applicable_till']) && $PARAMS['applicable_till'] == "") {
-            $result['error'][] = "Please insert a valid Applicable till date ";
+        if (isset($PARAMS['applicable_month']) && $PARAMS['applicable_month'] == "") {
+            $result['error'][] = "Please insert a valid Applicable month ";
         }
         if (!isset($PARAMS['leave'])) {
             $result['error'][] = "Please add leave ";
@@ -120,6 +120,12 @@ trait SalaryNew {
         if (isset($PARAMS['arrear']) && $PARAMS['arrear'] === "") {
             $result['error'][] = "Please insert a valid arrear ";
         }
+        if (!isset($PARAMS['increment_amount'])) {
+            $result['error'][] = "Please add increment_amount ";
+        }
+        if (isset($PARAMS['increment_amount']) && $PARAMS['increment_amount'] === "") {
+            $result['error'][] = "Please insert a valid increment_amount ";
+        }
         
         if (sizeof($result['error']) <= 0) {
             foreach ($PARAMS as $key => $val) {
@@ -135,15 +141,15 @@ trait SalaryNew {
             }
         }
         
-        if (isset($PARAMS['token']) && $PARAMS['token'] != "") {        
-        
-            $tuserid = self::getIdUsingToken($PARAMS['token']); // get userid through login token.
-            $userinfo = self::getUserDetail($tuserid); // get user details
+        if (isset($PARAMS['token']) && $PARAMS['token'] != "") {      
             
             // added on 7th oct 2018 by arun -to get logged user details( role ) from token
             $decodedUserInfo = JWT::decode($PARAMS['token'], HR::JWT_SECRET_KEY);
             $decodedUserInfo = json_decode(json_encode($decodedUserInfo), true);
             $LOGGED_USER_ROLE = $decodedUserInfo['role'];
+            
+            $tuserid = $decodedUserInfo['id'];
+            $userinfo = self::getUserDetail($tuserid); // get user details
             
             $HR_CAN_ADD_SALARY = false;
             //check if employee total months in employment
@@ -178,22 +184,6 @@ trait SalaryNew {
         return $result;
     }
 
-    // get user id  on basis of access token
-    public static function getIdUsingToken($token) {
-        $db = self::getInstance();
-        $mysqli = $db->getConnection();
-
-        $token = mysqli_real_escape_string($mysqli, $token);
-        $q = "select * from login_tokens where token='$token' ";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRow($runQuery);
-        if (sizeof($rows) > 0) {
-            return $rows['userid'];
-        } else {
-            return false;
-        }
-    }
-
     //get details of an employee
     public function getUserDetail($userid) {
         $q = "SELECT users.*,user_profile.* FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id where users.status = 'Enabled' AND users.id = $userid";
@@ -210,6 +200,145 @@ trait SalaryNew {
         return $arr;
     }
     
+    //get all payslips info of a employee
+    public function getUserPayslipInfo($userid) {
+        $q = "select * from payslips where user_Id = $userid ORDER by id DESC";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        return $row;
+    }
+
+    //get Holding amount detail of a employee
+    public function getHoldingDetail($user_id) {
+        $ret = array();
+        $q = "select * from user_holding_info where user_Id = $user_id";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        $ret = $row;
+        return $ret;
+    }
+
+    //get employee salary info 
+    public function getSalaryInfo($userid, $sort = false, $date = false) {
+        
+        $q = "select * from salary where user_Id = $userid";
+
+        if ($sort == 'first_to_last') {
+            $q = "select * from salary where user_Id = $userid ORDER by id ASC";
+        }
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        
+        // calculate applicable month from applicable_from and applicable_till date
+        $applicable_month = 0;
+        foreach($rows as $key => $row){
+            if(isset($row['applicable_from']) && $row['applicable_from'] != "" && $row['applicable_from'] != "0000-00-00" ){
+                $applicable_from = $row['applicable_from'];
+            }            
+            if(isset($row['applicable_till']) && $row['applicable_till'] != "" && $row['applicable_till'] != "0000-00-00"){
+                $applicable_till = $row['applicable_till'];
+            }
+            if( isset($applicable_from) && isset($applicable_till) ){
+                $start = date('Ym', strtotime($applicable_from));
+                while($start < date("Ym", strtotime($applicable_till))){                    
+                    $applicable_month++;
+                    if(substr($start, 4, 2) == "12"){
+                        $start = (date("Y", strtotime($start)) + 1)."01";
+                    } else {
+                        $start++;
+                    }                    
+                }        
+            }
+            $rows[$key]['applicable_month'] = $applicable_month;
+            $applicable_month = 0;
+        }
+        
+        if ($date != false) {
+            $arr = array();
+            foreach ($rows as $val) {
+                if (strtotime($date) >= strtotime($val['applicable_from'])) {
+                    $arr[] = $val;
+                }
+            }
+            return $arr;
+        } else {
+            return $rows;
+        }
+    }
+
+    // get Salary details on basis of salary id of employee    
+    public function getSalaryDetail($salary_id) {
+        $ret = array();
+        $q = "select * from salary_details where salary_id = $salary_id";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        foreach ($row as $val) {
+            $ret[$val['key']] = $val['value'];
+        }
+        return $ret;
+    }
+
+    public static function getUserSalaryInfoById($PARAMS){
+        $res = array();
+        $token = $PARAMS['token'];
+
+        if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
+            $userid = $PARAMS['user_id'];
+            $userinfo = self::getUserDetail($userid);
+            if (sizeof($userinfo) <= 0) {
+                $res['error'] = 1;
+                $res['message'] = 'The given user id member not found';
+            } else {
+                $res['error'] = 0;
+                $res['data'] = $userinfo;
+                $res3 = self::getHoldingDetail($userid);
+                $resData = self::getSalaryInfo($userid);
+                
+                // start - check added so that salary greater than not to show to HR
+                $hideSalaryFromHR = false;
+                if( sizeof($resData ) > 0 ){
+                    foreach($resData as $salCheck ){
+                        if( $salCheck['total_salary'] && $salCheck['total_salary'] > 20000 ){
+                            $hideSalaryFromHR = true;
+                        }
+                    }
+                }
+                // end - check added so that salary greater than not to show to HR
+                $res4 = self::getUserPayslipInfo($userid);
+                $i = 0;
+                $res['data']['salary_details'] = array();
+                foreach ($resData as $val) {
+                    $res2 = self::getSalaryDetail($val['id']);
+                    $res2['test'] = $val;
+                    $res2['date'] = $val['applicable_from'];
+                    $res['data']['salary_details'][] = $res2;
+                    $i++;
+                }
+                $res['data']['holding_details'] = $res3;
+                $res['data']['payslip_history'] = $res4;
+    
+                $joining_date = $res['data']['date_of_joining'];
+                $current_date = date("Y-m-d");
+                $endDate = strtotime($current_date);
+                $startDate = strtotime($joining_date);
+                
+                $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
+                
+                // arun you have to work on this to enable this for hr role
+                $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);
+                if( strtolower( $loggedUserInfo->role ) == "hr"  &&  ( $numberOfMonths > 8 || $hideSalaryFromHR == true) ){
+                    $res['data'] = array();
+                    $res['data']['message'] = "You are not authorise to view this user data";
+                }
+    
+            }
+        } else {
+            $res['error'] = 1;
+            $res['message'] = 'The given user id member not found';
+        }
+
+        return $res;
+    }
 }
 
 ?>

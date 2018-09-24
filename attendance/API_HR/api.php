@@ -722,8 +722,15 @@ else if( $action == 'get_average_working_hours' ){
 else if ( $action == 'get_employees_history_stats' ){  
     $res = HR::getEmployeesHistoryStats();
 }
+
+/****************************************/
+/************ Salary Module *************/
+/****************************************/
 else if ( $action == 'add_new_salary' ){  
     $res = HR::add_salary_structure($PARAMS);
+}
+else if ( $action == 'get_user_salary_info_by_id' ){  
+    $res = HR::getUserSalaryInfoById($PARAMS);
 }
 
 echo json_encode($res);
