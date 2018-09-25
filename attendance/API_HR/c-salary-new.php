@@ -339,6 +339,32 @@ trait SalaryNew {
 
         return $res;
     }
+
+    //Delete salary detail of an employee
+    public static function API_deleteUserSalary($userid, $salaryid) {
+        $r_error = 1;
+        $r_message = "";
+        $r_data = array();
+        $return = array();
+        $q = " SELECT * FROM salary WHERE id = $salaryid AND user_Id = $userid ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if( sizeof($row) > 0 ){
+            $q = " DELETE FROM salary WHERE id = $salaryid ";
+            $runQuery = self::DBrunQuery($q);
+            $q2 = " DELETE FROM salary_details WHERE salary_id = $salaryid ";
+            $runQuery2 = self::DBrunQuery($q2);
+            $r_error = 0;            
+            $r_message = "Salary deleted successfully";
+
+        } else {
+            $r_message = "No Records Found.";
+        }
+        $r_data['message'] = $r_message;        
+        $return['error'] = $r_error;
+        $return['data'] = $r_data;
+        return $return;
+    }
 }
 
 ?>
