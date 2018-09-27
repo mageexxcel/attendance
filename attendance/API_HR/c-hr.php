@@ -356,11 +356,21 @@ class HR extends DATABASE {
         return $newRows;
     }
 
-    public static function getEnabledUsersListWithoutPass() {
+    public static function getEnabledUsersListWithoutPass($role = false) {
 
         $row = self::getEnabledUsersList();
+        $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];        
         foreach ($row as $val) {
             unset($val['password']);
+            if( strtolower($role) == 'guest' ){
+                foreach( $val as $key => $value ){
+                    foreach( $secureKeys as $secureKey ){
+                        if( $key == $secureKey ){
+                            unset($val[$key]);
+                        }
+                    }
+                }               
+            }
             $rows[] = $val;
         }
         $return = array();
