@@ -80,6 +80,21 @@ foreach( $actionsNotRequiredToken as $ac ){
 }
 // end -- check if action required token
 
+// check for secret key
+$secret_key = $PARAMS['secret_key'];
+if(isset($secret_key) && $secret_key != ""){
+    $validate_secret = HR::validateSecretKey($secret_key); 
+    if($validate_secret) {
+        $secret_actions = HR::getActionsForThirdPartyApiCall();
+        foreach( $secret_actions as $secret_action ){
+            if( $secret_action['name'] == $action ){
+                $DO_TOKEN_VERIFICATION = false;
+                $q = " UPDATE secret_tokens SET last_request = CURRENT_TIMESTAMP WHERE secret_key = '$secret_key' ";
+                $runQuery = HR::DBrunQuery($q);
+            }
+        }   
+    }
+}
 
 //validate a token
 //if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
@@ -724,6 +739,25 @@ else if( $action == 'get_average_working_hours' ){
 }
 else if ( $action == 'get_employees_history_stats' ){  
     $res = HR::getEmployeesHistoryStats();
+}
+/****************************************/
+/******* THIRD PARTY API's ************/
+/****************************************/
+else if ( $action == 'generate_secret_key' ){  
+    $app_name = $PARAMS['app_name'];
+    $user_id = $tokenInfo['id'];   
+    $res = HR::API_generateSecretKey( $app_name, $user_id );
+}
+else if ( $action == 'regenerate_secret_key' ){    
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_regenerateSecretKey( $app_id );
+}
+else if ( $action == 'delete_secret_key' ){  
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_deleteSecretKey( $app_id );
+}
+else if ( $action == 'get_all_secret_keys' ){  
+    $res = HR::API_getAllSecretKeys();
 }
 
 

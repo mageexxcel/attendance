@@ -700,6 +700,19 @@ trait Roles {
         return $array;
     }
 
+    public static function getActionsForThirdPartyApiCall(){
+        $array = array(
+            array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+            array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+            array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+            array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+            array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
+            array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
+            array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' )
+        );
+        return $array;
+    }
+
     // get page by id
     public static function getPageById( $id ){
         $return = false;
