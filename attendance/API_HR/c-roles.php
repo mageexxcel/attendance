@@ -700,7 +700,7 @@ trait Roles {
         return $array;
     }
 
-    public static function getActionsForSecretKey(){
+    public static function getActionsForThirdPartyApiCall(){
         $array = array(
             array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
             array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),

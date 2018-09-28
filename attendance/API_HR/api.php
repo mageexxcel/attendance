@@ -83,9 +83,9 @@ foreach( $actionsNotRequiredToken as $ac ){
 // check for secret key
 $secret_key = $PARAMS['secret_key'];
 if(isset($secret_key) && $secret_key != ""){
-    $validate_secret = HR::validateSecretKey($secret_key);  
+    $validate_secret = HR::validateSecretKey($secret_key); 
     if($validate_secret) {
-        $secret_actions = HR::getActionsForSecretKey();
+        $secret_actions = HR::getActionsForThirdPartyApiCall();
         foreach( $secret_actions as $secret_action ){
             if( $secret_action['name'] == $action ){
                 $DO_TOKEN_VERIFICATION = false;
@@ -748,19 +748,13 @@ else if ( $action == 'generate_secret_key' ){
     $user_id = $tokenInfo['id'];   
     $res = HR::API_generateSecretKey( $app_name, $user_id );
 }
-else if ( $action == 'regenerate_secret_key' ){
-    $app_name = $PARAMS['app_name'];
-    $secret_id = $PARAMS['secret_id'];
-    $user_id = $tokenInfo['id'];
-    $secret_info = [
-        'app_name' => $app_name,
-        'added_by_userid' => $user_id
-    ];
-    $res = HR::API_regenerateSecretKey( $secret_id, $secret_info );
+else if ( $action == 'regenerate_secret_key' ){    
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_regenerateSecretKey( $app_id );
 }
 else if ( $action == 'delete_secret_key' ){  
-    $secret_id = $PARAMS['secret_id'];
-    $res = HR::API_deleteSecretKey( $secret_id );
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_deleteSecretKey( $app_id );
 }
 else if ( $action == 'get_all_secret_keys' ){  
     $res = HR::API_getAllSecretKeys();

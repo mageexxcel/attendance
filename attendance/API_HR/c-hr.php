@@ -4,6 +4,7 @@ require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
 require_once 'c-holiday.php';
+require_once 'c-thirdParty.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -11,6 +12,7 @@ class HR extends DATABASE {
 
     use Roles;
     use Holiday;
+    use ThirdPartyAPI;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -6083,162 +6085,6 @@ class HR extends DATABASE {
             'data' => $r_data
         ];
 
-        return $return;
-    }
-
-    public static function validateSecretKey($secret_key){
-        $return = false;
-        $q = " SELECT * from secret_tokens WHERE secret_key = '$secret_key' ";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRows($runQuery);
-        if( sizeof($row) > 0 ){
-            $return = true;
-        }
-        return $return;
-    }
-
-    public static function generateSecretKey($length = 60){
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $secretKey = '';
-        for ($i = 0; $i < $length; $i++) {
-            $secretKey .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $secretKey;
-    }
-
-    public static function checkIfAppNameExist($app_name){
-        $return = false;
-        $q = " SELECT * FROM secret_tokens WHERE app_name = '$app_name' ";       
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            $return = true;
-        }
-        return $return;
-    }
-
-    public static function API_generateSecretKey( $app_name, $user_id ){
-        $r_error = 0;
-        $r_data = array();
-        $return = array();
-
-        if( isset($app_name) && $app_name != "" ){
-            $app_exist = self::checkIfAppNameExist($app_name);
-            if( $app_exist ) {
-                $r_error = 1;
-                $r_data['message'] = "App already exist";           
-            } else {
-                $secret_key = self::generateSecretKey();
-                $secret_info = [
-                    'app_name' => $app_name,
-                    'secret_key' => $secret_key,
-                    'added_by_userid' => $user_id
-                ];
-                $generate_secret_key = self::DBinsertQuery('secret_tokens', $secret_info);
-                if( $generate_secret_key ){
-                    $r_data['message'] = 'Secret key generated successfully.';
-                } else {
-                    $r_error = 1;
-                    $r_data['message'] = 'Unable to generate secret key.';
-                }
-            }
-            
-        } else {
-            $r_error = 1;
-            $r_data['message'] = 'Please provide App name';
-        }                
-        $return = [
-            'error' => $r_error,
-            'data' => $r_data
-        ];
-        return $return;
-    }
-
-    public static function API_regenerateSecretKey( $secret_id, $secret_info ){    
-        $r_error = 0;
-        $r_data = array();
-        $return = array();  
-        $q = " SELECT * from secret_tokens WHERE id = $secret_id ";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        $secret_key = self::generateSecretKey();
-        if( sizeof($rows) > 0 ){
-            $q = " UPDATE secret_tokens SET secret_key = '$secret_key', added_on = CURRENT_TIMESTAMP WHERE id = $secret_id ";
-            $runQuery = self::DBrunQuery($q);
-            if($runQuery){
-                $r_data['message'] = 'Secret key regenerated successfully';
-            } else {
-                $r_error = 1;
-                $r_data['message'] = 'Secret key regeneration failed';
-            }
-        } else {
-            $app_exist = self::checkIfAppNameExist($secret_info['app_name']);
-            if( $app_exist ){
-                $r_error = 1;
-                $r_data['message'] = "App already exist";
-            } else {
-                $secret_info['secret_key'] = $secret_key;
-                $ins_secret_info = self::DBinsertQuery('secret_tokens', $secret_info);
-                if($ins_secret_info){
-                    $r_data['message'] = 'Secret key inserted successfully';
-                } else {
-                    $r_error = 1;
-                    $r_data['message'] = 'Secret key insertion failed';
-                }
-            }
-        }
-        $return = [
-            'error' => $r_error,
-            'data' => $r_data
-        ];
-        return $return;
-    }
-
-    public static function API_deleteSecretKey( $secret_id ){
-        $r_error = 0;
-        $r_data = array();
-        $return = array();
-        $q = " SELECT * FROM secret_tokens WHERE id = $secret_id ";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            $q = " DELETE FROM secret_tokens WHERE id = $secret_id ";
-            $runQuery = self::DBrunQuery($q);
-            if($runQuery) {
-                $r_data['message'] = 'Secret key deleted successfully';    
-            } else {
-                $r_error = 1;
-                $r_data['message'] = 'Secret key deletion failed';    
-            }            
-        } else {
-            $r_error = 1;
-            $r_data['message'] = 'No Records Found';
-        }
-        $return = [
-            'error' => $r_error,
-            'data' => $r_data
-        ];
-        return $return;        
-    }
-
-    public static function API_getAllSecretKeys(){
-        $r_error = 0;
-        $r_data = array();
-        $return = array();
-        $q = " SELECT * FROM secret_tokens ";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            $r_data['secret_info'] = $rows;
-        } else {
-            $r_error = 1;
-            $r_data['message'] = 'No Records Found';
-        }
-        $return = [
-            'error' => $r_error,
-            'data' => $r_data
-        ];
         return $return;
     }
 
