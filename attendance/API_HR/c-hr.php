@@ -4,7 +4,7 @@ require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
 require_once 'c-holiday.php';
-require_once 'c-thirdParty.php';
+require_once 'c-thirdPartyApi.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
