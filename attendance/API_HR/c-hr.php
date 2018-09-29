@@ -1061,7 +1061,7 @@ class HR extends DATABASE {
                 $runQuery = self::DBrunQuery($q);
                 $rows = self::DBfetchRows($runQuery);
                 
-                if( count($rows) > 1 ){
+                if( count($rows) > 0 ){
                     
                     $q = "DELETE FROM attendance WHERE timing like '%$year%'";
                     $runQuery = self::DBrunQuery($q);
