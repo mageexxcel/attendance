@@ -141,7 +141,7 @@ trait Holiday {
 
         $list = array(
             array('type' => self::$NORMAL_HOLIDAY, 'text' => 'Normal'),
-            array('type' => self::$RESTRICTED_HOLIDAY, 'text' => 'Restricted'),
+            // array('type' => self::$RESTRICTED_HOLIDAY, 'text' => 'Restricted'),
         );
 
         return $list;
