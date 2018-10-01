@@ -2691,7 +2691,7 @@ class HR extends DATABASE {
         $data['email']['body'] = $mail_body;
         $data['email']['email_id'] = $work_email;
         self::sendEmail($data);
-        $r_message = "Welcome mail sent!!";
+        $r_message = "Birthday wish sent!!";
         return $r_message;
     }
 
