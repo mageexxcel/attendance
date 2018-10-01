@@ -2657,6 +2657,44 @@ class HR extends DATABASE {
 
     //end New Employee Welcome Email
 
+    public static function sendBirthdayWishEmail($userID){
+        $userInfo = self::getUserInfo($userID);
+
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='Birthday Wish'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if(empty($row)) {
+           $r_message = "Warning - Birthday Wish template not found!!";
+           return $r_message; 
+        }
+        $mail_body = $row[0]['body'];
+        $mail_subject = $row[0]['subject'];       
+        $work_email = $userInfo['work_email'];
+        $replace_to = array();
+        $replace_to[0] = $userInfo['name'];
+        $replace_from = array('#employee_name');
+
+        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
+        
+        // Fetching value of Variables in Template
+        $q2 = 'Select * from template_variables';
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRows($runQuery2);
+        foreach ($row2 as $s) {
+            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
+        }
+        
+        $data = array();
+        $data['email']['subject'] = $mail_subject;
+        $data['email']['name'] = $userInfo['name'];
+        $data['email']['body'] = $mail_body;
+        $data['email']['email_id'] = $work_email;
+        self::sendEmail($data);
+        $r_message = "Welcome mail sent!!";
+        return $r_message;
+    }
+
     //Leave of New Employee
 
     public static function applyNewEmployeeLeaves($userID) {
