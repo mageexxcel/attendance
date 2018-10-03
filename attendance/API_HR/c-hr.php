@@ -998,7 +998,6 @@ class HR extends DATABASE {
     public static function API_getStatsAttendanceSummary() {
 
         $r_error = 0;
-        $r_message = "";
         $r_data = array();
         $return = array();
         $attendance_rows = array();
@@ -1030,11 +1029,11 @@ class HR extends DATABASE {
             }
         }
         
+        $r_data['message'] = '';
         $r_data['attendance_rows'] = $attendance_rows;
         
         $return = [
             'error' => $r_error,
-            'message' => $r_message,
             'data' => $r_data
         ];
 
@@ -1044,7 +1043,7 @@ class HR extends DATABASE {
     public static function API_deleteAttendanceStatsSummary($year) {
 
         $r_error = 0;
-        $r_message = "";
+        $r_data = array();
         $return = array();
         $current_year = date('Y');
         $previous_year = $current_year - 1;
@@ -1053,7 +1052,7 @@ class HR extends DATABASE {
 
             if ( $year == $current_year || $year == $previous_year ) {
                 $r_error = 1;
-                $r_message = "Can't delete current or previous year attendance.";
+                $r_data['message'] = "Can't delete current or previous year attendance.";
     
             } else {
     
@@ -1065,11 +1064,11 @@ class HR extends DATABASE {
                     
                     $q = "DELETE FROM attendance WHERE timing like '%$year%'";
                     $runQuery = self::DBrunQuery($q);
-                    $r_message = "Records deleted for " . $year;
+                    $r_data['message'] = "Records deleted for " . $year;
     
                 } else {
                     $r_error = 1;
-                    $r_message = "Records not found for " . $year;
+                    $r_data['message'] = "Records not found for " . $year;
                 }
     
             }
@@ -1082,18 +1081,18 @@ class HR extends DATABASE {
             if ( count($rows) > 1 ) {
                 $q = "DELETE FROM attendance WHERE timing like '__:%'";
                 $runQuery = self::DBrunQuery($q);
-                $r_message = "Junk Records deleted";
+                $r_data['message'] = "Junk Records deleted";
 
             } else {
                 $r_error = 1;
-                $r_message = "No Junk Records Found";
+                $r_data['message'] = "No Junk Records Found";
             }
         }
 
         
         $return = [
             'error' => $r_error,
-            'message' => $r_message
+            'data' => $r_data
         ];
 
         return $return;        
