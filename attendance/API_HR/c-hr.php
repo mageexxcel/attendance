@@ -6136,6 +6136,7 @@ class HR extends DATABASE {
     public static function API_getEmployeesLeavesStats( $year, $month ){
         $r_error = 0;
         $r_data = array();
+        $stats = array();
         $return = array();
         $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
         $days = self::getDaysOfMonth( $year, $month );
@@ -6181,9 +6182,10 @@ class HR extends DATABASE {
             if( !isset($day['cancelled_request']) ){
                 $days[$key]['cancelled_request'] = 0;
             }
+            $stats[]= $days[$key];
         }        
         $r_data = [
-            'stats' => $days
+            'stats' => $stats
         ];
         $return = [
             'error' => $r_error,
