@@ -1839,12 +1839,8 @@ class HR extends DATABASE {
         $year = date('Y', strtotime($from_date));
         $month = date('m', strtotime($from_date));
         $applied_days = self::getDaysBetweenLeaves( $from_date, $to_date );
-        $users = self::getEnabledUsersListWithoutPass();
-        foreach( $users['data'] as $key => $user ){
-            if( $user['user_Id'] == $userid ){
-                $team = $user['team'];
-            }
-        }
+        $applied_user_info = self::getUserInfo($userid);
+        $team = $applied_user_info['team'];
         $leaves = self::getLeavesForYearMonth( $year, $month );
         foreach( $leaves as $leave ){
             $userInfo = self::getUserInfo( $leave['user_Id'] );
