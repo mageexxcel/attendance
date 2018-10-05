@@ -6125,6 +6125,73 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getLeavesForYearMonth( $year, $month ){
+        $year_month = $year . "-" . $month;
+        $q = " SELECT * FROM leaves WHERE from_date LIKE '$year_month%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function API_getEmployeesLeavesStats( $year, $month ){
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
+        $days = self::getDaysOfMonth( $year, $month );
+        foreach( $monthly_leaves as $key => $leave ){ 
+            $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] );             
+            foreach($days_between_leaves['data']['days'] as $day_between_leave){
+                foreach($days as $key => $day){                                
+                    if($day_between_leave['type'] == 'working'){
+                        if($day_between_leave['full_date'] == $day['full_date']){
+                            if($leave['status'] == 'Approved'){
+                                $days[$key]['approved']++;
+                            }
+                            if($leave['status'] == 'Pending'){
+                                $days[$key]['pending']++;
+                            }
+                            if($leave['status'] == 'Rejected'){
+                                $days[$key]['rejected']++;
+                            }
+                            if($leave['status'] == 'Cancelled'){
+                                $days[$key]['cancelled']++;
+                            }
+                            if($leave['status'] == 'Cancelled Request'){
+                                $days[$key]['cancelled_request']++;
+                            }                            
+                        } 
+                    }
+                }        
+            }            
+        }
+        foreach( $days as $key => $day ){
+            if( !isset($day['approved']) ) {
+                $days[$key]['approved'] = 0;
+            }
+            if( !isset($day['pending']) ){
+                $days[$key]['pending'] = 0;
+            }
+            if( !isset($day['rejected']) ){
+                $days[$key]['rejected'] = 0;
+            }
+            if( !isset($day['cancelled']) ){
+                $days[$key]['cancelled'] = 0;
+            }
+            if( !isset($day['cancelled_request']) ){
+                $days[$key]['cancelled_request'] = 0;
+            }
+        }        
+        $r_data = [
+            'stats' => $days
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];     
+        return $return;           
+    }
+
 }
 
 new HR();
