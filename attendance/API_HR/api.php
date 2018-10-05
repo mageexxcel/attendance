@@ -759,6 +759,14 @@ else if ( $action == 'delete_secret_key' ){
 else if ( $action == 'get_all_secret_keys' ){  
     $res = HR::API_getAllSecretKeys();
 }
+/****************************************/
+/************* Leaves Stats *************/
+/****************************************/
+else if ( $action == 'get_employees_leaves_stats' ){  
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::API_getEmployeesLeavesStats( $year, $month );
+}
 
 
 echo json_encode($res);
