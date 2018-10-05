@@ -1833,10 +1833,47 @@ class HR extends DATABASE {
         return true; // means set status_merged to 1
     }
 
+    public static function checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date ){
+        $check = false;
+        $team = ""; 
+        $year = date('Y', strtotime($from_date));
+        $month = date('m', strtotime($from_date));
+        $applied_days = self::getDaysBetweenLeaves( $from_date, $to_date );
+        $users = self::getEnabledUsersListWithoutPass();
+        foreach( $users['data'] as $key => $user ){
+            if( $user['user_Id'] == $userid ){
+                $team = $user['team'];
+            }
+        }
+        $leaves = self::getLeavesForYearMonth( $year, $month );
+        foreach( $leaves as $leave ){
+            $userInfo = self::getUserInfo( $leave['user_Id'] );
+            if( strtolower($userInfo['team']) == strtolower($team) ){
+                $check_days = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] );
+                foreach( $applied_days['data']['days'] as $applied_day ){
+                    foreach( $check_days['data']['days'] as $check_day ){
+                        if( $applied_day['type'] == 'working' ){
+                            if( $applied_day['full_date'] == $check_day['full_date'] ){
+                                $check = true;
+                            }
+                        }
+                    }
+                }
+            }             
+        }
+        return $check;
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $db = self::getInstance();
         $mysqli = $db->getConnection();
+
+        $alert_message = "";
+        $check = self::checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date );
+        if( $check ){
+            $alert_message = "Another team member already has applied during this period so leave approve will depend on project.";
+        }
 
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
@@ -1875,14 +1912,14 @@ class HR extends DATABASE {
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
             if ($day_status == "2") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason  \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } elseif ($day_status == "1") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } else {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             }
 
             if ($late_reason != "") {
