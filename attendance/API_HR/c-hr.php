@@ -6172,12 +6172,17 @@ class HR extends DATABASE {
         $stats = array();
         $return = array();
         $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
-        $days = self::getDaysOfMonth( $year, $month );
-        foreach( $monthly_leaves as $key => $leave ){ 
-            $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] );             
-            foreach($days_between_leaves['data']['days'] as $day_between_leave){
-                foreach($days as $key => $day){                                
-                    if($day_between_leave['type'] == 'working'){
+        $days = self::getGenericMonthSummary( $year, $month );        
+        $removableKeys = ['day_text', 'in_time', 'out_time', 'total_time', 'extra_time', 'text', 'admin_alert', 'admin_alert_message', 'orignal_total_time'];
+        foreach( $monthly_leaves as $leave ){ 
+            $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] ); 
+            foreach($days as $key => $day){   
+                $days[$key]['day'] = substr($day['day'], 0, 3);
+                foreach( $removableKeys as $removableKey ){
+                    unset($days[$key][$removableKey]);
+                }
+                foreach($days_between_leaves['data']['days'] as $day_between_leave){
+                    if( strtolower($day_between_leave['type']) == 'working' ){
                         if($day_between_leave['full_date'] == $day['full_date']){
                             if($leave['status'] == 'Approved'){
                                 $days[$key]['approved']++;
@@ -6196,7 +6201,7 @@ class HR extends DATABASE {
                             }                            
                         } 
                     }
-                }        
+                } 
             }            
         }
         foreach( $days as $key => $day ){
