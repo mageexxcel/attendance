@@ -6170,8 +6170,7 @@ class HR extends DATABASE {
         $r_error = 0;
         $r_data = array();
         $stats = array();
-        $return = array();        
-        $weekendsOfMonth = self::getWeekendsOfMonth( $year, $month );
+        $return = array();
         $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
         $days = self::getGenericMonthSummary( $year, $month );        
         $removableKeys = ['day_text', 'in_time', 'out_time', 'total_time', 'extra_time', 'text', 'admin_alert', 'admin_alert_message', 'orignal_total_time'];
