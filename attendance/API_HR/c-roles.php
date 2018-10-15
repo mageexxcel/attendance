@@ -708,7 +708,9 @@ trait Roles {
             array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
             array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
             array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
-            array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' )
+            array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' ),
+            array( 'id' => self::$ACTION_get_user_profile_detail_by_id, 'name' => 'get_user_profile_detail_by_id' ),
+            array( 'id' => self::$ACTION_update_user_profile_detail_by_id, 'name' => 'update_user_profile_detail_by_id' ),            
         );
         return $array;
     }

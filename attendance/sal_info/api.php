@@ -22,10 +22,12 @@ $res = array(
 
 //validate a token
 $token = $PARAMS['token'];
-$validateToken = Salary::validateToken($token);
-if ($validateToken == false) {
-    header("HTTP/1.1 401 Unauthorized");
-    exit;
+if( !isset($PARAMS['secret_key']) || $PARAMS['secret_key'] == "" ){
+    $validateToken = Salary::validateToken($token);
+    if ($validateToken == false) {
+        header("HTTP/1.1 401 Unauthorized");
+        exit;
+    }
 }
 
 
@@ -39,6 +41,22 @@ $actionsNotRequiredToken = HR::getActionsNotRequiredToken();
 foreach( $actionsNotRequiredToken as $ac ){
     if( $ac['name'] == $action ){
         $DO_TOKEN_VERIFICATION = false;
+    }
+}
+
+// check for secret key
+$secret_key = $PARAMS['secret_key'];
+if(isset($secret_key) && $secret_key != ""){
+    $validate_secret = HR::validateSecretKey($secret_key); 
+    if($validate_secret) {
+        $secret_actions = HR::getActionsForThirdPartyApiCall();
+        foreach( $secret_actions as $secret_action ){
+            if( $secret_action['name'] == $action ){
+                $DO_TOKEN_VERIFICATION = false;
+                $q = " UPDATE secret_tokens SET last_request = CURRENT_TIMESTAMP WHERE secret_key = '$secret_key' ";
+                $runQuery = HR::DBrunQuery($q);
+            }
+        }   
     }
 }
 
