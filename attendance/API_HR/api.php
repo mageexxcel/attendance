@@ -708,6 +708,11 @@ else if ( $action == 'add_inventory_audit' ){
     $inventory_id = $PARAMS['inventory_id'];
     $audit_message = $PARAMS['audit_message'];
     $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
+    // update user token when he audit the inventory
+    if( HR::isInventoryAuditPending( $logged_user_id ) == false ){
+        $newToken = HR::refreshToken( $token );
+        $res['data']['new_token'] = $newToken;
+    }
 }
 
 else if( $action == 'get_inventory_audit_status_month_wise' ){
