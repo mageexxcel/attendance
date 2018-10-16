@@ -595,6 +595,20 @@ class Salary extends DATABASE {
         if (empty(self::$isAdmin)) {
             unset($row['holding_comments']);
         }
+        // addition on 21st june 2018 by arun to return profile image also. i.e slack image
+        $slack_image = "";
+        $allSlackUsers = self::getSlackUsersList();
+        foreach ($allSlackUsers as $s) {
+            if ($s['profile']['email'] == $row['work_email']) {
+                $sl = $s;
+                break;
+            }
+        }
+        if (sizeof($sl) > 0) {
+            $slack_image = $sl['profile']['image_192'];
+        }
+        $row['profileImage'] = $slack_image;
+
         $arr = "";
         $arr = $row;
         return $arr;
@@ -1106,6 +1120,24 @@ class Salary extends DATABASE {
         return $return;
     }
 
+    public static function _getCurrentMonth($year, $month) {
+        $currentMonthDate = date('Y-m-d', strtotime("$year-$month-01"));
+        $currentMonth = array();
+        $currentMonth['year'] = date('Y', strtotime($currentMonthDate));
+        $currentMonth['month'] = date('m', strtotime($currentMonthDate));
+        $currentMonth['monthName'] = date('F', strtotime($currentMonthDate));
+        return $currentMonth;
+    }
+
+    public static function _getPreviousMonth($year, $month) {
+        $previousMonthDate = date('Y-m-d', strtotime('-1 month', strtotime("$year-$month-01")));
+        $previousMonth = array();
+        $previousMonth['year'] = date('Y', strtotime($previousMonthDate));
+        $previousMonth['month'] = date('m', strtotime($previousMonthDate));
+        $previousMonth['monthName'] = date('F', strtotime($previousMonthDate));
+        return $previousMonth;
+    }
+
 // get employee particular month and year  salary details 
     public function getUserManagePayslip($userid, $year, $month, $extra_arrear, $arrear_for_month) {
         
@@ -1157,21 +1189,63 @@ class Salary extends DATABASE {
         $actual_salary_detail['net_salary'] = $actual_salary_detail['total_earning'] - $actual_salary_detail['total_deduction'];
         // get employee month payslip info   
         $res = self::getUserPayslipInfo($userid);
+        // echo '<pre>';
+        // print_r( $res );
+
+        // changes done on 7ht june 2018 by arun
+        // this was the calulcation to have the leave balance and every time it was returning the latest leave balance
+        // even if we were viewing many months back payslip
+        // to fix this we need to we need to process on the basis of month opted
+
         if (sizeof($res) > 0) {
-            if ($res[0]['month'] == $month) {
-                if ($res[1]['final_leave_balance'] == "") {
-                    $balance_leave = 0;
+
+            // 7 June 2018 : first check if we are calculating for previous month of current month
+            // if above condition is true then old logic else new logic will be implemented to call the balance leave
+            $currentYear = date('Y');
+            $currentMonth = date('m');
+
+            $current_month_previous_month_year = self::_getPreviousMonth( $currentYear, $currentMonth);
+            $current_month_previous_year = $current_month_previous_month_year['year'];
+            $current_month_previous_month = $current_month_previous_month_year['month'];
+
+
+            if( $current_month_previous_year == $year && $current_month_previous_month == $month ){
+                // start old logic
+                if ($res[0]['month'] == $month) {
+                    if ($res[1]['final_leave_balance'] == "") {
+                        $balance_leave = 0;
+                    } else {
+                        $balance_leave = $res[1]['final_leave_balance'];
+                    }
                 } else {
-                    $balance_leave = $res[1]['final_leave_balance'];
+                    if ($res[0]['final_leave_balance'] == "") {
+                        $balance_leave = 0;
+                    } else {
+                        $balance_leave = $res[0]['final_leave_balance'];
+                    }
                 }
+                // end old logic
             } else {
-                if ($res[0]['final_leave_balance'] == "") {
-                    $balance_leave = 0;
-                } else {
-                    $balance_leave = $res[0]['final_leave_balance'];
-                }
+                // start new logic
+                $previousMonthDetails = self::_getPreviousMonth( $year, $month);
+                $balance_leave_check_of_month = $previousMonthDetails['month'];
+                $balance_leave_check_of_year = $previousMonthDetails['year'];
+
+                $balance_leave = 0;
+
+                foreach( $res as $ps ){
+                    if( $ps['year'] ==  $balance_leave_check_of_year && $ps['month'] == $balance_leave_check_of_month ){
+                        if( $ps['final_leave_balance'] != '' ){
+                            $balance_leave = $ps['final_leave_balance'];
+                            break;
+                        } 
+                    }
+                }// end new logic
             }
         }
+
+        // echo "$balance_leave -- <br>";
+
         // if no data of employee in payslips table   
         if (sizeof($res) <= 0) {
             //get employee detail from payslip table of previous  hr system
@@ -1335,16 +1409,35 @@ class Salary extends DATABASE {
         return $list;
     }
 
-    // get weekends off days list
+    // get weekends off list
     public static function getWeekendsOfMonth($year, $month) {
+        // echo $year.'-----'.$month.'*******';
         $list = array();
         $monthDays = self::getDaysOfMonth($year, $month);
-        $alternateSaturdayCheck = false;
+
+        $firstSatOff = false;
+
+        if( $year >= 2018 && $month >= 03 ){
+            $firstSatOff = true;            
+        }
+
+        $alternateSaturdayCheck = false; // this is change from false to true to make 1st saturday off
+        if($firstSatOff == true ){
+            $alternateSaturdayCheck = true;
+        }
+
+        $saturdayCount = 0; // to make 5th saturday working
+
         foreach ($monthDays as $k => $v) {
-            if ($v['day'] == self::$Sunday) {
+            if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
             }
-            if ($v['day'] == self::$Saturday) {
+            if ($v['day'] == 'Saturday') { 
+                $saturdayCount++; // to make 5th saturday working
+                if( $saturdayCount == 5 ){ // to make 5th saturday working
+                    $alternateSaturdayCheck = false; // to make 5th saturday working
+                } // to make 5th saturday working
+
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -1353,12 +1446,14 @@ class Salary extends DATABASE {
                 }
             }
         }
-        //exclude working weekend from month weekends   
+
+        //exclude working weekend from month weekends
         $list2 = self::getWorkingHoursOfMonth($year, $month);
 
         $pop = array();
 
         $pop = array_diff_key($list, $list2);
+
         return $pop;
     }
 

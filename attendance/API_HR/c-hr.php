@@ -3,12 +3,16 @@
 require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
+require_once 'c-holiday.php';
+require_once 'c-thirdPartyApi.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
 class HR extends DATABASE {
 
     use Roles;
+    use Holiday;
+    use ThirdPartyAPI;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -172,19 +176,28 @@ class HR extends DATABASE {
             // print_r( $u) ;
             // end - get user role and then role pages
 
-            //start - check if policy docs are read
+            
             $u['is_policy_documents_read_by_user'] = 1;
+            $u['is_inventory_audit_pending'] = 0; 
             if( strtolower( $userInfo['type'] ) == 'admin' ){ // this is super admin
 
             }else{
+                //start - check if policy docs are read
                 $is_policy_documents_read_by_user = self::is_policy_documents_read_by_user( $userInfo['user_Id'] );
                 if( $is_policy_documents_read_by_user == false ){
                     $u['is_policy_documents_read_by_user'] = 0;
                     $u['role_pages'] = self::getGenericPagesForAllRoles('');
                 }
-            }
-            //end - check if policy docs are read
+                //end - check if policy docs are read
 
+                // start - check audit is pending or not                       
+                if( HR::isInventoryAuditPending($userid) ){
+                    $u['is_inventory_audit_pending'] = 1;
+                    $u['role_pages'] = self::getGenericPagesForAllRoles('');
+                }
+                // end - check audit is pending or not
+            }
+   
             // echo '<pre>';
             // print_r( $u );
 
@@ -346,11 +359,21 @@ class HR extends DATABASE {
         return $newRows;
     }
 
-    public static function getEnabledUsersListWithoutPass() {
+    public static function getEnabledUsersListWithoutPass($role = false) {
 
         $row = self::getEnabledUsersList();
+        $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];        
         foreach ($row as $val) {
             unset($val['password']);
+            if( strtolower($role) == 'guest' ){
+                foreach( $val as $key => $value ){
+                    foreach( $secureKeys as $secureKey ){
+                        if( $key == $secureKey ){
+                            unset($val[$key]);
+                        }
+                    }
+                }               
+            }
             $rows[] = $val;
         }
         $return = array();
@@ -473,7 +496,31 @@ class HR extends DATABASE {
         $return['seconds_actual_worked_time'] = $r_total_time;
         $return['seconds_extra_time'] = $r_extra_time;
 
+        // calulate active hours, i.e the time user was in the office
+        $insideOfficeTime =  self::getInsideOfficeTime($dayRaw);
+        $return['office_time_inside'] = $insideOfficeTime['inside_time_seconds'];
+
         return $return;
+    }
+
+    //
+    public static function getInsideOfficeTime( $dayPunches ){
+        $totalInsideTime = 0;
+        if( sizeOf( $dayPunches ) > 1 ){
+            $b = array_chunk($dayPunches,2);            
+            foreach( $b as $break ){
+                if( sizeof($break) == 2 ){
+                    $startInside = $break[0]['timestamp'];
+                    $endInside = $break[1]['timestamp'];
+                    $timeInside = $endInside - $startInside;
+                    $totalInsideTime += $timeInside;                    
+                }
+            }
+           
+        }
+        $ret = array();
+        $ret['inside_time_seconds'] = $totalInsideTime;
+        return $ret;
     }
 
     // get generic month days will have date, day, and full date
@@ -522,6 +569,7 @@ class HR extends DATABASE {
         $q = "SELECT * FROM holidays";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+        $holiday_type = self::getHolidayTypesList();        
         $list = array();
         foreach ($rows as $pp) {
             $h_date = $pp['date'];
@@ -532,6 +580,11 @@ class HR extends DATABASE {
                 $h_date = date("d", strtotime($h_date));
                 $pp['date'] = $h_date;
                 $pp['full_date'] = $h_full_date; // added on 27 for daysbetwweb leaves
+                for($i = 0; $i < count($holiday_type); $i++){
+                    if($pp['type'] == $holiday_type[$i]['type']){
+                        $pp['type_text'] = $holiday_type[$i]['text'];
+                    }
+                }
                 $list[$h_date] = $pp;
             }
         }
@@ -555,11 +608,18 @@ class HR extends DATABASE {
             $alternateSaturdayCheck = true;
         }
 
+        $saturdayCount = 0; // to make 5th saturday working
+
         foreach ($monthDays as $k => $v) {
             if ($v['day'] == 'Sunday') {
                 $list[$k] = $v;
             }
-            if ($v['day'] == 'Saturday') {
+            if ($v['day'] == 'Saturday') { 
+                $saturdayCount++; // to make 5th saturday working
+                if( $saturdayCount == 5 ){ // to make 5th saturday working
+                    $alternateSaturdayCheck = false; // to make 5th saturday working
+                } // to make 5th saturday working
+
                 if ($alternateSaturdayCheck == true) {
                     $list[$k] = $v;
                     $alternateSaturdayCheck = false;
@@ -568,6 +628,7 @@ class HR extends DATABASE {
                 }
             }
         }
+
         //exclude working weekend from month weekends
         $list2 = self::getWorkingHoursOfMonth($year, $month);
 
@@ -885,6 +946,7 @@ class HR extends DATABASE {
                 $v['seconds_actual_working_time'] = $userMonthPunching[$k]['seconds_actual_working_time'];
                 $v['seconds_actual_worked_time'] = $userMonthPunching[$k]['seconds_actual_worked_time'];
                 $v['seconds_extra_time'] = $userMonthPunching[$k]['seconds_extra_time'];
+                $v['office_time_inside'] = $userMonthPunching[$k]['office_time_inside'];
 
                 $return[$k] = $v;
             } else {
@@ -932,6 +994,109 @@ class HR extends DATABASE {
 
 
         return $finalReturn;
+    }
+
+    public static function API_getStatsAttendanceSummary() {
+
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $attendance_rows = array();
+
+        $q = "SELECT * from attendance ORDER BY timing ASC";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+
+        foreach($rows as $key => $date){
+            $full_date = explode(" ", $date['timing']);
+            $explode_full_date = explode("-", $full_date[0]);
+            $year = $explode_full_date[2];
+
+            $flag = false;
+            if(count($attendance_rows)){
+                foreach($attendance_rows as $key => $attendance){
+                    if($attendance['year'] == $year){
+                        $attendance_rows[$key]['count']++;
+                        $flag = true;
+                        break;
+                    } 
+                }
+            }
+            if($flag == false){
+                $attendance_rows[] = [
+                    'year' => $year,
+                    'count' => 1
+                ];
+            }
+        }
+        
+        $r_data['message'] = '';
+        $r_data['attendance_rows'] = $attendance_rows;
+        
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
+    public static function API_deleteAttendanceStatsSummary($year) {
+
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $current_year = date('Y');
+        $previous_year = $current_year - 1;
+        
+        if ( isset($year) && $year != "" ) {
+
+            if ( $year == $current_year || $year == $previous_year ) {
+                $r_error = 1;
+                $r_data['message'] = "Can't delete current or previous year attendance.";
+    
+            } else {
+    
+                $q = "SELECT * from attendance where timing like '%$year%'";
+                $runQuery = self::DBrunQuery($q);
+                $rows = self::DBfetchRows($runQuery);
+                
+                if( count($rows) > 0 ){
+                    
+                    $q = "DELETE FROM attendance WHERE timing like '%$year%'";
+                    $runQuery = self::DBrunQuery($q);
+                    $r_data['message'] = "Records deleted for " . $year;
+    
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Records not found for " . $year;
+                }
+    
+            }
+    
+        } else {
+            $q = "SELECT * from attendance where timing like '__:%'";
+            $runQuery = self::DBrunQuery($q);
+            $rows = self::DBfetchRows($runQuery);
+            
+            if ( count($rows) > 1 ) {
+                $q = "DELETE FROM attendance WHERE timing like '__:%'";
+                $runQuery = self::DBrunQuery($q);
+                $r_data['message'] = "Junk Records deleted";
+
+            } else {
+                $r_error = 1;
+                $r_data['message'] = "No Junk Records Found";
+            }
+        }
+
+        
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;        
     }
 
     public static function _beautyMonthSummary($monthAttendace) {
@@ -1583,6 +1748,8 @@ class HR extends DATABASE {
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $list = array();
+        
+        $type_text = self::getHolidayTypesList();
 
         if ($year == false) {
             $list = $rows;
@@ -1590,12 +1757,17 @@ class HR extends DATABASE {
             foreach ($rows as $pp) {
                 $h_date = $pp['date'];
                 $h_year = date('Y', strtotime($h_date));
+                foreach($type_text as $text){
+                    if( $pp['type'] == $text['type'] ){
+                        $pp['type_text'] = $text['text'];
+                    }
+                }
                 if ($h_year == $year) {
                     $list[] = $pp;
-                }
+                }                
             }
         }
-
+        
         if (sizeof($list) > 0) {
             foreach ($list as $key => $v) {
                 $list[$key]['month'] = date('F', strtotime($v['date']));
@@ -1603,8 +1775,9 @@ class HR extends DATABASE {
             }
         }
 
-
+        
         $r_error = 0;
+        $r_data = array();
         $return = array();
         $return['error'] = $r_error;
         $r_data['message'] = "";
@@ -1661,19 +1834,57 @@ class HR extends DATABASE {
         return true; // means set status_merged to 1
     }
 
+    public static function checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date ){
+        $check = false;
+        $team = ""; 
+        $year = date('Y', strtotime($from_date));
+        $month = date('m', strtotime($from_date));
+        $applied_days = self::getDaysBetweenLeaves( $from_date, $to_date );
+        $applied_user_info = self::getUserInfo($userid);
+        $team = $applied_user_info['team'];
+        $leaves = self::getLeavesForYearMonth( $year, $month );
+        foreach( $leaves as $leave ){
+            $userInfo = self::getUserInfo( $leave['user_Id'] );
+            if( strtolower($userInfo['team']) == strtolower($team) ){
+                $check_days = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] );
+                foreach( $applied_days['data']['days'] as $applied_day ){
+                    foreach( $check_days['data']['days'] as $check_day ){
+                        if( $applied_day['type'] == 'working' ){
+                            if( $applied_day['full_date'] == $check_day['full_date'] ){
+                                $check = true;
+                            }
+                        }
+                    }
+                }
+            }             
+        }
+        return $check;
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
+        $alert_message = "";
+        $check = self::checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date );
+        if( $check ){
+            $alert_message = "Another team member already has applied during this period so leave approve will depend on project.";
+        }
+
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
         $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status,leave_type,late_reason ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status','$leave_type','$late_reason' )";
 
         $r_error = 0;
         $r_message = "";
+        $leave_id = "";
 
         try {
             self::DBrunQuery($q);
             $success = true;
             $r_message = "Leave applied.";
+            $leave_id = mysqli_insert_id($mysqli);
         } catch (Exception $e) {
             $r_error = 1;
             $r_message = "Error in applying leave.";
@@ -1698,14 +1909,14 @@ class HR extends DATABASE {
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
             if ($day_status == "2") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason  \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } elseif ($day_status == "1") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } else {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             }
 
             if ($late_reason != "") {
@@ -1720,6 +1931,7 @@ class HR extends DATABASE {
         $r_data = array();
         $return['error'] = $r_error;
         $r_data['message'] = $r_message;
+        $r_data['leave_id'] = $leave_id;
         $return['data'] = $r_data;
         return $return;
     }
@@ -1897,6 +2109,38 @@ class HR extends DATABASE {
         $return['error'] = 0;
         $r_data['message'] = $r_message;
         $return['data'] = $r_data;
+
+        return $return;
+    }
+
+    public static function revertLeaveStatus($leaveid){
+
+        $return = array();
+        $r_error = 0;
+        $r_message = "";
+        $leaveDetails = self::getLeaveDetails($leaveid);
+
+        if(count($leaveDetails) > 0){
+
+            if ( $leaveDetails['status'] == "Approved" || $leaveDetails['status'] == "Rejected" ) {
+                $newstatus = "Pending";
+                self::changeLeaveStatus($leaveid, $newstatus);                
+                $r_message = "Leave Status Reverted Successfully.";
+                $r_data['status'] = true;
+
+            } else {
+                $r_error = 1;
+                $r_message = "Status is Pending yet.";
+            }
+
+        } else {            
+            $r_message = "No such leave found";
+        }
+        
+        $return = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
 
         return $return;
     }
@@ -2446,6 +2690,44 @@ class HR extends DATABASE {
 
     //end New Employee Welcome Email
 
+    public static function sendBirthdayWishEmail($userID){
+        $userInfo = self::getUserInfo($userID);
+
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='Birthday Wish'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if(empty($row)) {
+           $r_message = "Warning - Birthday Wish template not found!!";
+           return $r_message; 
+        }
+        $mail_body = $row[0]['body'];
+        $mail_subject = $row[0]['subject'];       
+        $work_email = $userInfo['work_email'];
+        $replace_to = array();
+        $replace_to[0] = $userInfo['name'];
+        $replace_from = array('#employee_name');
+
+        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
+        
+        // Fetching value of Variables in Template
+        $q2 = 'Select * from template_variables';
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRows($runQuery2);
+        foreach ($row2 as $s) {
+            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
+        }
+        
+        $data = array();
+        $data['email']['subject'] = $mail_subject;
+        $data['email']['name'] = $userInfo['name'];
+        $data['email']['body'] = $mail_body;
+        $data['email']['email_id'] = $work_email;
+        self::sendEmail($data);
+        $r_message = "Birthday wish sent!!";
+        return $r_message;
+    }
+
     //Leave of New Employee
 
     public static function applyNewEmployeeLeaves($userID) {
@@ -2499,6 +2781,90 @@ class HR extends DATABASE {
 
     // end Leave of New Employee
 
+    public static function addNewSalary($userID, $PARAMS){
+        
+        $db = self::getInstance();
+        $mysqli = $db->getConnection();
+
+        $token = $PARAMS['token'];
+        $loggedUserInfo = JWT::decode($token, self::JWT_SECRET_KEY);        
+        $update_by = $loggedUserInfo->name;
+        
+        $ins_salary = array(
+            'user_Id' => $userID,
+            'total_salary' => $PARAMS['total_salary'],
+            'last_updated_on' => date("Y-m-d"),
+            'updated_by' => $update_by,
+            'leaves_allocated' => $PARAMS['leave'],
+            'applicable_from' => $PARAMS['applicable_from'],
+            'applicable_till' => $PARAMS['applicable_till']
+        );
+
+        self::DBinsertQuery('salary', $ins_salary);
+        $salary_id = mysqli_insert_id($mysqli);        
+
+        $ins_salary_details = array(
+            'Special_Allowance' => $PARAMS['special_allowance'],
+            'Medical_Allowance' => $PARAMS['medical_allowance'],
+            'Conveyance' => $PARAMS['conveyance'],
+            'HRA' => $PARAMS['hra'],
+            'Basic' => $PARAMS['basic'],
+            'Arrears' => $PARAMS['arrear'],
+            'TDS' => $PARAMS['tds'],
+            'Misc_Deductions' => $PARAMS['misc_deduction'],
+            'Advance' => $PARAMS['advance'],
+            'Loan' => $PARAMS['loan'],
+            'EPF' => $PARAMS['epf']
+        );
+
+        $type = 1;
+        foreach ($ins_salary_details as $key => $val) {
+            // change value of type on and after array key TDS    
+            if ($key == 'TDS') {
+                $type = 2;
+            }
+            $query = "Insert Into salary_details (`salary_id`, `key`, `value`,`type`) Value ($salary_id,'$key',$val,$type)";
+            $runQuery = self::DBrunQuery($query);
+        }
+        
+        return "Salary Inserted Successfully.";
+    }
+
+    public static function addNewEmployeeFirstSalary($userID, $PARAMS){
+
+        $special_allowance = "1000";
+        $medical_allowance = "1000";
+        $conveyance = "1000";
+        $hra = "1000";
+        $basic = "1000";
+        $arrear = "0";
+        $tds = "0";
+        $misc_deduction = "0";
+        $advance = "0";
+        $loan = "0";
+        $epf = "0";
+        $leave = "0";
+
+        $total_salary = ( $special_allowance + $medical_allowance + $conveyance + $hra + $basic + $arrear ) - ( $misc_deduction + $advance + $loan + $epf + $tds );
+        
+        $PARAMS['total_salary'] = $total_salary;
+        $PARAMS['special_allowance'] = $special_allowance;
+        $PARAMS['medical_allowance'] = $medical_allowance;
+        $PARAMS['conveyance'] = $conveyance;
+        $PARAMS['hra'] = $hra;
+        $PARAMS['basic'] = $basic;
+        $PARAMS['arrear'] = $arrear;
+        $PARAMS['misc_deduction'] = $misc_deduction;
+        $PARAMS['advance'] = $advance;
+        $PARAMS['loan'] = $loan;
+        $PARAMS['tds'] = $tds;
+        $PARAMS['epf'] = $epf;
+        $PARAMS['leave'] = $leave;
+        
+        $addSalary = self::addNewSalary($userID, $PARAMS);
+        
+        return "Salary Inserted Successfully.";
+    }
 
     public static function addNewEmployee($PARAMS) { //api call
         $r_error = 1;
@@ -2533,10 +2899,7 @@ class HR extends DATABASE {
             $f_training_month = trim($PARAMS['training_month']);
         }
 
-
-
-
-
+        
         if ($f_dateofjoining == '') {
             $r_message = "Date of joining is empty";
         } else if ($f_name == '') {
@@ -2573,6 +2936,10 @@ class HR extends DATABASE {
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
+                    $PARAMS['applicable_from'] = $f_dateofjoining;
+                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_till'] = $applicable_till;
+                    self::addNewEmployeeFirstSalary($userID, $PARAMS);
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
@@ -2780,11 +3147,28 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function getDisabledUsersList() {
-
+    public static function getDisabledUsersList($pagination) {
+        
         $q = "SELECT users.*,user_profile.*,user_bank_details.bank_account_no as bank_no FROM users LEFT JOIN user_profile ON users.id = user_profile.user_Id LEFT JOIN user_bank_details ON users.id = user_bank_details.user_Id where users.status = 'Disabled'";
+
+        $runQuery = self::DBrunQuery($q);
+        $total_rows = self::DBfetchRows($runQuery);
+        $rowCount = count($total_rows);
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            if($pagination['page'] == 1){
+                $q = $q . " LIMIT " . $pagination['limit'];  
+    
+            } else {
+                $offset = ($pagination['page'] - 1) * $pagination['limit'];
+                $q = $q . " LIMIT " . $pagination['limit'] . " OFFSET " . $offset;
+            }
+            $pagination = self::pagination($pagination, $rowCount);   
+        }
+        
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
+                
         $newRows = array();
         foreach ($rows as $pp) {
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
@@ -2803,8 +3187,64 @@ class HR extends DATABASE {
             }
         }
 
+        $return = array();
+        $return['disabled_employees'] = $newRows;
+        $return['pagination'] = $pagination;
+        
+        if( isset($pagination['total_pages']) && $pagination['total_pages'] != "" ) {
+            return $return;
+        } else {
+            return $newRows;
+        }
+    }
 
-        return $newRows;
+    public static function pagination($pagination, $count) {
+
+        $total_pages = $previous_page = $next_page = "";        
+        $prev = false;
+        $next = false;
+        $limit = 1;
+        $page = "";
+        
+        if( isset($pagination['page']) && $pagination['page'] != "" && isset($pagination['limit']) && $pagination['limit'] != "" ) {
+            $page = $pagination['page'];
+            $limit = $pagination['limit'];
+        }
+
+        $total_pages = ceil($count / $limit);
+
+        if ( $page == 1 ) {
+            $next = true;
+
+        } else if ( $page == $total_pages ) {
+            $prev = true;
+            $next = false;
+
+        } else if ( $page == "" ) {
+            $prev = false;
+            $next = false;
+
+        } else {
+            $prev = true;
+            $next = true;
+        }
+
+        if ($prev) {
+            $previous_page = $page - 1;
+        }
+
+        if($next) {
+            $next_page = $page + 1;
+        }
+        
+        $res_pagination = array(
+            'total_pages' => $total_pages,
+            'current_page' => $page,
+            'previous_page' => $previous_page,
+            'next_page' => $next_page
+        );
+
+        return $res_pagination;
     }
 
     public static function getUserInfofromSlack($userid) {
@@ -4596,6 +5036,11 @@ class HR extends DATABASE {
                 'id' => 5525,
                 'text' => 'Training Service Agreement'
             ),
+            array(
+                'stage_id' => self::$ELC_stage_onboard,
+                'id' => 5526,
+                'text' => 'Update RH Leave'
+            ),
 
 
             array(
@@ -4645,6 +5090,12 @@ class HR extends DATABASE {
                 'id' => 5618,
                 'text' => 'Update fingerprint (if required)',
                 'sort' => 8
+            ),
+            array(
+                'stage_id' => self::$ELC_stage_employment,
+                'id' => 5619,
+                'text' => 'Issue Training Certificate',
+                'sort' => 9
             ),
 
 
@@ -4936,53 +5387,110 @@ class HR extends DATABASE {
         self::addInventoryComment($inventory_id, $logged_user_id,  "Inventory Photo is uploaded" );
     }
 
+
+    // check if a like timings already exits in DB
+    public static function checkTimingExitsInAttendance( $userid, $timing ){
+        $q = "SELECT * FROM `attendance` WHERE `user_id` = $userid AND `timing` LIKE '%$timing%'";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            return true;
+        }
+        return false;
+    }
+
+
     // add manual attendance
     public static function addManualAttendance( $user_id, $time_type, $date, $manual_time, $reason ){
         $db = self::getInstance();
         $mysqli = $db->getConnection();
-        $final_date_time = $date .' '.$manual_time;
-        // $raw_timestamp = strtotime( $raw_final_time );
-        // $raw_date = new DateTime($raw_final_time);
-        // $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
 
-        $reason_new = mysqli_real_escape_string($mysqli, $reason);
-        
-        $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason_new')";
-        self::DBrunQuery($q);
-        $last_inserted_id = mysqli_insert_id($mysqli);
-        $userInfo = self::getUserInfo($user_id);
-        $userInfo_name = $userInfo['name'];
-        $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+        // check if timing already exists in db or not
+        $explodeTime = explode(" ",$manual_time);
+        $checkTime = $date.' '.$explodeTime[0];      
 
-        $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
-        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+        $checkIfTimingExits = self::checkTimingExitsInAttendance( $user_id, $checkTime );
 
-        $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
-        
-        $baseURL =  self::getBasePath();
-        $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
-        $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
 
-        $slackMessageActions = '[
-            {
-              "type": "button",
-              "text": "Approve",
-              "url": "'.$approveLink.'",
-              "style": "primary"
-            }, 
-            {
-              "type": "button",
-              "text": "Reject",
-              "url": "'.$rejectLink.'",
-              "style": "danger"
+        if( $checkIfTimingExits == false ){
+
+            $final_date_time = $date .' '.$manual_time;
+            // $raw_timestamp = strtotime( $raw_final_time );
+            // $raw_date = new DateTime($raw_final_time);
+            // $final_date_time =  $raw_date->format('m-d-Y h:i:sA');
+
+            $reason_new = mysqli_real_escape_string($mysqli, $reason);
+            
+            $q = "INSERT into attendance_manual ( user_id, manual_time, reason ) VALUES ( $user_id, '$final_date_time', '$reason_new')";
+            self::DBrunQuery($q);
+            $last_inserted_id = mysqli_insert_id($mysqli);
+            $userInfo = self::getUserInfo($user_id);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+
+            $message_to_hr = "Hi HR !!  \n $userInfo_name had requested for manual $time_type time : $final_date_time \n Reason - $reason \n";
+            
+            $baseURL =  self::getBasePath();
+            $approveLink = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id";
+            $approveLinkMinutesLess = $baseURL."/attendance/API_HR/api.php?action=approve_manual_attendance&id=$last_inserted_id&deductminutes=30";
+            $rejectLink = $baseURL."/attendance/API_HR/api.php?action=reject_manual_attendance&id=$last_inserted_id";
+
+            $slackMessageActions = '[
+                {
+                  "type": "button",
+                  "text": "Approve",
+                  "url": "'.$approveLink.'",
+                  "style": "primary"
+                }, 
+                {
+                  "type": "button",
+                  "text": "Reject",
+                  "url": "'.$rejectLink.'",
+                  "style": "danger"
+                }
+            ';
+
+            if( $time_type == 'exit' ){
+                $slackMessageActions .= ',{
+                  "type": "button",
+                  "text": "Approve With 30 Minutes Less",
+                  "url": "'.$approveLinkMinutesLess.'",
+                  "style": "primary"
+                }';
             }
-        ]';
-        $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+            $slackMessageActions .= "]";
 
-        $return['error'] = 0;
-        $return['message'] = 'Successfully Updated!!';
-        $return['data'] = array();
-        return $return;
+            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+
+            // $return['error'] = 0;
+            // $return['message'] = 'Successfully Updated!!';
+            // $return['data'] = array();
+            // return $return;
+
+            return "Time $final_date_time - Sent For Approval!!";
+
+        } else {
+            // $return['error'] = 0;
+            // $return['message'] = "$checkTimeTiming already exists. No Need to update!!";
+            // $return['data'] = array();
+            // return $return;
+
+            // also send message whatever time is already exist
+            $final_date_time = $date .' '.$manual_time;
+
+            $userInfo = self::getUserInfo($user_id);
+            $userInfo_name = $userInfo['name'];
+            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+
+            $message_to_hr = "Hi HR !!  \n $userInfo_name had requested manual $time_type time : $final_date_time which is already exist.";
+
+            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false);
+
+            return "Time $checkTime already exists. No Need to update!!";
+        }
     }
 
     public static function getManualAttendanceById( $id ){
@@ -4997,9 +5505,10 @@ class HR extends DATABASE {
     }
 
     // approve manual attendance 
-    public static function approveManualAttendance( $id ){
+    public static function approveManualAttendance( $id, $deductminutes ){
         $message = '';
         $row = self::getManualAttendanceById($id);
+        $approvedWithLessTimeText = "";
         if( $row == false ){
             $message = 'No Record found!!';
         } else {
@@ -5008,6 +5517,23 @@ class HR extends DATABASE {
             }else{
                 $row_userid = $row['user_id'];
                 $row_manual_time = $row['manual_time'];
+                if( $deductminutes != false ){
+                    $explodeActualTime = explode(" ", $row_manual_time);
+                    $explodeActualTime_Date = $explodeActualTime[0];
+                    $explodeActualTime_Time = $explodeActualTime[1];
+                    $explodeActualTime_AMPM = $explodeActualTime[2];                    
+                    $explodeDate = explode("-", $explodeActualTime_Date);
+                    $n_month = $explodeDate[0];
+                    $n_date = $explodeDate[1];
+                    $n_year = $explodeDate[2];
+                    $actualTimeModified = "$n_date-$n_month-$n_year $explodeActualTime_Time $explodeActualTime_AMPM";
+                    $actualTimestamp = strtotime($actualTimeModified);
+                    $deductSeconds = $deductminutes * 60;
+                    $newTimestamp = $actualTimestamp - $deductSeconds;
+                    $row_manual_time = date('m-d-Y h:i A', $newTimestamp);
+
+                    $approvedWithLessTimeText = ": $deductminutes Minutes Less, ";
+                }
                 $q = "INSERT INTO attendance( id, user_id, timing ) VALUES ( 0, $row_userid, '$row_manual_time' )";
                 $q1 = "UPDATE attendance_manual set status=0 WHERE id = $id ";
                 self::DBrunQuery($q); 
@@ -5018,7 +5544,7 @@ class HR extends DATABASE {
                 $userInfo_name = $userInfo['name'];
                 $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
-                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $row_manual_time is approved!!";
+                $message_to_user = "Hi $userInfo_name !!  \n Your manual attendance $approvedWithLessTimeText $row_manual_time is approved!!";
                 $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
 
             }
@@ -5200,6 +5726,23 @@ class HR extends DATABASE {
             $row = false;
         }        
         return $row;
+    }
+
+    // return true or false is audit of inventory is pending for passed userid
+    public static function isInventoryAuditPending( $userid ){
+        $isAuditPending = false;
+        $userInventories = self::getUserInventories($userid);
+        if( $userInventories == false ){
+            
+        } else {
+            foreach( $userInventories as $ui ){
+                $i_details = self::getInventoryFullDetails( $ui['machine_id']);
+                if( isset($i_details['audit_current_month_status'] ) &&  $i_details['audit_current_month_status']['status'] == false){
+                    $isAuditPending = true;
+                }
+            }
+        }
+        return $isAuditPending;
     }
 
 
@@ -5398,6 +5941,308 @@ class HR extends DATABASE {
         $return['message'] = "Eth Token Updated!!";
         $return['data'] = array();
         return $return;
+    }
+
+    public static function getInventoriesAuditStatusForYearMonth( $month, $year ){
+
+        $return = array();
+        $data = array();
+        $error = 0;
+        $message = ""; 
+
+        $q = "SELECT 
+        machines_list.id, 
+        machines_list.machine_type, 
+        machines_list.machine_name, 
+        machines_user.machine_id,
+        machines_user.user_Id as assigned_user_id,
+        files.file_name, 
+        inventory_audit_month_wise.id as audit_id, 
+        inventory_audit_month_wise.inventory_id, 
+        inventory_audit_month_wise.month, 
+        inventory_audit_month_wise.year, 
+        inventory_audit_month_wise.audit_done_by_user_id,
+        inventory_comments.comment, 
+        up_audit.name as audit_done_by,
+        up_assign.name as assigned_to
+        FROM 
+        machines_list 
+        left join files on machines_list.file_inventory_photo = files.id 
+        left join inventory_audit_month_wise on machines_list.id = inventory_audit_month_wise.inventory_id 
+        AND inventory_audit_month_wise.month = $month 
+        AND inventory_audit_month_wise.year = $year 
+        left join user_profile as up_audit on inventory_audit_month_wise.audit_done_by_user_id = up_audit.user_Id
+        left join inventory_comments on inventory_audit_month_wise.inventory_comment_id = inventory_comments.id 
+        left join machines_user on machines_list.id = machines_user.machine_id
+        left join user_profile as up_assign on machines_user.user_Id = up_assign.user_Id
+        ORDER BY id DESC";
+        
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $inventoriesCount = sizeof($rows);
+        $auditDoneCount = 0;
+        $auditPendingCount = 0;
+        $unassignedInventoriesCount = 0;
+        $unassignedInventories = self::getUnassignedInventories();
+        if($unassignedInventories){
+            $unassignedInventoriesCount = sizeof($unassignedInventories);
+        }
+                
+        if ($inventoriesCount == 0) {
+            $message = "No Records Found.";
+            
+        } else {                       
+            foreach($rows as $row){
+                if(!isset($row['audit_id']) && $row['audit_id'] == ""){
+                    $auditPendingCount++;
+                } else {
+                    $auditDoneCount++;
+                } 
+            }
+            
+            $message = "Inventory Audit List";
+            $data = [
+                'stats' => [
+                    'total_inventories' => $inventoriesCount,
+                    'audit_done' => $auditDoneCount,
+                    'audit_pending' => $auditPendingCount,
+                    'unassigned_inventories' => $unassignedInventoriesCount
+                ],
+                'audit_list' => $rows
+            ];
+        }
+        
+        $return = [
+            'error' => $error,
+            'message' => $message,
+            'data' => $data
+        ];
+        
+        return $return;
+    }
+
+    // api call
+    public static function api_getAverageWorkingHours( $startDate, $endDate ){
+        if( $startDate == null || $endDate == null ){
+            $d = self::_getDateTimeData();
+            $endDate = $d['current_year_number'].'-'.$d['current_month_number'].'-'.$d['current_date_number'];
+            $startDate = date("Y-m-d", strtotime($endDate . '-7 day'));
+        }
+        $DATA = array();
+        $dates = self::_getDatesBetweenTwoDates( $startDate, $endDate );       
+        $enabledUsersList = self::getEnabledUsersList();
+
+        $hideUsersArray = array('302','300','415','420');
+
+        foreach ($enabledUsersList as $u) {
+            $userid = $u['user_Id'];
+            // hide details of specific users
+            if( in_array($userid, $hideUsersArray, true)){
+                continue;
+            }
+
+            $timings = array();
+            foreach($dates as $d ){
+                $m = date('m', strtotime($d));
+                $y = date('Y', strtotime($d));
+                $d = date('d', strtotime($d));
+                $nd = $m.'-'.$d.'-'.$y;
+                $q = "select * from attendance where user_id=$userid AND timing like '%$nd%'";
+                $runQuery = self::DBrunQuery($q);
+                $rows = self::DBfetchRows($runQuery);
+                $allMonthAttendance = array();
+                foreach ($rows as $key => $d) {
+                    $d_timing = $d['timing'];
+                    $d_timing = str_replace("-", "/", $d_timing);
+                    // check if date and time are not there in string
+                    if( strlen($d_timing) < 10 ){
+
+                    } else {
+                        $d_full_date = date("Y-m-d", strtotime($d_timing));
+                        $d_timestamp = strtotime($d_timing);
+                        $d_month = date("m", $d_timestamp);
+                        $d_year = date("Y", $d_timestamp);
+                        $d_date = date("d", $d_timestamp);                        
+                        $d['timestamp'] = $d_timestamp;
+                        $timings[$nd][] = $d;
+                    }
+                }
+            }
+
+            if( sizeof($timings ) > 0 ){
+                $totalPresentDays = 0;
+                $totalInsideTimeInSeconds = 0;
+                foreach( $timings as $pp ){
+                    $aa = self::getInsideOfficeTime( $pp );
+                    if( $aa['inside_time_seconds'] > 0 ){
+                        $totalPresentDays++;
+                        $totalInsideTimeInSeconds += $aa['inside_time_seconds'];
+                    }
+                }
+
+                $average_seconds = $totalInsideTimeInSeconds / $totalPresentDays;
+
+                if( is_nan( $average_seconds) ){
+
+                } else {
+                    $DATA[$userid] = array();
+                    $DATA[$userid]['name'] = $u['name'];
+                    $DATA[$userid]['jobtitle'] = $u['jobtitle'];
+                    $DATA[$userid]['totalPresentDays'] = $totalPresentDays;
+                    $DATA[$userid]['totalInsideTimeInSeconds'] = $totalInsideTimeInSeconds;
+                    $DATA[$userid]['average_inside_seconds'] = $average_seconds;
+                    $aaa = self::_secondsToTime( $average_seconds);
+                    $average_inside_hours = $aaa['h']. ' Hrs ' . $aaa['m'] . ' Mins';
+                    $DATA[$userid]['average_inside_hours'] = $average_inside_hours;
+                }
+            }
+        }
+
+        $sort_average_inside_seconds  = array_column($DATA, 'average_inside_seconds');
+        
+        array_multisort($sort_average_inside_seconds, SORT_ASC, $DATA);
+
+        $error = 0;
+        $return['error'] = $error;
+        $return['message'] = "";
+        $return['data'] = $DATA;
+        return $return;
+    }
+
+    public static function getAllUsers(){
+        $q = " SELECT users.*, user_profile.* FROM users left join user_profile on users.id = user_profile.user_Id ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function getEmployeesHistoryStats(){
+        $r_error = 0;
+        $r_data = array();
+        $return = array();
+        $stats = array();
+        $jt_stats = array();
+        
+        $all_employees_list = self::getAllUsers();
+
+        foreach($all_employees_list as $key => $employee){            
+            $join_year = date('Y', strtotime($employee['dateofjoining']));        
+            $terminate_year = date('Y', strtotime($employee['termination_date']));
+            $stats['total_employees']++;
+            if($employee['status'] == 'Enabled') {
+                $stats['enabled_employees']++;
+            }
+            if($employee['status'] == 'Disabled') {
+                $stats['disabled_employees']++;
+            }
+            if( $join_year > 0 ){
+                if( isset($jt_stats[$join_year]) ){
+                    $jt_stats[$join_year]['joining']++;
+                } else {
+                    $jt_stats[$join_year]['joining'] = 1;
+                }
+                if( !isset($jt_stats[$join_year]['termination']) ){
+                    $jt_stats[$join_year]['termination'] = 0;
+                }
+            }            
+
+            if( $terminate_year > 0 ){
+                if( isset($jt_stats[$terminate_year]) ){
+                    $jt_stats[$terminate_year]['termination']++;
+                } else {
+                    $jt_stats[$terminate_year]['termination'] = 1;
+                }
+                if( !isset($jt_stats[$terminate_year]['joining']) ){
+                    $jt_stats[$terminate_year]['joining'] = 0;
+                }
+            }
+            
+        }
+        
+        $stats['joining_termination_stats'] = $jt_stats;
+        $r_data = [
+            'stats' => $stats
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+
+        return $return;
+    }
+
+    public static function getLeavesForYearMonth( $year, $month ){
+        $year_month = $year . "-" . $month;
+        $q = " SELECT * FROM leaves WHERE from_date LIKE '$year_month%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function API_getEmployeesLeavesStats( $year, $month ){
+        $r_error = 0;
+        $r_data = array();
+        $stats = array();
+        $return = array();
+        $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
+        $days = self::getGenericMonthSummary( $year, $month );        
+        $removableKeys = ['day_text', 'in_time', 'out_time', 'total_time', 'extra_time', 'text', 'admin_alert', 'admin_alert_message', 'orignal_total_time'];
+        foreach( $monthly_leaves as $leave ){ 
+            $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] ); 
+            foreach($days as $key => $day){   
+                $days[$key]['day'] = substr($day['day'], 0, 3);
+                foreach( $removableKeys as $removableKey ){
+                    unset($days[$key][$removableKey]);
+                }
+                foreach($days_between_leaves['data']['days'] as $day_between_leave){
+                    if( strtolower($day_between_leave['type']) == 'working' ){
+                        if($day_between_leave['full_date'] == $day['full_date']){
+                            if($leave['status'] == 'Approved'){
+                                $days[$key]['approved']++;
+                            }
+                            if($leave['status'] == 'Pending'){
+                                $days[$key]['pending']++;
+                            }
+                            if($leave['status'] == 'Rejected'){
+                                $days[$key]['rejected']++;
+                            }
+                            if($leave['status'] == 'Cancelled'){
+                                $days[$key]['cancelled']++;
+                            }
+                            if($leave['status'] == 'Cancelled Request'){
+                                $days[$key]['cancelled_request']++;
+                            }                            
+                        } 
+                    }
+                } 
+            }            
+        }
+        foreach( $days as $key => $day ){
+            if( !isset($day['approved']) ) {
+                $days[$key]['approved'] = 0;
+            }
+            if( !isset($day['pending']) ){
+                $days[$key]['pending'] = 0;
+            }
+            if( !isset($day['rejected']) ){
+                $days[$key]['rejected'] = 0;
+            }
+            if( !isset($day['cancelled']) ){
+                $days[$key]['cancelled'] = 0;
+            }
+            if( !isset($day['cancelled_request']) ){
+                $days[$key]['cancelled_request'] = 0;
+            }
+            $stats[]= $days[$key];
+        }        
+        $r_data = [
+            'stats' => $stats
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];     
+        return $return;           
     }
 
 }

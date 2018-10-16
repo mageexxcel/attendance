@@ -37,6 +37,7 @@ trait Roles {
     static $PAGE_manage_user_pending_hours = 131;
     static $PAGE_logout = 132;
     static $PAGE_add_documents = 133;
+    static $PAGE_health_stats = 134;
 
 
 
@@ -87,6 +88,7 @@ trait Roles {
     static $ACTION_validate_unique_key = 241;
     static $ACTION_send_slack_msg = 242;
     static $ACTION_get_all_users_detail = 243;
+    static $ACTION_get_holiday_types_list = 244;    
 
     static $ACTION_get_all_clients = 301;
     static $ACTION_get_client_detail = 302;
@@ -121,6 +123,8 @@ trait Roles {
     static $ACTION_get_unapproved_inventories = 516;
     static $ACTION_get_my_inventories = 517;
     static $ACTION_add_inventory_comment = 518;
+    static $ACTION_add_inventory_audit = 519;
+    static $ACTION_get_inventory_audit_status_month_wise = 520;
 
     //actions not required token
     static $ACTION_login = 601;
@@ -195,6 +199,7 @@ trait Roles {
     static $ACTION_add_manual_attendance = 11001;
     static $ACTION_reject_manual_attendance = 11002;
     static $ACTION_approve_manual_attendance = 11003;
+    static $ACTION_get_average_working_hours = 11004;
 
     // action for ETHER
     static $ACTION_update_user_eth_token = 22001;
@@ -247,6 +252,8 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_unapproved_inventories, 'name' => 'get_unapproved_inventories' ),
                     array( 'id' => self::$ACTION_get_my_inventories, 'name' => 'get_my_inventories' ),
                     array( 'id' => self::$ACTION_add_inventory_comment, 'name' => 'add_inventory_comment' ),
+                    array( 'id' => self::$ACTION_add_inventory_audit, 'name' => 'add_inventory_audit' ),
+                    array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' ),
                 )
             ),
 
@@ -501,6 +508,13 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_managed_user_working_hours, 'name' => 'get_managed_user_working_hours' ),
                 )
             ),
+            array(
+                'id' => self::$PAGE_health_stats,
+                'name' => 'health_stats',
+                'actions_list' => array(
+                    
+                )
+            ),
 
         );
 
@@ -684,6 +698,21 @@ trait Roles {
             array( 'id' => self::$ACTION_lunch_break, 'name' => 'lunch_break' ),
             array( 'id' => self::$ACTION_approve_manual_attendance, 'name' => 'approve_manual_attendance' ),
             array( 'id' => self::$ACTION_reject_manual_attendance, 'name' => 'reject_manual_attendance' ),
+            array( 'id' => self::$ACTION_get_average_working_hours, 'name' => 'get_average_working_hours' ),
+            array( 'id' => self::$ACTION_get_holiday_types_list, 'name' => 'get_holiday_types_list' ),
+        );
+        return $array;
+    }
+
+    public static function getActionsForThirdPartyApiCall(){
+        $array = array(
+            array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+            array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+            array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+            array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+            array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
+            array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
+            array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' )
         );
         return $array;
     }
@@ -1018,7 +1047,7 @@ trait Roles {
         $allPages = self::getAllPages();
         foreach( $allPages as $page ){
             $pid = $page['id'];
-            if( $pid == self::$PAGE_login || $pid == self::$PAGE_logout || $pid == self::$PAGE_policy_documents ){
+            if( $pid == self::$PAGE_login || $pid == self::$PAGE_logout || $pid == self::$PAGE_policy_documents || $pid == self::$PAGE_my_inventory ){
                 $new_page = array(
                     'page_id' =>  $page['id'],
                     'page_name' => $page['name']

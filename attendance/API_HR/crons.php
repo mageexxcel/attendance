@@ -42,7 +42,7 @@ $todayDate_Y_m_d = date('Y-m-d');
 // function to get previous month pending time and insert it to users_previous_month_time table 
 // which will be list on manage_user_pending_hours page on HR portal
 function calculate_previous_month_pending_time(){
-	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $prev_month, $prev_month_year, $current_date;
+	global $current_time_hour_min, $todayDate_Y_m_d, $current_month, $current_year, $prev_month, $prev_month_year, $current_date;
 
 	// this will be run only manually by manish sir so below code is commented
 	// if( $current_date * 1 !== 2 ){
@@ -58,6 +58,14 @@ function calculate_previous_month_pending_time(){
 	foreach( $enabledUsersList as $employee ){
 		$employee_id = $employee['user_Id'];
 		// print_r( $employee );
+
+		$joining_month = date('m', strtotime($employee['dateofjoining']));
+		$joining_year = date('Y', strtotime($employee['dateofjoining']));
+		
+		if ( $joining_month == $current_month && $joining_year == $current_year ) {
+			continue;
+		}
+
 		$previousMonthAttendaceDetails = HR::getUserMonthAttendaceComplete($employee_id, $prev_month_year, $prev_month);
 
 		// calculation from compensated time summary
@@ -172,6 +180,8 @@ function notification_compensation_time(){
 					$slackMessageForUser .= $txt['text']. "\n";
 				}
 
+				//sleep for 1 seconds to delay SLACK call -- added on 22june2018 by arun
+    		sleep(1);
 				$aa = HR::sendSlackMessageToUser($slack_userChannelid, $slackMessageForUser);
 				echo '<hr>';
 			}
@@ -220,6 +230,27 @@ function notification_compensation_time(){
 	HR::sendSlackMessageToUser("hr_system", "CRON Executed - Notifications of pending compensation time!!");
 }
 
+function sendBirthdayWishes(){
+	global $current_month, $current_date;
+	$users = HR::getEnabledUsersList();
+	foreach($users as $user){
+		$user_id = $user['user_Id'];
+		$user_dob = $user['dob'];
+		$user_name = $user['name'];
+		$user_slack_channel_id = $user['slack_channel_id'];		
+		if( isset($user_dob) && $user_dob != "" && $user_dob != '0000-00-00' ){
+			$user_dob_month_day = date('m-d', strtotime($user_dob));
+			$current_month_day = $current_month . "-" . $current_date;
+			if( $user_dob_month_day == $current_month_day ){
+				HR::sendBirthdayWishEmail($user_id);
+				if( isset($user_slack_channel_id) && $user_slack_channel_id != "" ){
+					$message = "Happy Birthday " . $user_name . " !!";
+					HR::sendSlackMessageToUser( $user_slack_channel_id, $message );
+				}
+			}
+		}		
+	}
+}
 
 
 switch ($CRON_ACTION) {
@@ -230,6 +261,10 @@ switch ($CRON_ACTION) {
 	case 'notification_compensation_time':
 		notification_compensation_time();
 		break;
+
+	case 'send_birthday_wishes':
+		sendBirthdayWishes();
+		break;		
 	
 	default:
 		break;

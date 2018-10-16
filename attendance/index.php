@@ -31,6 +31,9 @@ if (isset($_FILES['image'])) {
         $file = fopen($PF_file_name, "r");
         $i = 0;
         $data = array();
+
+        $toBeInsertData = array();
+
         while (!feof($file)) {
             $line = fgets($file);
             if ($i == 0) {
@@ -63,20 +66,38 @@ if (isset($_FILES['image'])) {
 
                 } else {
                     if (strpos($datetime, '01-08-2017') === false) {
-                        $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
-                        mysqli_query($link, $q2) or die(mysqli_error($link));
+                        // below 2 comments line of multiple query to single query
+                        // $q2 = "INSERT INTO attendance (user_id,timing) VALUES ($user_id,'$datetime')";
+                        // mysqli_query($link, $q2) or die(mysqli_error($link));
+                        $toBeInsertData[] = '(' . $user_id . ',"' . $datetime . '")';
                     }
                 }
             }
             $i++;
         }
+
+        // above multiple insert query is changed to single insert query on 22 june 2018 by arun
+        if( sizeof($toBeInsertData) > 0 ){
+             $q2 = 'INSERT INTO attendance (user_id,timing) VALUES' . implode(',', $toBeInsertData);
+             mysqli_query($link, $q2) or die(mysqli_error($link));
+        }
+
     }
 
+    // echo $de.'<br/>';
+
     $check_date = get_time_array($de, $link);
-    if (sizeof($check_date) == 0) {
-        echo "Please Upload updated attendance sheet";
-        $sendmessage = 0;
-    }
+
+    // echo '<pre>';
+    // print_r( $check_date );
+
+    // start this was commented by arun on 22 june, since no use once the uploading is already processed above
+    // if (sizeof($check_date) == 0) {
+    //     echo "Please Upload updated attendance sheet";
+    //     $sendmessage = 0;
+    // }
+    // end this was commented by arun on 22 june, since no use once the uploading is already processed above
+
 }
 $time_table2 = array();
 $time_table2 = get_time_array($de, $link);
@@ -364,6 +385,9 @@ function get_channel_id($data, $array) {
 }
 
 function send_slack_message($channelid, $token, $sir = false, $s = false, $day = false) {
+    //sleep for 1 seconds to delay SLACK call -- added on 22june2018 by arun
+    sleep(1);
+
     $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#36a64f"}]';
     if ($sir == "You have not Entered your time Today") {
         $message = '[{"text": "' . $sir . '", "fallback": "Message Send to Employee", "color": "#AF2111"}]';

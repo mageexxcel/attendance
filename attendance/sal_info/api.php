@@ -239,7 +239,22 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
 } else if ($action == 'update_user_profile_detail_by_id') {  //action to update employee profile detail.
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
-        $res = Salary::UpdateUserInfo($PARAMS);
+        $update = true;
+        $tr_completion_date = $PARAMS['training_completion_date'];
+        if( isset($tr_completion_date) && $tr_completion_date != "" ) {
+            $sal_details = Salary::getSalaryInfo($user_id);
+            if(count($sal_details) > 1) {
+                
+            } else {
+                $update = false;
+                $res['data']['message'] = 'You have to add salary first.';
+            }
+        }
+
+        if($update) {
+            $res = Salary::UpdateUserInfo($PARAMS);
+        }
+        
     } else {
         $res['data']['message'] = 'Please give user_id ';
     }

@@ -37,7 +37,8 @@ if( isset($_GET['action']) ){
 if (isset($_GET['userslack_id']) || $GET_action == 'updatebandwidthstats' || $GET_action == 'send_slack_msg' 
     || $GET_action == 'save_bandwidth_detail' || $GET_action == 'get_bandwidth_detail' 
     || $GET_action == 'validate_unique_key'
-    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' ) {
+    || $GET_action == 'reject_manual_attendance' || $GET_action == 'approve_manual_attendance' 
+    || $GET_action == 'get_average_working_hours') {
     $PARAMS = $_GET;
 }
 
@@ -49,6 +50,17 @@ if (isset($PARAMS['action'])) {
 if (isset($PARAMS['userslack_id'])) {
     $slack_id = $PARAMS['userslack_id'];
 }
+if(isset($PARAMS['pagination_page'])){
+    $pagination_page = $PARAMS['pagination_page'];
+}
+if(isset($PARAMS['pagination_limit'])){
+    $pagination_limit = $PARAMS['pagination_limit'];
+}
+
+$pagination = array(
+    'page' => $pagination_page,
+    'limit' => $pagination_limit
+);
 
 $res = array(
     'error' => 1,
@@ -68,6 +80,21 @@ foreach( $actionsNotRequiredToken as $ac ){
 }
 // end -- check if action required token
 
+// check for secret key
+$secret_key = $PARAMS['secret_key'];
+if(isset($secret_key) && $secret_key != ""){
+    $validate_secret = HR::validateSecretKey($secret_key); 
+    if($validate_secret) {
+        $secret_actions = HR::getActionsForThirdPartyApiCall();
+        foreach( $secret_actions as $secret_action ){
+            if( $secret_action['name'] == $action ){
+                $DO_TOKEN_VERIFICATION = false;
+                $q = " UPDATE secret_tokens SET last_request = CURRENT_TIMESTAMP WHERE secret_key = '$secret_key' ";
+                $runQuery = HR::DBrunQuery($q);
+            }
+        }   
+    }
+}
 
 //validate a token
 //if ($action != 'login' && $action != 'forgot_password' && $slack_id == "" && $action != 'updatebandwidthstats' && $action != 'send_slack_msg' && $action != 'save_bandwidth_detail' && $action != 'get_bandwidth_detail' && $action != 'validate_unique_key') {
@@ -292,6 +319,9 @@ else if ($action == 'add_hr_comment') {
     $newstatus = $PARAMS['newstatus'];
     $messagetouser = $PARAMS['messagetouser'];
     $res = HR::updateLeaveStatus($leaveid, $newstatus, $messagetouser);
+} else if ($action == 'revert_leave_status') {
+    $leaveid = $PARAMS['leaveid'];
+    $res = HR::revertLeaveStatus($leaveid);
 } else if ($action == "get_managed_user_working_hours") {
     $userid = $PARAMS['userid'];
     $res = HR::geManagedUserWorkingHours($userid);
@@ -392,15 +422,35 @@ else if ($action == 'add_hr_comment') {
         $res = HR::addUserWorkingHours($userid, $date, $working_hours, $reason);
     }    
 } else if ($action == "get_holidays_list") {
-    $res = HR::API_getYearHolidays();
-} else if ($action == 'show_disabled_users') {
-    $res = HR::getDisabledUsersList();
+    $year = $PARAMS['year'];
+    $res = HR::API_getYearHolidays($year);
+} else if ($action == "add_holiday") {
+    $date = $PARAMS['holiday_date'];
+    $name = $PARAMS['holiday_name'];
+    $type = $PARAMS['holiday_type'];
+    $res = HR::addHoliday($name, $date, $type);
+} else if ($action == "update_holiday") {
+    $date = $PARAMS['holiday_date'];
+    $name = $PARAMS['holiday_name'];
+    $type = $PARAMS['holiday_type'];
+    $id = $PARAMS['holiday_id'];
+    $res = HR::API_updateHoliday($id, $name, $date, $type);
+} else if ($action == "delete_holiday") {    
+    $id = $PARAMS['holiday_id'];
+    $res = HR::API_deleteHoliday($id);
+} else if ($action == "get_holiday_types_list") {
+    $res = HR::API_getHolidayTypesList();
+} else if ($action == 'show_disabled_users') {  
+    $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
     $res = HR::getWorkingHoursSummary($year, $month);
 } else if ($action == "get_enable_user") {
-    $res = HR::getEnabledUsersListWithoutPass();
+    $token = $PARAMS['token'];
+    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+    $role = $loggedUserInfo->role;
+    $res = HR::getEnabledUsersListWithoutPass($role);
 } else if ($action == 'add_roles') { 
     $base_role_id = false;
     if( isset( $PARAMS['base_role_id']) && !empty( $PARAMS['base_role_id']) ){
@@ -425,6 +475,11 @@ else if ($action == 'add_hr_comment') {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
     $res = HR::getUserMonthAttendaceComplete($userid, $year, $month);
+} else if ($action == 'get_stats_attendance_summary') {   
+    $res = HR::API_getStatsAttendanceSummary();
+} else if ($action == 'delete_attendance_stats_summary') {   
+    $year = $PARAMS['year'];
+    $res = HR::API_deleteAttendanceStatsSummary($year);
 } else if ($action == "attendance_summary") {
     $year = $PARAMS['year'];
     $month = $PARAMS['month'];
@@ -581,21 +636,29 @@ else if ($action == 'add_inventory_comment' ){
 else if ($action == 'add_manual_attendance' ){
     $user_id = $loggedUserInfo['id'];
     $reason = $PARAMS['reason'];
-    $date = $PARAMS['date'];    
+    $date = $PARAMS['date'];
+    $resMessageEntry = "";  
+    $resMessageExit = "";  
     if ( isset($PARAMS['entry_time']) && !empty($PARAMS['entry_time']) ){
         $entry_time = $PARAMS['entry_time'];
-        $res = HR::addManualAttendance( $user_id, 'entry', $date, $entry_time, $reason );
+        $resMessageEntry = HR::addManualAttendance( $user_id, 'entry', $date, $entry_time, $reason );
     }
     if ( isset($PARAMS['exit_time']) && !empty($PARAMS['exit_time']) ){
         $exit_time = $PARAMS['exit_time'];
-        $res = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
+        $resMessageExit = HR::addManualAttendance( $user_id, 'exit', $date, $exit_time, $reason );
     }
-
+    $res['error'] = 0;
+    $res['message'] = "$resMessageEntry  $resMessageExit";
+    $res['data'] = array();
 }
 
 else if ( $action == 'approve_manual_attendance'){
     $manual_attendance_id = $PARAMS['id'];
-    $res = HR::approveManualAttendance( $manual_attendance_id );
+    $deductminutes = false;
+    if( isset( $PARAMS['deductminutes']) ){
+        $deductminutes = $PARAMS['deductminutes'];
+    }
+    $res = HR::approveManualAttendance( $manual_attendance_id, $deductminutes );
 }
 
 else if ( $action == 'reject_manual_attendance'){
@@ -645,6 +708,69 @@ else if ( $action == 'add_inventory_audit' ){
     $inventory_id = $PARAMS['inventory_id'];
     $audit_message = $PARAMS['audit_message'];
     $res = HR::api_addInventoryAudit( $inventory_id, $logged_user_id, $audit_message );
+    // update user token when he audit the inventory
+    if( HR::isInventoryAuditPending( $logged_user_id ) == false ){
+        $newToken = HR::refreshToken( $token );
+        $res['data']['new_token'] = $newToken;
+    }
+}
+
+else if( $action == 'get_inventory_audit_status_month_wise' ){
+    $currentTime = HR::_getDateTimeData();
+
+    if( isset($PARAMS['month']) && $PARAMS['month'] != "" ){
+        $month = $PARAMS['month'];
+    } else {
+        $month = $currentTime['current_month_number'];
+    }
+
+    if( isset($PARAMS['year']) && $PARAMS['year'] != "" ){
+        $year = $PARAMS['year'];
+    } else {
+        $year = $currentTime['current_year_number'];
+    }
+    
+    $res = HR::getInventoriesAuditStatusForYearMonth( $month, $year );
+}
+
+/****************************************/
+/*******AVERAGE WORKING HOURS************/
+/****************************************/
+
+else if( $action == 'get_average_working_hours' ){
+    $start_date = $PARAMS['start_date'];
+    $end_date = $PARAMS['end_date'];
+    $res = HR::api_getAverageWorkingHours( $start_date, $end_date );
+}
+else if ( $action == 'get_employees_history_stats' ){  
+    $res = HR::getEmployeesHistoryStats();
+}
+/****************************************/
+/******* THIRD PARTY API's ************/
+/****************************************/
+else if ( $action == 'generate_secret_key' ){  
+    $app_name = $PARAMS['app_name'];
+    $user_id = $tokenInfo['id'];   
+    $res = HR::API_generateSecretKey( $app_name, $user_id );
+}
+else if ( $action == 'regenerate_secret_key' ){    
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_regenerateSecretKey( $app_id );
+}
+else if ( $action == 'delete_secret_key' ){  
+    $app_id = $PARAMS['app_id'];
+    $res = HR::API_deleteSecretKey( $app_id );
+}
+else if ( $action == 'get_all_secret_keys' ){  
+    $res = HR::API_getAllSecretKeys();
+}
+/****************************************/
+/************* Leaves Stats *************/
+/****************************************/
+else if ( $action == 'get_employees_leaves_stats' ){  
+    $year = $PARAMS['year'];
+    $month = $PARAMS['month'];
+    $res = HR::API_getEmployeesLeavesStats( $year, $month );
 }
 
 
