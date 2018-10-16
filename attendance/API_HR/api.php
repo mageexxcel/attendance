@@ -786,7 +786,19 @@ else if ( $action == 'update_user_eth_token' ){
     $eth_token = $PARAMS['eth_token'];
     $res = HR::updateUserEthToken( $logged_user_id, $eth_token );
 }
-
+/****************************************/
+/************ User Meta Data ************/
+/****************************************/
+else if ( $action == 'update_user_meta_data' ){
+    $user_id = $PARAMS['user_id'];
+    $data = $PARAMS['data'];    
+    $res = HR::API_updateUserMetaData( $user_id, $data );
+}
+else if ( $action == 'delete_user_meta_data' ){
+    $user_id = $PARAMS['user_id'];
+    $keys = $PARAMS['metadata_keys'];    
+    $res = HR::API_deleteUserMetaData( $user_id, $keys );
+}
 
 echo json_encode($res);
 ?>
