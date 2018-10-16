@@ -721,7 +721,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
             array( 'id' => self::$ACTION_update_user_meta_data, 'name' => 'update_user_meta_data' ),
             array( 'id' => self::$ACTION_delete_user_meta_data, 'name' => 'delete_user_meta_data' ),      
-            
+            array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' )
         );
         return $array;
     }
