@@ -201,6 +201,9 @@ trait Roles {
     static $ACTION_approve_manual_attendance = 11003;
     static $ACTION_get_average_working_hours = 11004;
 
+    // action for ETHER
+    static $ACTION_update_user_eth_token = 22001;
+
 
     /////IMPORTANT
     /////name cannot be change since they are used in api calling from frontend
@@ -340,6 +343,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
                     array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
                     array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+                    array( 'id' => self::$ACTION_update_user_eth_token,'name' => 'update_user_eth_token' ),
                 )
             ),
 
