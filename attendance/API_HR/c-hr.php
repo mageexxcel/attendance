@@ -2939,6 +2939,8 @@ class HR extends DATABASE {
                     $PARAMS['applicable_from'] = $f_dateofjoining;
                     $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
                     $PARAMS['applicable_till'] = $applicable_till;
+                    
+                    // first salary will not add if an employee is added using third party key
                     if( !isset($PARAMS['secret_key']) || $PARAMS['secret_key'] == "" ){
                         self::addNewEmployeeFirstSalary($userID, $PARAMS);
                     }
