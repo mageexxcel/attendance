@@ -711,7 +711,8 @@ trait Roles {
             array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' ),
             array( 'id' => self::$ACTION_get_user_profile_detail_by_id, 'name' => 'get_user_profile_detail_by_id' ),
             array( 'id' => self::$ACTION_update_user_profile_detail_by_id, 'name' => 'update_user_profile_detail_by_id' ),            
-            array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' )            
+            array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
+            array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' )            
         );
         return $array;
     }

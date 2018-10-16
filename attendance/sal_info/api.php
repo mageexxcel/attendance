@@ -248,6 +248,19 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::getUserDetailInfo($user_id);
+        if( isset($PARAMS['secret_key']) || $PARAMS['secret_key'] != "" ){
+            $validate_secret = HR::validateSecretKey($PARAMS['secret_key']);
+            if($validate_secret){
+                $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];
+                foreach( $res['data']['user_profile_detail'] as $key => $r ){
+                    foreach( $secureKeys as $secureKey ){
+                        if( $key == $secureKey ){
+                            unset($res['data']['user_profile_detail'][$key]);
+                        }
+                    }
+                }
+            }        
+        }
     } else {
         $res['data']['message'] = 'Please give user_id ';
     }

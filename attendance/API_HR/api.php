@@ -447,9 +447,16 @@ else if ($action == 'add_hr_comment') {
     $month = $PARAMS['month'];
     $res = HR::getWorkingHoursSummary($year, $month);
 } else if ($action == "get_enable_user") {
-    $token = $PARAMS['token'];
-    $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
-    $role = $loggedUserInfo->role;
+    if( isset($PARAMS['secret_key']) || $PARAMS['secret_key'] != "" ){
+        $validate_secret = HR::validateSecretKey($PARAMS['secret_key']);
+        if($validate_secret){
+            $role = 'guest';
+        } 
+    } else {
+        $token = $PARAMS['token'];
+        $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
+        $role = $loggedUserInfo->role;
+    }
     $res = HR::getEnabledUsersListWithoutPass($role);
 } else if ($action == 'add_roles') { 
     $base_role_id = false;
