@@ -22,10 +22,12 @@ $res = array(
 
 //validate a token
 $token = $PARAMS['token'];
-$validateToken = Salary::validateToken($token);
-if ($validateToken == false) {
-    header("HTTP/1.1 401 Unauthorized");
-    exit;
+if( !isset($PARAMS['secret_key']) || $PARAMS['secret_key'] == "" ){
+    $validateToken = Salary::validateToken($token);
+    if ($validateToken == false) {
+        header("HTTP/1.1 401 Unauthorized");
+        exit;
+    }
 }
 
 
@@ -39,6 +41,22 @@ $actionsNotRequiredToken = HR::getActionsNotRequiredToken();
 foreach( $actionsNotRequiredToken as $ac ){
     if( $ac['name'] == $action ){
         $DO_TOKEN_VERIFICATION = false;
+    }
+}
+
+// check for secret key
+$secret_key = $PARAMS['secret_key'];
+if(isset($secret_key) && $secret_key != ""){
+    $validate_secret = HR::validateSecretKey($secret_key); 
+    if($validate_secret) {
+        $secret_actions = HR::getActionsForThirdPartyApiCall();
+        foreach( $secret_actions as $secret_action ){
+            if( $secret_action['name'] == $action ){
+                $DO_TOKEN_VERIFICATION = false;
+                $q = " UPDATE secret_tokens SET last_request = CURRENT_TIMESTAMP WHERE secret_key = '$secret_key' ";
+                $runQuery = HR::DBrunQuery($q);
+            }
+        }   
     }
 }
 
@@ -230,6 +248,19 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
     if (isset($PARAMS['user_id']) && $PARAMS['user_id'] != "") {
         $user_id = $PARAMS['user_id'];
         $res = Salary::getUserDetailInfo($user_id);
+        if( isset($PARAMS['secret_key']) || $PARAMS['secret_key'] != "" ){
+            $validate_secret = HR::validateSecretKey($PARAMS['secret_key']);
+            if($validate_secret){
+                $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];
+                foreach( $res['data']['user_profile_detail'] as $key => $r ){
+                    foreach( $secureKeys as $secureKey ){
+                        if( $key == $secureKey ){
+                            unset($res['data']['user_profile_detail'][$key]);
+                        }
+                    }
+                }
+            }        
+        }
     } else {
         $res['data']['message'] = 'Please give user_id ';
     }
