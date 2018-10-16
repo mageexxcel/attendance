@@ -183,7 +183,9 @@ trait Roles {
 
     static $ACTION_get_employee_life_cycle = 8021;
     static $ACTION_update_employee_life_cycle = 8022;
-
+    
+    static $ACTION_update_user_meta_data = 8023;
+    static $ACTION_delete_user_meta_data = 8024;
 
 
 
@@ -716,7 +718,10 @@ trait Roles {
             array( 'id' => self::$ACTION_get_user_profile_detail_by_id, 'name' => 'get_user_profile_detail_by_id' ),
             array( 'id' => self::$ACTION_update_user_profile_detail_by_id, 'name' => 'update_user_profile_detail_by_id' ),            
             array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
-            array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' )            
+            array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
+            array( 'id' => self::$ACTION_update_user_meta_data, 'name' => 'update_user_meta_data' ),
+            array( 'id' => self::$ACTION_delete_user_meta_data, 'name' => 'delete_user_meta_data' ),      
+            
         );
         return $array;
     }

@@ -6245,6 +6245,77 @@ class HR extends DATABASE {
         return $return;           
     }
 
+    public function API_updateUserMetaData( $user_id, $data ){
+        $r_error = 0;
+        $r_data = [];
+        $meta_data = [];
+        $userInfo = self::getUserInfo($user_id);        
+        if( isset($userInfo['meta_data']) && $userInfo['meta_data'] != "" ){            
+            $user_meta_data = json_decode($userInfo['meta_data'], true);                         
+            foreach( $user_meta_data as $key => $value ){                
+                $meta_data[$key] = $value;
+                foreach( $data as $k => $dt ){
+                    if( $k != $key ){
+                        $meta_data[$k] = $dt;
+                    } else {
+                        $meta_data[$key] = $dt;
+                    }
+                }
+            }
+
+        } else {
+            foreach( $data as $k => $dt ){
+                $meta_data[$k] = $dt;
+            }
+        }        
+        $update_meta_data = json_encode($meta_data);        
+        $q = " UPDATE user_profile SET meta_data = '$update_meta_data' WHERE user_Id = '$user_id' ";
+        $runQuery = self::DBrunQuery($q);
+        $r_data = [
+            'meta_data' => $meta_data
+        ];
+        $return = [
+            'error' => $r_error,
+            'message' => "Meta Data Updated Successfully",
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public function API_deleteUserMetaData( $user_id, $keys ){
+        $r_error = 0;
+        $r_message = "";
+        $meta_data = [];
+        $userInfo = self::getUserInfo($user_id);
+        $user_meta_data = json_decode($userInfo['meta_data'], true);
+        foreach( $user_meta_data as $key => $value ){
+            $meta_data[$key] = $value; 
+            foreach( $keys as $k ){
+                if( $key == $k ){
+                    unset($meta_data[$key]);
+                }
+            }
+        }
+        if( count($user_meta_data) == count($meta_data) ){
+            $r_error = 1;
+            $r_message = "Key not found";
+        } else {
+            $r_message = "Key Deleted";
+        }
+        $update_meta_data = json_encode($meta_data); 
+        if( count($meta_data) > 0 ){
+            $q = " UPDATE user_profile SET meta_data = '$update_meta_data' WHERE user_Id = '$user_id' ";
+        } else {
+            $q = " UPDATE user_profile SET meta_data = '' WHERE user_Id = '$user_id' ";
+        }
+        $runQuery = self::DBrunQuery($q);
+        $return  = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+        return $return;        
+    }
+
 }
 
 new HR();
