@@ -801,10 +801,11 @@ else if ( $action == 'delete_user_meta_data' ){
 }
 else if ( $action == 'employee_punch_time' ){
     $user_id = $PARAMS['user_id'];
-    $time = $PARAMS['punch_time'];
-    $date = $PARAMS['punch_date'];    
-    $punchTime = $date . ' ' . $time;
-    $insertPunchTime = date('h:i:s-m/d/y', strtotime($punchTime));    
+    $time = $PARAMS['punch_time'];    
+    $punch_time = substr( $time, 0, 8 );
+    $punch_date = substr( $time, 9 );
+    $punchTime = $punch_date . ' ' . $punch_time;
+    $insertPunchTime = date('m-d-Y h:i:sA', strtotime($punchTime));    
     $res = HR::insertUserPunchTime( $user_id, $insertPunchTime );
 }
 
