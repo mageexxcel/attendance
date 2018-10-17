@@ -6354,6 +6354,26 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function API_getUserMetaData( $user_id ){
+        $r_error = 0;
+        $r_data = [];
+        $userInfo = self::getUserInfo( $user_id );        
+        if( isset($userInfo['meta_data']) && $userInfo['meta_data'] != "" ){
+            $userMetaData = json_decode($userInfo['meta_data']);
+            $r_data = [
+                'meta_data' => $userMetaData
+            ];
+        } else {
+            $r_error = 1;
+            $r_data['message'] = "Meta Data Not Found";
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
 }
 
 new HR();
