@@ -186,8 +186,9 @@ trait Roles {
     
     static $ACTION_update_user_meta_data = 8023;
     static $ACTION_delete_user_meta_data = 8024;
+    static $ACTION_employee_punch_time = 8026;
 
-
+    
 
 
 
@@ -721,7 +722,8 @@ trait Roles {
             array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
             array( 'id' => self::$ACTION_update_user_meta_data, 'name' => 'update_user_meta_data' ),
             array( 'id' => self::$ACTION_delete_user_meta_data, 'name' => 'delete_user_meta_data' ),      
-            array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' )
+            array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
+            array( 'id' => self::$ACTION_employee_punch_time, 'name' => 'employee_punch_time' ),            
         );
         return $array;
     }

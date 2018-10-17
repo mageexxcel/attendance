@@ -799,6 +799,14 @@ else if ( $action == 'delete_user_meta_data' ){
     $keys = $PARAMS['metadata_keys'];    
     $res = HR::API_deleteUserMetaData( $user_id, $keys );
 }
+else if ( $action == 'employee_punch_time' ){
+    $user_id = $PARAMS['user_id'];
+    $time = $PARAMS['punch_time'];
+    $date = $PARAMS['punch_date'];    
+    $punchTime = $date . ' ' . $time;
+    $insertPunchTime = date('h:i:s-m/d/y', strtotime($punchTime));    
+    $res = HR::insertUserPunchTime( $user_id, $insertPunchTime );
+}
 
 echo json_encode($res);
 ?>
