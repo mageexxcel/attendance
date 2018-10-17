@@ -6320,6 +6320,40 @@ class HR extends DATABASE {
         return $return;        
     }
 
+    public static function API_getUserRecentPunchTime( $user_id ){
+        $r_error = 0;
+        $r_data = [];
+        $q = " SELECT user_id,timing FROM attendance WHERE user_id = '$user_id' ORDER BY user_id DESC LIMIT 1 ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);           
+        if( count($rows) > 0 ){
+            $timing = $rows[0]['timing'];
+            $explodeDateTime = explode(" ", $timing);
+            $date = $explodeDateTime[0];
+            $dateExplode = explode("-", $date);
+            $newDate = $dateExplode[2] . "-" . $dateExplode[0] . "-" . $dateExplode[1];        
+            $time = $explodeDateTime[1];
+            $newDateTime = $newDate . ' ' . $time;
+            $recentPunchTime = date('dS M h:ia', strtotime($newDateTime));  
+            $r_data = [
+                'recent_punch_time' => [
+                    'user_id' => $rows[0]['user_id'],
+                    'timing' => $recentPunchTime
+                ]
+            ];
+        } else {
+            $r_error = 1;
+            $r_data = [
+                'message' => "Employee didn't punched yet"
+            ];
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
 }
 
 new HR();

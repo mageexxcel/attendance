@@ -808,6 +808,10 @@ else if ( $action == 'employee_punch_time' ){
     $insertPunchTime = date('m-d-Y h:i:sA', strtotime($punchTime));    
     $res = HR::insertUserPunchTime( $user_id, $insertPunchTime );
 }
+else if ( $action == 'get_employee_recent_punch_time' ){
+    $user_id = $PARAMS['user_id'];
+    $res = HR::API_getUserRecentPunchTime( $user_id );
+}
 
 echo json_encode($res);
 ?>
