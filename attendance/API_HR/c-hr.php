@@ -6188,12 +6188,15 @@ class HR extends DATABASE {
         $r_data = array();
         $stats = array();
         $return = array();
+        $enableEmployees = self::getEnabledUsersList();
+        $totalEmployees = count($enableEmployees);
         $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
         $days = self::getGenericMonthSummary( $year, $month );        
         $removableKeys = ['day_text', 'in_time', 'out_time', 'total_time', 'extra_time', 'text', 'admin_alert', 'admin_alert_message', 'orignal_total_time'];
         foreach( $monthly_leaves as $leave ){ 
             $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] ); 
             foreach($days as $key => $day){   
+                $days[$key]['total_employees'] = $totalEmployees;
                 $days[$key]['day'] = substr($day['day'], 0, 3);
                 foreach( $removableKeys as $removableKey ){
                     unset($days[$key][$removableKey]);
