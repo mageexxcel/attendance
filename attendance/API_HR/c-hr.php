@@ -499,6 +499,7 @@ class HR extends DATABASE {
         // calulate active hours, i.e the time user was in the office
         $insideOfficeTime =  self::getInsideOfficeTime($dayRaw);
         $return['office_time_inside'] = $insideOfficeTime['inside_time_seconds'];
+        $return['user_punches'] = $dayRaw;
 
         return $return;
     }
@@ -6377,25 +6378,28 @@ class HR extends DATABASE {
     public function API_getUserPunchesByDate( $user_id, $date ){
         $r_error = 0;
         $r_data = [];
+        $userPunches = [];
         $explodeDate = explode( "-", $date );
-        $newDate = $explodeDate[1] . "-" . $explodeDate[0] . "-" . $explodeDate[2];
-        $q = " SELECT user_id, timing FROM attendance WHERE user_id = '$user_id' AND timing like '$newDate%' ";
-        $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( count($rows) > 0 ){
-            foreach( $rows as $key => $row ){
-                $explodeRowTiming = explode( " ", $row['timing'] );
-                $explodeRowTimingDate = explode( "-", $explodeRowTiming[0] );
-                $newDateTime = $explodeRowTimingDate[1] . "-" . $explodeRowTimingDate[0] . "-" . $explodeRowTimingDate[2] . " " . $explodeRowTiming[1];                
-                $timestamp = strtotime($newDateTime);
-                $rows[$key]['timestamp'] = $timestamp;
+        $day = $explodeDate[0];
+        $month = $explodeDate[1];
+        $year = $explodeDate[2];
+        $newDate = $month . "-" . $day . "-" . $year;
+        $userMonthPunching = self::getUserMonthPunching( $user_id, $year, $month );        
+        if( count($userMonthPunching[$day]['user_punches']) > 0 ){
+            foreach( $userMonthPunching[$day]['user_punches'] as $key => $punches ){            
+                $explodePunchTime = explode(" ", $punches['timing']);                
+                $punchDate = $explodePunchTime[0];
+                if( $newDate == $punchDate ){                    
+                    $userPunches[] = $punches;
+                }
             }
-            $r_data['punches'] = $rows;
+
+            $r_data['punches'] = $userPunches;
 
         } else {
             $r_error = 1;
             $r_data['message'] = "Employee had not punched that day";
-        }
+        }        
         $return = [
             'error' => $r_error,
             'data' => $r_data
