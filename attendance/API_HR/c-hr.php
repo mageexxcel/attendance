@@ -499,7 +499,8 @@ class HR extends DATABASE {
         // calulate active hours, i.e the time user was in the office
         $insideOfficeTime =  self::getInsideOfficeTime($dayRaw);
         $return['office_time_inside'] = $insideOfficeTime['inside_time_seconds'];
-
+        $return['user_punches'] = $dayRaw;
+        
         return $return;
     }
 
@@ -6370,6 +6371,38 @@ class HR extends DATABASE {
             $r_error = 1;
             $r_data['message'] = "Meta Data Not Found";
         }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getUserPunchesByDate( $user_id, $date ){
+        $r_error = 0;
+        $r_data = [];
+        $userPunches = [];
+        $explodeDate = explode( "-", $date );
+        $day = $explodeDate[0];
+        $month = $explodeDate[1];
+        $year = $explodeDate[2];
+        $newDate = $month . "-" . $day . "-" . $year;
+        $userMonthPunching = self::getUserMonthPunching( $user_id, $year, $month );        
+        if( count($userMonthPunching[$day]['user_punches']) > 0 ){
+            foreach( $userMonthPunching[$day]['user_punches'] as $key => $punches ){            
+                $explodePunchTime = explode(" ", $punches['timing']);                
+                $punchDate = $explodePunchTime[0];
+                if( $newDate == $punchDate ){                    
+                    $userPunches[] = $punches;
+                }
+            }
+
+            $r_data['punches'] = $userPunches;
+
+        } else {
+            $r_error = 1;
+            $r_data['message'] = "Employee had not punched that day";
+        }        
         $return = [
             'error' => $r_error,
             'data' => $r_data
