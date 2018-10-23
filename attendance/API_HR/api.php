@@ -821,6 +821,11 @@ else if ( $action == 'get_employee_punches_by_date' ){
     $date = $PARAMS['date'];
     $res = HR::API_getUserPunchesByDate( $user_id, $date );
 }
+else if ( $action == 'get_employees_monthly_attendance' ){
+    $month = $PARAMS['month'];
+    $year = $PARAMS['year'];
+    $res = HR::API_getEmployeesMonthlyAttendance( $year, $month );
+}
 
 echo json_encode($res);
 ?>

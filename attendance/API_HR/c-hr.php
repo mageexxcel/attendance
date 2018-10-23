@@ -6410,6 +6410,40 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public function API_getEmployeesMonthlyAttendance( $year, $month ){
+        $r_error = 0;
+        $r_data = [];
+        $userStats = [];
+        $usersAttendanceSummary = self::getMonthAttendaceSummary( $year, $month );          
+        $userStats['year'] = $year;
+        $userStats['month'] = $month;
+        foreach( $usersAttendanceSummary['data']['usersAttendance'] as $key => $userAttendance ){
+            $userStats['attendance_info'][$key]['userid'] = $userAttendance['userid'];
+            $userStats['attendance_info'][$key]['name'] = $userAttendance['name'];
+            $userStats['attendance_info'][$key]['jobtitle'] = $userAttendance['jobtitle'];
+            $userStats['attendance_info'][$key]['working_days'] = $userAttendance['monthSummary']['WORKING_DAY'];
+            $userStats['attendance_info'][$key]['non_working_days'] = $userAttendance['monthSummary']['NON_WORKING_DAY'];
+            $userStats['attendance_info'][$key]['leave_days'] = $userAttendance['monthSummary']['LEAVE_DAY'];
+            $userStats['attendance_info'][$key]['half_days'] = $userAttendance['monthSummary']['HALF_DAY'];
+            $userStats['attendance_info'][$key]['present_days'] = 0;
+            $userStats['attendance_info'][$key]['absent_days'] = 0;
+            foreach($userAttendance['attendance'] as $attendance){                
+                if( isset($attendance['in_time']) && $attendance['in_time'] != "" ){
+                    $userStats['attendance_info'][$key]['present_days']++;
+                }
+                if( $attendance['day_type'] == 'WORKING_DAY' && ( !isset($attendance['in_time']) || $attendance['in_time'] == "" ) ){
+                    $userStats['attendance_info'][$key]['absent_days']++;
+                }
+            }            
+        }
+        $r_data['attendance_summary'] = $userStats;
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
 }
 
 new HR();
