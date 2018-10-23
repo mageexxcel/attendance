@@ -816,6 +816,11 @@ else if ( $action == 'get_employee_recent_punch_time' ){
     $user_id = $PARAMS['user_id'];
     $res = HR::API_getUserRecentPunchTime( $user_id );
 }
+else if ( $action == 'get_employee_punches_by_date' ){
+    $user_id = $PARAMS['user_id'];
+    $date = $PARAMS['date'];
+    $res = HR::API_getUserPunchesByDate( $user_id, $date );
+}
 
 echo json_encode($res);
 ?>
