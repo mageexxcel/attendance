@@ -190,6 +190,7 @@ trait Roles {
     static $ACTION_employee_punch_time = 8026;
     static $ACTION_get_employee_recent_punch_time = 8027;
     static $ACTION_get_employee_punches_by_date = 8028;
+    static $ACTION_get_employees_monthly_attendance = 8029;
     
     
 
@@ -730,6 +731,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_employee_recent_punch_time, 'name' => 'get_employee_recent_punch_time' ),                        
             array( 'id' => self::$ACTION_get_user_meta_data, 'name' => 'get_user_meta_data' ),                        
             array( 'id' => self::$ACTION_get_employee_punches_by_date, 'name' => 'get_employee_punches_by_date' ),  
+            array( 'id' => self::$ACTION_get_employees_monthly_attendance, 'name' => 'get_employees_monthly_attendance' ),
         );
         return $array;
     }
