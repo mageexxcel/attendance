@@ -1263,6 +1263,7 @@ class Salary extends DATABASE {
                 if ($v['status'] == "Approved" || $v['status'] == "approved" || $v['status'] == "Pending" || $v['status'] == "pending") {
                     if ($v['no_of_days'] < 1) {
                         $current_month_leave = $current_month_leave + $v['no_of_days'];
+                        $user_salaryinfo['days_present'] = $user_salaryinfo['days_present'] - $v['no_of_days'];
                     } else {
                         $current_month_leave = $current_month_leave + 1;
                     }
