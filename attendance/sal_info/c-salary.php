@@ -161,16 +161,12 @@ class Salary extends DATABASE {
             if(isset($r['applicable_till']) && $r['applicable_till'] != "" && $r['applicable_till'] != "0000-00-00"){
                 $applicable_till = $r['applicable_till'];
             }
-            if( isset($applicable_from) && isset($applicable_till) ){
-                $start = date('Ym', strtotime($applicable_from));
-                while($start < date("Ym", strtotime($applicable_till))){                    
-                    $applicable_month++;
-                    if(substr($start, 4, 2) == "12"){
-                        $start = (date("Y", strtotime($start)) + 1)."01";
-                    } else {
-                        $start++;
-                    }                    
-                }        
+            if( isset($applicable_from) && isset($applicable_till) ){                
+                $begin = new DateTime( $applicable_from );
+                $end = new DateTime( $applicable_till );
+                $interval = DateInterval::createFromDateString('1 month');
+                $period = new DatePeriod($begin, $interval, $end);                                
+                $applicable_month = iterator_count($period);
             }            
             $row[$key]['applicable_month'] = $applicable_month;
             $applicable_month = 0;
@@ -321,7 +317,7 @@ class Salary extends DATABASE {
             return "Invalid token";
         }
         $applicable_month = $data['applicable_month'];
-        $applicable_till = date('Y-m-d', strtotime("+$applicable_month months", strtotime($data['applicable_from'])));
+        $applicable_till = date('Y-m-d', ( strtotime("+$applicable_month months", strtotime($data['applicable_from']))) - 1 );        
         $ins = array(
             'user_Id' => $data['user_id'],
             'total_salary' => $data['total_salary'],

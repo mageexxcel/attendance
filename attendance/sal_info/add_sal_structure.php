@@ -133,7 +133,7 @@ if (isset($PARAMS['increment_amount']) && $PARAMS['increment_amount'] === "") {
 
 if (sizeof($result['error']) <= 0) {
     foreach ($PARAMS as $key => $val) {
-        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_month' && $key != 'submit') {
+        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_month' && $key != 'applicable_till' && $key != 'submit') {
             if (!is_numeric($val)) {
                 $result['error'][] = "Please insert a valid $key number";
             }
