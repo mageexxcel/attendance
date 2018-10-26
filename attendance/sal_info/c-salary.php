@@ -151,6 +151,31 @@ class Salary extends DATABASE {
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
+
+        // calculate applicable month from applicable_from and applicable_till date
+        $applicable_month = 0;
+        foreach($row as $key => $r){
+            if(isset($r['applicable_from']) && $r['applicable_from'] != "" && $r['applicable_from'] != "0000-00-00" ){
+                $applicable_from = $r['applicable_from'];
+            }            
+            if(isset($r['applicable_till']) && $r['applicable_till'] != "" && $r['applicable_till'] != "0000-00-00"){
+                $applicable_till = $r['applicable_till'];
+            }
+            if( isset($applicable_from) && isset($applicable_till) ){
+                $start = date('Ym', strtotime($applicable_from));
+                while($start < date("Ym", strtotime($applicable_till))){                    
+                    $applicable_month++;
+                    if(substr($start, 4, 2) == "12"){
+                        $start = (date("Y", strtotime($start)) + 1)."01";
+                    } else {
+                        $start++;
+                    }                    
+                }        
+            }            
+            $row[$key]['applicable_month'] = $applicable_month;
+            $applicable_month = 0;
+        }
+                        
         if ($date != false) {
             $arr = array();
             foreach ($row as $val) {
@@ -295,6 +320,8 @@ class Salary extends DATABASE {
         if ($update_by == false) {
             return "Invalid token";
         }
+        $applicable_month = $data['applicable_month'];
+        $applicable_till = date('Y-m-d', strtotime("+$applicable_month months", strtotime($data['applicable_from'])));
         $ins = array(
             'user_Id' => $data['user_id'],
             'total_salary' => $data['total_salary'],
@@ -302,7 +329,7 @@ class Salary extends DATABASE {
             'updated_by' => $update_by,
             'leaves_allocated' => $data['leave'],
             'applicable_from' => date("Y-m-d", strtotime($data['applicable_from'])),
-            'applicable_till' => date("Y-m-d", strtotime($data['applicable_till']))
+            'applicable_till' => $applicable_till
         );
         self::DBinsertQuery('salary', $ins);
         $salary_id = mysqli_insert_id($mysqli);
@@ -314,6 +341,7 @@ class Salary extends DATABASE {
             'HRA' => $data['hra'],
             'Basic' => $data['basic'],
             'Arrears' => $data['arrear'],
+            'Increment_Amount' => $data['increment_amount'],
             'TDS' => $data['tds'],
             'Misc_Deductions' => $data['misc_deduction'],
             'Advance' => $data['advance'],
