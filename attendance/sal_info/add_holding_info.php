@@ -33,11 +33,11 @@ if (!isset($PARAMS['holding_start_date'])) {
 if (isset($PARAMS['holding_start_date']) && $PARAMS['holding_start_date'] == "") {
     $result['error'][] = "Please insert a Holding amount start date";
 }
-if (!isset($PARAMS['holding_end_date'])) {
-    $result['error'][] = "Please add holding_end_date ";
+if (!isset($PARAMS['holding_month'])) {
+    $result['error'][] = "Please add holding_month ";
 }
-if (isset($PARAMS['holding_end_date']) && $PARAMS['holding_end_date'] == "") {
-    $result['error'][] = "Please insert a Holding amount end date";
+if (isset($PARAMS['holding_month']) && $PARAMS['holding_month'] == "") {
+    $result['error'][] = "Please insert a Holding month";
 }
 if (!isset($PARAMS['holding_amt'])) {
     $result['error'][] = "Please add Holding amount ";
@@ -51,7 +51,7 @@ if (isset($PARAMS['reason']) && $PARAMS['reason'] == "") {
 
 if (sizeof($result['error']) <= 0) {
     foreach ($PARAMS as $key => $val) {
-        if ($key != 'token' && $key != 'user_id' && $key != 'holding_amt' && $key != 'reason') {
+        if ($key != 'token' && $key != 'user_id' && $key != 'holding_amt' && $key != 'holding_month' && $key != 'holding_end_date' && $key != 'reason') {
             if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $val)) {
                 $result['error'][] = "Please insert a valid $key date";
             }

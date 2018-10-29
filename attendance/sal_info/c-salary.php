@@ -389,11 +389,13 @@ class Salary extends DATABASE {
 
     //Insert the holding amount details of a employee
     public function insertHoldingInfo($data) {
+        $holding_month = $data['holding_month'];
+        $holding_end_date = date('Y-m-d', ( strtotime("+$holding_month months", strtotime($data['holding_start_date']))) - 1 );        
         $ins = array(
             'user_Id' => $data['user_id'],
             'holding_amt' => $data['holding_amt'],
             'holding_start_date' => $data['holding_start_date'],
-            'holding_end_date' => $data['holding_end_date'],
+            'holding_end_date' => $holding_end_date,
             'reason' => $data['reason'],
             'last_updated_on' => date("Y-m-d")
         );
@@ -406,7 +408,7 @@ class Salary extends DATABASE {
             $message = "Holding amount info of an Employee " . $username['name'] . " is added in database \n Details: \n ";
             $message = $message . "Holding Amount = " . $data['holding_amt'] . "\n";
             $message = $message . "Holding start date= " . $data['holding_start_date'] . "\n";
-            $message = $message . "Holding end date = " . $data['holding_end_date'] . "\n";
+            $message = $message . "Holding end date = " . $holding_end_date . "\n";
             $message = $message . "Reason = " . $data['reason'] . "\n";
             $slack_userChannelid = "hr_system";
             // $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
