@@ -1148,7 +1148,7 @@ class Salary extends DATABASE {
         $month_name = date('F', strtotime($date));
         $user_salaryinfo = array();
         //get all salary list of employee
-        $res1 = self::getSalaryInfo($userid, "first_to_last", $date);
+        $res1 = self::getSalaryInfo($userid, "first_to_last", $date);        
         //get employee profile detail.   
         $res0 = self::getUserprofileDetail($userid);
         // get latest salary id
@@ -2778,11 +2778,44 @@ class Salary extends DATABASE {
                         }
                     }
                 }
+
+                $paySlipInfo = self::getUserPayslipInfo($userid);
+                if( sizeof($paySlipInfo) > 0 ){
+                    foreach( $paySlipInfo as $ps ){
+                        if( $ps['year'] ==  $prev_year && $ps['month'] == $prev_month ){
+                            if( $ps['final_leave_balance'] != '' ){
+                                $balance_leave = $ps['final_leave_balance'];
+                                break;
+                            } 
+                        }
+                    }
+                }
+                
+                if( sizeof($paySlipInfo) <= 0 ){
+                    //get employee detail from payslip table of previous  hr system
+                    $prev = self::getUserBalanceLaveInfo($userid, $prev_year, $prev_month);                    
+                    $balance_leave = $prev['final_leave_balance'];
+                }
+
+                $date = $prev_year . "-" . $prev_month . "-01";
+                $salInfo = self::getSalaryInfo($userid, "first_to_last", $date);                
+                // get latest salary id
+                $latest_sal_id = sizeof($salInfo) - 1;
+                $user_salaryinfo = $salInfo[$latest_sal_id];
+                
+                // get final leave balance of employee
+                $leaves = $balance_leave - $c1_month_leave + $user_salaryinfo['leaves_allocated'];
+                if ($leaves >= 0) {
+                    $unpaid_leave = 0;
+                }
+                if ($leaves < 0) {
+                    $unpaid_leave = abs($leaves);
+                }
                $arr['year'] =  $prev_year;
                $arr['month'] =  $prev_month;
                $arr['total_working_days'] =  $mon;
                $arr['leave'] = $c1_month_leave;
-               $arr['arrear_amount'] = $extra_arrear - ($extra_arrear/$mon)*$c1_month_leave;
+               $arr['arrear_amount'] = $extra_arrear - ($extra_arrear/$mon)*$unpaid_leave;
                $prev_arr[]= $arr;
                 
             }
