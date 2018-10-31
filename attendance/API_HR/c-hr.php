@@ -2932,13 +2932,13 @@ class HR extends DATABASE {
                 if ($userID == false) {
                     //user is not inserted
                     $r_message = "Errosr occurs while inserting user";
-                } else {
+                } else {                    
                     //user is inserted
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
-                    $PARAMS['applicable_from'] = $f_dateofjoining;
-                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_from'] = date('Y-m-d', strtotime($f_dateofjoining));
+                    $applicable_till = date('Y-m-d', ( strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from']))) - 1 );
                     $PARAMS['applicable_till'] = $applicable_till;
                     
                     // first salary will not add if an employee is added using third party key
