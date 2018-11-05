@@ -133,7 +133,7 @@ if (isset($PARAMS['increment_amount']) && $PARAMS['increment_amount'] === "") {
 
 if (sizeof($result['error']) <= 0) {
     foreach ($PARAMS as $key => $val) {
-        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_month' && $key != 'applicable_till' && $key != 'submit') {
+        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_month' && $key != 'applicable_till' && $key != 'first_update' && $key != 'submit') {
             if (!is_numeric($val)) {
                 $result['error'][] = "Please insert a valid $key number";
             }
@@ -173,9 +173,17 @@ if (isset($PARAMS['token']) && $PARAMS['token'] != "") {
         $endDate = strtotime($current_date);
         $startDate = strtotime($joining_date);
 
-        $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));
+        $numberOfMonths = abs((date('Y', $endDate) - date('Y', $startDate)) * 12 + (date('m', $endDate) - date('m', $startDate)));        
         if( $numberOfMonths < 6 && $PARAMS['total_salary'] <= 10000 ){
             $HR_CAN_ADD_SALARY = true;
+        }
+        if( isset($PARAMS['first_update']) ){
+            $firstUpdateByHR = $PARAMS['first_update'];
+            if( $firstUpdateByHR ) {
+                if( $numberOfMonths < 6 ){
+                    $HR_CAN_ADD_SALARY = true;
+                }
+            }
         }
     }
 
