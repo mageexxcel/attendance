@@ -114,12 +114,24 @@ function calculate_previous_month_pending_time(){
 			$runQuery = HR::DBrunQuery($checkAlreadyExistsQuery);
 	    $no_of_rows = HR::DBnumRows($runQuery);
 	    echo "<h2>$no_of_rows</h2>";
-	    if($no_of_rows==0){
-	    	$insertQuery = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value ('$employee_id', '$extraTime', '$yearAndMonth', '$todayDate_Y_m_d')";
-	    	HR::DBrunQuery($insertQuery);
+	    if($no_of_rows==0){						
+			$insertQuery = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value ('$employee_id', '$extraTime', '$yearAndMonth', '$todayDate_Y_m_d')";
+			HR::DBrunQuery($insertQuery);
 	    	echo "<h2>--INSERT</h2>";
 	    }else{
-	    	echo "<h2>--ALREADY EXISTS</h2>";
+			$checkMergeStatusQuery = " SELECT * FROM users_previous_month_time where user_Id=$employee_id AND year_and_month='$yearAndMonth' AND status_merged = 0 ";
+			$runQuery = HR::DBrunQuery($checkMergeStatusQuery);
+			$rowExists = HR::DBnumRows($runQuery);
+			if( $rowExists > 0 ){
+				$deleteQuery = " DELETE FROM users_previous_month_time WHERE user_Id=$employee_id AND year_and_month='$yearAndMonth' AND status_merged = 0 ";
+				HR::DBrunQuery($deleteQuery);
+				echo "<h2>--Already exist with merge status = 0, So DELETED</h2>";
+				$insertQuery = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value ('$employee_id', '$extraTime', '$yearAndMonth', '$todayDate_Y_m_d')";
+				HR::DBrunQuery($insertQuery);
+				echo "<h2>--Already exist with merge status = 0 DELETED & New INSERTED</h2>";
+			} else {
+				echo "<h2>--ALREADY EXISTS</h2>";
+			}
 	    }
 		}
 	}
