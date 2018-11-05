@@ -4,6 +4,7 @@ require_once 'c-database.php';
 require_once 'c-roles.php';
 require_once 'c-jwt.php';
 require_once 'c-holiday.php';
+require_once 'c-thirdPartyApi.php';
 
 //comman format for dates = "Y-m-d" eg "04/07/2016"
 
@@ -11,6 +12,7 @@ class HR extends DATABASE {
 
     use Roles;
     use Holiday;
+    use ThirdPartyAPI;
 
     const DEFAULT_WORKING_HOURS = "09:00";
 
@@ -156,7 +158,8 @@ class HR extends DATABASE {
                 "jobtitle" => $userInfo['jobtitle'],
                 "profileImage" => $userProfileImage,
                 "login_time" => time(),
-                "login_date_time" => date('d-M-Y H:i:s')
+                "login_date_time" => date('d-M-Y H:i:s'),
+                "eth_token" => $userInfo['eth_token']
             );
 
             // start - get user role and then role pages
@@ -496,7 +499,8 @@ class HR extends DATABASE {
         // calulate active hours, i.e the time user was in the office
         $insideOfficeTime =  self::getInsideOfficeTime($dayRaw);
         $return['office_time_inside'] = $insideOfficeTime['inside_time_seconds'];
-
+        $return['user_punches'] = $dayRaw;
+        
         return $return;
     }
 
@@ -996,7 +1000,6 @@ class HR extends DATABASE {
     public static function API_getStatsAttendanceSummary() {
 
         $r_error = 0;
-        $r_message = "";
         $r_data = array();
         $return = array();
         $attendance_rows = array();
@@ -1028,11 +1031,11 @@ class HR extends DATABASE {
             }
         }
         
+        $r_data['message'] = '';
         $r_data['attendance_rows'] = $attendance_rows;
         
         $return = [
             'error' => $r_error,
-            'message' => $r_message,
             'data' => $r_data
         ];
 
@@ -1042,7 +1045,7 @@ class HR extends DATABASE {
     public static function API_deleteAttendanceStatsSummary($year) {
 
         $r_error = 0;
-        $r_message = "";
+        $r_data = array();
         $return = array();
         $current_year = date('Y');
         $previous_year = $current_year - 1;
@@ -1051,7 +1054,7 @@ class HR extends DATABASE {
 
             if ( $year == $current_year || $year == $previous_year ) {
                 $r_error = 1;
-                $r_message = "Can't delete current or previous year attendance.";
+                $r_data['message'] = "Can't delete current or previous year attendance.";
     
             } else {
     
@@ -1059,15 +1062,15 @@ class HR extends DATABASE {
                 $runQuery = self::DBrunQuery($q);
                 $rows = self::DBfetchRows($runQuery);
                 
-                if( count($rows) > 1 ){
+                if( count($rows) > 0 ){
                     
                     $q = "DELETE FROM attendance WHERE timing like '%$year%'";
                     $runQuery = self::DBrunQuery($q);
-                    $r_message = "Records deleted for " . $year;
+                    $r_data['message'] = "Records deleted for " . $year;
     
                 } else {
                     $r_error = 1;
-                    $r_message = "Records not found for " . $year;
+                    $r_data['message'] = "Records not found for " . $year;
                 }
     
             }
@@ -1080,18 +1083,18 @@ class HR extends DATABASE {
             if ( count($rows) > 1 ) {
                 $q = "DELETE FROM attendance WHERE timing like '__:%'";
                 $runQuery = self::DBrunQuery($q);
-                $r_message = "Junk Records deleted";
+                $r_data['message'] = "Junk Records deleted";
 
             } else {
                 $r_error = 1;
-                $r_message = "No Junk Records Found";
+                $r_data['message'] = "No Junk Records Found";
             }
         }
 
         
         $return = [
             'error' => $r_error,
-            'message' => $r_message
+            'data' => $r_data
         ];
 
         return $return;        
@@ -1832,10 +1835,43 @@ class HR extends DATABASE {
         return true; // means set status_merged to 1
     }
 
+    public static function checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date ){
+        $check = false;
+        $team = ""; 
+        $year = date('Y', strtotime($from_date));
+        $month = date('m', strtotime($from_date));
+        $applied_days = self::getDaysBetweenLeaves( $from_date, $to_date );
+        $applied_user_info = self::getUserInfo($userid);
+        $team = $applied_user_info['team'];
+        $leaves = self::getLeavesForYearMonth( $year, $month );
+        foreach( $leaves as $leave ){
+            $userInfo = self::getUserInfo( $leave['user_Id'] );
+            if( strtolower($userInfo['team']) == strtolower($team) ){
+                $check_days = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] );
+                foreach( $applied_days['data']['days'] as $applied_day ){
+                    foreach( $check_days['data']['days'] as $check_day ){
+                        if( $applied_day['type'] == 'working' ){
+                            if( $applied_day['full_date'] == $check_day['full_date'] ){
+                                $check = true;
+                            }
+                        }
+                    }
+                }
+            }             
+        }
+        return $check;
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $db = self::getInstance();
         $mysqli = $db->getConnection();
+
+        $alert_message = "";
+        $check = self::checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date );
+        if( $check ){
+            $alert_message = "Another team member already has applied during this period so leave approve will depend on project.";
+        }
 
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
@@ -1874,14 +1910,14 @@ class HR extends DATABASE {
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
 
             if ($day_status == "2") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason  \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for second half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } elseif ($day_status == "1") {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for first half days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             } else {
-                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
-                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason ";
+                $message_to_user = "Hi $userInfo_name !!  \n You just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
+                $message_to_hr = "Hi HR !!  \n $userInfo_name just had applied for $no_of_days days of leave from $from_date to $to_date. \n Reason mentioned : $reason \n $alert_message";
             }
 
             if ($late_reason != "") {
@@ -2655,6 +2691,44 @@ class HR extends DATABASE {
 
     //end New Employee Welcome Email
 
+    public static function sendBirthdayWishEmail($userID){
+        $userInfo = self::getUserInfo($userID);
+
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='Birthday Wish'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if(empty($row)) {
+           $r_message = "Warning - Birthday Wish template not found!!";
+           return $r_message; 
+        }
+        $mail_body = $row[0]['body'];
+        $mail_subject = $row[0]['subject'];       
+        $work_email = $userInfo['work_email'];
+        $replace_to = array();
+        $replace_to[0] = $userInfo['name'];
+        $replace_from = array('#employee_name');
+
+        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
+        
+        // Fetching value of Variables in Template
+        $q2 = 'Select * from template_variables';
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRows($runQuery2);
+        foreach ($row2 as $s) {
+            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
+        }
+        
+        $data = array();
+        $data['email']['subject'] = $mail_subject;
+        $data['email']['name'] = $userInfo['name'];
+        $data['email']['body'] = $mail_body;
+        $data['email']['email_id'] = $work_email;
+        self::sendEmail($data);
+        $r_message = "Birthday wish sent!!";
+        return $r_message;
+    }
+
     //Leave of New Employee
 
     public static function applyNewEmployeeLeaves($userID) {
@@ -2858,15 +2932,19 @@ class HR extends DATABASE {
                 if ($userID == false) {
                     //user is not inserted
                     $r_message = "Errosr occurs while inserting user";
-                } else {
+                } else {                    
                     //user is inserted
                     $q1 = "INSERT INTO user_profile ( name, jobtitle, dateofjoining, user_Id, dob, gender, work_email, training_month ) VALUES
                         ( '$f_name', '$f_jobtitle', '$f_dateofjoining', $userID, '$f_dob', '$f_gender', '$f_workemail', $f_training_month ) ";
                     self::DBrunQuery($q1);
-                    $PARAMS['applicable_from'] = $f_dateofjoining;
-                    $applicable_till = date('Y-m-d', strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from'])));        
+                    $PARAMS['applicable_from'] = date('Y-m-d', strtotime($f_dateofjoining));
+                    $applicable_till = date('Y-m-d', ( strtotime("+$f_training_month months", strtotime($PARAMS['applicable_from']))) - 1 );
                     $PARAMS['applicable_till'] = $applicable_till;
-                    self::addNewEmployeeFirstSalary($userID, $PARAMS);
+                    
+                    // first salary will not add if an employee is added using third party key
+                    if( !isset($PARAMS['secret_key']) || $PARAMS['secret_key'] == "" ){
+                        self::addNewEmployeeFirstSalary($userID, $PARAMS);
+                    }
                     $r_error = 0;
                     
                     $r_message = "Employee added Successfully !!";
@@ -5858,6 +5936,18 @@ class HR extends DATABASE {
         return $return;
     }
 
+
+    // eth operations
+
+    public static function updateUserEthToken( $userid, $eth_token ){
+        $q2 = "UPDATE user_profile SET eth_token = '$eth_token' WHERE user_Id = $userid ";
+        $runQuery2 = self::DBrunQuery($q2);
+        $return['error'] = 0;
+        $return['message'] = "Eth Token Updated!!";
+        $return['data'] = array();
+        return $return;
+    }
+
     public static function getInventoriesAuditStatusForYearMonth( $month, $year ){
 
         $return = array();
@@ -6083,6 +6173,274 @@ class HR extends DATABASE {
             'data' => $r_data
         ];
 
+        return $return;
+    }
+
+    public static function getLeavesForYearMonth( $year, $month ){
+        $year_month = $year . "-" . $month;
+        $q = " SELECT * FROM leaves WHERE from_date LIKE '$year_month%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
+    public static function API_getEmployeesLeavesStats( $year, $month ){
+        $r_error = 0;
+        $r_data = array();
+        $stats = array();
+        $return = array();
+        $enableEmployees = self::getEnabledUsersList();
+        $totalEmployees = count($enableEmployees);
+        $monthly_leaves = self::getLeavesForYearMonth( $year, $month );
+        $days = self::getGenericMonthSummary( $year, $month );        
+        $removableKeys = ['day_text', 'in_time', 'out_time', 'total_time', 'extra_time', 'text', 'admin_alert', 'admin_alert_message', 'orignal_total_time'];
+        foreach( $monthly_leaves as $leave ){ 
+            $days_between_leaves = self::getDaysBetweenLeaves( $leave['from_date'], $leave['to_date'] ); 
+            foreach($days as $key => $day){   
+                $days[$key]['total_employees'] = $totalEmployees;
+                $days[$key]['day'] = substr($day['day'], 0, 3);
+                foreach( $removableKeys as $removableKey ){
+                    unset($days[$key][$removableKey]);
+                }
+                foreach($days_between_leaves['data']['days'] as $day_between_leave){
+                    if( strtolower($day_between_leave['type']) == 'working' ){
+                        if($day_between_leave['full_date'] == $day['full_date']){
+                            if($leave['status'] == 'Approved'){
+                                $days[$key]['approved']++;
+                            }
+                            if($leave['status'] == 'Pending'){
+                                $days[$key]['pending']++;
+                            }
+                            if($leave['status'] == 'Rejected'){
+                                $days[$key]['rejected']++;
+                            }
+                            if($leave['status'] == 'Cancelled'){
+                                $days[$key]['cancelled']++;
+                            }
+                            if($leave['status'] == 'Cancelled Request'){
+                                $days[$key]['cancelled_request']++;
+                            }                            
+                        } 
+                    }
+                } 
+            }            
+        }
+        foreach( $days as $key => $day ){
+            if( !isset($day['approved']) ) {
+                $days[$key]['approved'] = 0;
+            }
+            if( !isset($day['pending']) ){
+                $days[$key]['pending'] = 0;
+            }
+            if( !isset($day['rejected']) ){
+                $days[$key]['rejected'] = 0;
+            }
+            if( !isset($day['cancelled']) ){
+                $days[$key]['cancelled'] = 0;
+            }
+            if( !isset($day['cancelled_request']) ){
+                $days[$key]['cancelled_request'] = 0;
+            }
+            $stats[]= $days[$key];
+        }        
+        $r_data = [
+            'stats' => $stats
+        ];
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];     
+        return $return;           
+    }
+
+    public function API_updateUserMetaData( $user_id, $data ){
+        $r_error = 0;
+        $r_data = [];
+        $meta_data = [];
+        $userInfo = self::getUserInfo($user_id);        
+        if( isset($userInfo['meta_data']) && $userInfo['meta_data'] != "" ){            
+            $user_meta_data = json_decode($userInfo['meta_data'], true);                         
+            foreach( $user_meta_data as $key => $value ){                
+                $meta_data[$key] = $value;
+                foreach( $data as $k => $dt ){
+                    if( $k != $key ){
+                        $meta_data[$k] = $dt;
+                    } else {
+                        $meta_data[$key] = $dt;
+                    }
+                }
+            }
+
+        } else {
+            foreach( $data as $k => $dt ){
+                $meta_data[$k] = $dt;
+            }
+        }        
+        $update_meta_data = json_encode($meta_data);        
+        $q = " UPDATE user_profile SET meta_data = '$update_meta_data' WHERE user_Id = '$user_id' ";
+        $runQuery = self::DBrunQuery($q);
+        $r_data = [
+            'meta_data' => $meta_data
+        ];
+        $return = [
+            'error' => $r_error,
+            'message' => "Meta Data Updated Successfully",
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public function API_deleteUserMetaData( $user_id, $keys ){
+        $r_error = 0;
+        $r_message = "";
+        $meta_data = [];
+        $userInfo = self::getUserInfo($user_id);
+        $user_meta_data = json_decode($userInfo['meta_data'], true);
+        foreach( $user_meta_data as $key => $value ){
+            $meta_data[$key] = $value; 
+            foreach( $keys as $k ){
+                if( $key == $k ){
+                    unset($meta_data[$key]);
+                }
+            }
+        }
+        if( count($user_meta_data) == count($meta_data) ){
+            $r_error = 1;
+            $r_message = "Key not found";
+        } else {
+            $r_message = "Key Deleted";
+        }
+        $update_meta_data = json_encode($meta_data); 
+        if( count($meta_data) > 0 ){
+            $q = " UPDATE user_profile SET meta_data = '$update_meta_data' WHERE user_Id = '$user_id' ";
+        } else {
+            $q = " UPDATE user_profile SET meta_data = '' WHERE user_Id = '$user_id' ";
+        }
+        $runQuery = self::DBrunQuery($q);
+        $return  = [
+            'error' => $r_error,
+            'message' => $r_message
+        ];
+        return $return;        
+    }
+
+    public static function API_getUserRecentPunchTime( $user_id ){
+        $r_error = 0;
+        $r_data = [];
+        $q = " SELECT user_id,timing FROM attendance WHERE user_id = '$user_id' ORDER BY user_id DESC LIMIT 1 ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);           
+        if( count($rows) > 0 ){
+            $timing = $rows[0]['timing'];
+            $explodeDateTime = explode(" ", $timing);
+            $date = $explodeDateTime[0];
+            $dateExplode = explode("-", $date);
+            $newDate = $dateExplode[2] . "-" . $dateExplode[0] . "-" . $dateExplode[1];        
+            $time = $explodeDateTime[1];
+            $newDateTime = $newDate . ' ' . $time;
+            $recentPunchTime = date('dS M h:ia', strtotime($newDateTime));  
+            $r_data = [
+                'recent_punch_time' => [
+                    'user_id' => $rows[0]['user_id'],
+                    'timing' => $recentPunchTime
+                ]
+            ];
+        } else {
+            $r_error = 1;
+            $r_data = [
+                'message' => "Employee didn't punched yet"
+            ];
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getUserMetaData( $user_id ){
+        $r_error = 0;
+        $r_data = [];
+        $userInfo = self::getUserInfo( $user_id );        
+        if( isset($userInfo['meta_data']) && $userInfo['meta_data'] != "" ){
+            $userMetaData = json_decode($userInfo['meta_data']);
+            $r_data = [
+                'meta_data' => $userMetaData
+            ];
+        } else {
+            $r_error = 1;
+            $r_data['message'] = "Meta Data Not Found";
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getUserPunchesByDate( $user_id, $date ){
+        $r_error = 0;
+        $r_data = [];
+        $userPunches = [];
+        $explodeDate = explode( "-", $date );
+        $day = $explodeDate[0];
+        $month = $explodeDate[1];
+        $year = $explodeDate[2];
+        $newDate = $month . "-" . $day . "-" . $year;
+        $userMonthPunching = self::getUserMonthPunching( $user_id, $year, $month );        
+        if( count($userMonthPunching[$day]['user_punches']) > 0 ){
+            foreach( $userMonthPunching[$day]['user_punches'] as $key => $punches ){            
+                $explodePunchTime = explode(" ", $punches['timing']);                
+                $punchDate = $explodePunchTime[0];
+                if( $newDate == $punchDate ){                    
+                    $userPunches[] = $punches;
+                }
+            }
+
+            $r_data['punches'] = $userPunches;
+
+        } else {
+            $r_error = 1;
+            $r_data['message'] = "Employee had not punched that day";
+        }        
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public function API_getEmployeesMonthlyAttendance( $year, $month ){
+        $r_error = 0;
+        $r_data = [];
+        $userStats = [];
+        $usersAttendanceSummary = self::getMonthAttendaceSummary( $year, $month );          
+        $userStats['year'] = $year;
+        $userStats['month'] = $month;
+        foreach( $usersAttendanceSummary['data']['usersAttendance'] as $key => $userAttendance ){
+            $userStats['attendance_info'][$key]['userid'] = $userAttendance['userid'];
+            $userStats['attendance_info'][$key]['name'] = $userAttendance['name'];
+            $userStats['attendance_info'][$key]['jobtitle'] = $userAttendance['jobtitle'];
+            $userStats['attendance_info'][$key]['working_days'] = $userAttendance['monthSummary']['WORKING_DAY'];
+            $userStats['attendance_info'][$key]['non_working_days'] = $userAttendance['monthSummary']['NON_WORKING_DAY'];
+            $userStats['attendance_info'][$key]['leave_days'] = $userAttendance['monthSummary']['LEAVE_DAY'];
+            $userStats['attendance_info'][$key]['half_days'] = $userAttendance['monthSummary']['HALF_DAY'];
+            $userStats['attendance_info'][$key]['present_days'] = 0;
+            $userStats['attendance_info'][$key]['absent_days'] = 0;
+            foreach($userAttendance['attendance'] as $attendance){                
+                if( isset($attendance['in_time']) && $attendance['in_time'] != "" ){
+                    $userStats['attendance_info'][$key]['present_days']++;
+                }
+                if( $attendance['day_type'] == 'WORKING_DAY' && ( !isset($attendance['in_time']) || $attendance['in_time'] == "" ) ){
+                    $userStats['attendance_info'][$key]['absent_days']++;
+                }
+            }            
+        }
+        $r_data['attendance_summary'] = $userStats;
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
         return $return;
     }
 

@@ -151,6 +151,27 @@ class Salary extends DATABASE {
         }
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
+
+        // calculate applicable month from applicable_from and applicable_till date
+        $applicable_month = 0;
+        foreach($row as $key => $r){
+            if(isset($r['applicable_from']) && $r['applicable_from'] != "" && $r['applicable_from'] != "0000-00-00" ){
+                $applicable_from = $r['applicable_from'];
+            }            
+            if(isset($r['applicable_till']) && $r['applicable_till'] != "" && $r['applicable_till'] != "0000-00-00"){
+                $applicable_till = $r['applicable_till'];
+            }
+            if( isset($applicable_from) && isset($applicable_till) ){                
+                $begin = new DateTime( $applicable_from );
+                $end = new DateTime( $applicable_till );
+                $interval = DateInterval::createFromDateString('1 month');
+                $period = new DatePeriod($begin, $interval, $end);                                
+                $applicable_month = iterator_count($period);
+            }            
+            $row[$key]['applicable_month'] = $applicable_month;
+            $applicable_month = 0;
+        }
+                        
         if ($date != false) {
             $arr = array();
             foreach ($row as $val) {
@@ -214,6 +235,25 @@ class Salary extends DATABASE {
         $q = "select * from user_holding_info where user_Id = $user_id";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
+        // calculate holding_month from holding_start_date and holding_end_date
+        $applicable_month = 0;
+        foreach($row as $key => $r){
+            if(isset($r['holding_start_date']) && $r['holding_start_date'] != "" && $r['holding_start_date'] != "0000-00-00" ){
+                $holding_start_date = $r['holding_start_date'];
+            }            
+            if(isset($r['holding_end_date']) && $r['holding_end_date'] != "" && $r['holding_end_date'] != "0000-00-00"){
+                $holding_end_date = $r['holding_end_date'];
+            }
+            if( isset($holding_start_date) && isset($holding_end_date) ){                
+                $begin = new DateTime( $holding_start_date );
+                $end = new DateTime( $holding_end_date );
+                $interval = DateInterval::createFromDateString('1 month');
+                $period = new DatePeriod($begin, $interval, $end);                                
+                $holding_month = iterator_count($period);
+            }            
+            $row[$key]['holding_month'] = $holding_month;
+            $holding_month = 0;
+        }
         $ret = $row;
         return $ret;
     }
@@ -295,6 +335,8 @@ class Salary extends DATABASE {
         if ($update_by == false) {
             return "Invalid token";
         }
+        $applicable_month = $data['applicable_month'];
+        $applicable_till = date('Y-m-d', ( strtotime("+$applicable_month months", strtotime($data['applicable_from']))) - 1 );        
         $ins = array(
             'user_Id' => $data['user_id'],
             'total_salary' => $data['total_salary'],
@@ -302,7 +344,7 @@ class Salary extends DATABASE {
             'updated_by' => $update_by,
             'leaves_allocated' => $data['leave'],
             'applicable_from' => date("Y-m-d", strtotime($data['applicable_from'])),
-            'applicable_till' => date("Y-m-d", strtotime($data['applicable_till']))
+            'applicable_till' => $applicable_till
         );
         self::DBinsertQuery('salary', $ins);
         $salary_id = mysqli_insert_id($mysqli);
@@ -314,6 +356,7 @@ class Salary extends DATABASE {
             'HRA' => $data['hra'],
             'Basic' => $data['basic'],
             'Arrears' => $data['arrear'],
+            'Increment_Amount' => $data['increment_amount'],
             'TDS' => $data['tds'],
             'Misc_Deductions' => $data['misc_deduction'],
             'Advance' => $data['advance'],
@@ -365,11 +408,13 @@ class Salary extends DATABASE {
 
     //Insert the holding amount details of a employee
     public function insertHoldingInfo($data) {
+        $holding_month = $data['holding_month'];
+        $holding_end_date = date('Y-m-d', ( strtotime("+$holding_month months", strtotime($data['holding_start_date']))) - 1 );        
         $ins = array(
             'user_Id' => $data['user_id'],
             'holding_amt' => $data['holding_amt'],
             'holding_start_date' => $data['holding_start_date'],
-            'holding_end_date' => $data['holding_end_date'],
+            'holding_end_date' => $holding_end_date,
             'reason' => $data['reason'],
             'last_updated_on' => date("Y-m-d")
         );
@@ -382,7 +427,7 @@ class Salary extends DATABASE {
             $message = "Holding amount info of an Employee " . $username['name'] . " is added in database \n Details: \n ";
             $message = $message . "Holding Amount = " . $data['holding_amt'] . "\n";
             $message = $message . "Holding start date= " . $data['holding_start_date'] . "\n";
-            $message = $message . "Holding end date = " . $data['holding_end_date'] . "\n";
+            $message = $message . "Holding end date = " . $holding_end_date . "\n";
             $message = $message . "Reason = " . $data['reason'] . "\n";
             $slack_userChannelid = "hr_system";
             // $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);

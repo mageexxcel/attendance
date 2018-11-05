@@ -46,11 +46,11 @@ if (!isset($PARAMS['applicable_from'])) {
 if (isset($PARAMS['applicable_from']) && $PARAMS['applicable_from'] == "") {
     $result['error'][] = "Please insert a valid applicable_from date";
 }
-if (!isset($PARAMS['applicable_till'])) {
-    $result['error'][] = "Please add applicable_till ";
+if (!isset($PARAMS['applicable_month'])) {
+    $result['error'][] = "Please add applicable_month ";
 }
-if (isset($PARAMS['applicable_till']) && $PARAMS['applicable_till'] == "") {
-    $result['error'][] = "Please insert a valid Applicable till date ";
+if (isset($PARAMS['applicable_month']) && $PARAMS['applicable_month'] == "") {
+    $result['error'][] = "Please insert a valid applicable_month  ";
 }
 if (!isset($PARAMS['leave'])) {
     $result['error'][] = "Please add leave ";
@@ -124,10 +124,16 @@ if (!isset($PARAMS['arrear'])) {
 if (isset($PARAMS['arrear']) && $PARAMS['arrear'] === "") {
     $result['error'][] = "Please insert a valid arrear ";
 }
+if (!isset($PARAMS['increment_amount'])) {
+    $result['error'][] = "Please add increment_amount ";
+}
+if (isset($PARAMS['increment_amount']) && $PARAMS['increment_amount'] === "") {
+    $result['error'][] = "Please insert a valid increment_amount ";
+}
 
 if (sizeof($result['error']) <= 0) {
     foreach ($PARAMS as $key => $val) {
-        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_till' && $key != 'submit') {
+        if ($key != 'token' && $key != 'applicable_from' && $key != 'applicable_month' && $key != 'applicable_till' && $key != 'submit') {
             if (!is_numeric($val)) {
                 $result['error'][] = "Please insert a valid $key number";
             }

@@ -183,9 +183,16 @@ trait Roles {
 
     static $ACTION_get_employee_life_cycle = 8021;
     static $ACTION_update_employee_life_cycle = 8022;
-
-
-
+    
+    static $ACTION_update_user_meta_data = 8023;
+    static $ACTION_delete_user_meta_data = 8024;
+    static $ACTION_get_user_meta_data = 8025;    
+    static $ACTION_employee_punch_time = 8026;
+    static $ACTION_get_employee_recent_punch_time = 8027;
+    static $ACTION_get_employee_punches_by_date = 8028;
+    static $ACTION_get_employees_monthly_attendance = 8029;
+    
+    
 
 
 
@@ -200,6 +207,9 @@ trait Roles {
     static $ACTION_reject_manual_attendance = 11002;
     static $ACTION_approve_manual_attendance = 11003;
     static $ACTION_get_average_working_hours = 11004;
+
+    // action for ETHER
+    static $ACTION_update_user_eth_token = 22001;
 
 
     /////IMPORTANT
@@ -340,6 +350,7 @@ trait Roles {
                     array( 'id' => self::$ACTION_get_user_salary_info,'name' => 'get_user_salary_info' ),
                     array( 'id' => self::$ACTION_update_new_password, 'name' => 'update_new_password' ),
                     array( 'id' => self::$ACTION_delete_salary,'name' => 'delete_salary' ),
+                    array( 'id' => self::$ACTION_update_user_eth_token,'name' => 'update_user_eth_token' ),
                 )
             ),
 
@@ -696,6 +707,31 @@ trait Roles {
             array( 'id' => self::$ACTION_reject_manual_attendance, 'name' => 'reject_manual_attendance' ),
             array( 'id' => self::$ACTION_get_average_working_hours, 'name' => 'get_average_working_hours' ),
             array( 'id' => self::$ACTION_get_holiday_types_list, 'name' => 'get_holiday_types_list' ),
+        );
+        return $array;
+    }
+
+    public static function getActionsForThirdPartyApiCall(){
+        $array = array(
+            array( 'id' => self::$ACTION_get_machines_detail, 'name' => 'get_machines_detail' ),
+            array( 'id' => self::$ACTION_get_machine_type_list, 'name' => 'get_machine_type_list' ),
+            array( 'id' => self::$ACTION_get_machine_status_list, 'name' => 'get_machine_status_list' ),
+            array( 'id' => self::$ACTION_get_machine_count, 'name' => 'get_machine_count' ),
+            array( 'id' => self::$ACTION_list_all_roles, 'name' => 'list_all_roles' ),
+            array( 'id' => self::$ACTION_get_user_current_status, 'name' => 'get_user_current_status' ),
+            array( 'id' => self::$ACTION_get_inventory_audit_status_month_wise, 'name' => 'get_inventory_audit_status_month_wise' ),
+            array( 'id' => self::$ACTION_get_user_profile_detail_by_id, 'name' => 'get_user_profile_detail_by_id' ),
+            array( 'id' => self::$ACTION_update_user_profile_detail_by_id, 'name' => 'update_user_profile_detail_by_id' ),            
+            array( 'id' => self::$ACTION_update_user_day_summary, 'name' => 'update_user_day_summary' ),
+            array( 'id' => self::$ACTION_get_enable_user, 'name' => 'get_enable_user' ),
+            array( 'id' => self::$ACTION_update_user_meta_data, 'name' => 'update_user_meta_data' ),
+            array( 'id' => self::$ACTION_delete_user_meta_data, 'name' => 'delete_user_meta_data' ),      
+            array( 'id' => self::$ACTION_add_new_employee, 'name' => 'add_new_employee' ),
+            array( 'id' => self::$ACTION_employee_punch_time, 'name' => 'employee_punch_time' ),  
+            array( 'id' => self::$ACTION_get_employee_recent_punch_time, 'name' => 'get_employee_recent_punch_time' ),                        
+            array( 'id' => self::$ACTION_get_user_meta_data, 'name' => 'get_user_meta_data' ),                        
+            array( 'id' => self::$ACTION_get_employee_punches_by_date, 'name' => 'get_employee_punches_by_date' ),  
+            array( 'id' => self::$ACTION_get_employees_monthly_attendance, 'name' => 'get_employees_monthly_attendance' ),
         );
         return $array;
     }

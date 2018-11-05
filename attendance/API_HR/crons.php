@@ -230,6 +230,27 @@ function notification_compensation_time(){
 	HR::sendSlackMessageToUser("hr_system", "CRON Executed - Notifications of pending compensation time!!");
 }
 
+function sendBirthdayWishes(){
+	global $current_month, $current_date;
+	$users = HR::getEnabledUsersList();
+	foreach($users as $user){
+		$user_id = $user['user_Id'];
+		$user_dob = $user['dob'];
+		$user_name = $user['name'];
+		$user_slack_channel_id = $user['slack_channel_id'];		
+		if( isset($user_dob) && $user_dob != "" && $user_dob != '0000-00-00' ){
+			$user_dob_month_day = date('m-d', strtotime($user_dob));
+			$current_month_day = $current_month . "-" . $current_date;
+			if( $user_dob_month_day == $current_month_day ){
+				HR::sendBirthdayWishEmail($user_id);
+				if( isset($user_slack_channel_id) && $user_slack_channel_id != "" ){
+					$message = "Happy Birthday " . $user_name . " !!";
+					HR::sendSlackMessageToUser( $user_slack_channel_id, $message );
+				}
+			}
+		}		
+	}
+}
 
 
 switch ($CRON_ACTION) {
@@ -240,6 +261,10 @@ switch ($CRON_ACTION) {
 	case 'notification_compensation_time':
 		notification_compensation_time();
 		break;
+
+	case 'send_birthday_wishes':
+		sendBirthdayWishes();
+		break;		
 	
 	default:
 		break;
