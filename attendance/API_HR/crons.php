@@ -125,12 +125,13 @@ function calculate_previous_month_pending_time(){
 			if( $rowExists > 0 ){
 				$deleteQuery = " DELETE FROM users_previous_month_time WHERE user_Id=$employee_id AND year_and_month='$yearAndMonth' AND status_merged = 0 ";
 				HR::DBrunQuery($deleteQuery);
-				echo "<h2>--DELETED</h2>";
+				echo "<h2>--Already exist with merge status = 0, So DELETED</h2>";
 				$insertQuery = "INSERT INTO users_previous_month_time (user_Id,extra_time,year_and_month,date) value ('$employee_id', '$extraTime', '$yearAndMonth', '$todayDate_Y_m_d')";
 				HR::DBrunQuery($insertQuery);
-				echo "<h2>--INSERTED</h2>";
+				echo "<h2>--Already exist with merge status = 0 DELETED & New INSERTED</h2>";
+			} else {
+				echo "<h2>--ALREADY EXISTS</h2>";
 			}
-	    	echo "<h2>--ALREADY EXISTS</h2>";
 	    }
 		}
 	}
