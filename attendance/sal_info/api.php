@@ -272,7 +272,7 @@ if ($action == 'get_all_users_detail') { //action to get all employee details
         $user_id = $PARAMS['user_id'];
         $update = true;
         $tr_completion_date = $PARAMS['training_completion_date'];
-        if( isset($tr_completion_date) && $tr_completion_date != "" ) {
+        if( isset($tr_completion_date) && $tr_completion_date != "" && $tr_completion_date != '0000-00-00' ) {
             $sal_details = Salary::getSalaryInfo($user_id);
             if(count($sal_details) > 1) {
                 
