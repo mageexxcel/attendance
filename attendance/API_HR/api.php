@@ -836,8 +836,8 @@ else if ( $action == 'get_attendance_keys' ){
 }
 else if ( $action == 'delete_attendance_keys' ){    
     $key_text = trim($PARAMS['key_text']);
-    $setting_id = trim($PARAMS['setting_id']);
-    $res = HR::API_deleteAttendanceKeys( $setting_id, $key_text );
+    $field_name = trim($PARAMS['field_name']);
+    $res = HR::API_deleteAttendanceKeys( $field_name, $key_text );
 }
 
 echo json_encode($res);

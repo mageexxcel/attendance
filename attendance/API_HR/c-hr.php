@@ -6446,92 +6446,75 @@ class HR extends DATABASE {
 
     public static function API_addAttendanceKeys( $userid_key = false, $timing_key = false ){
         $r_error = 0;
-        $r_data = array();        
-        $userId = false;
-        $time = false;
-        $q = "SELECT * FROM settings";
+        $r_data = array();
+        $userIdKeys = [];
+        $timingKeys = [];
+        $q = " SELECT * FROM config WHERE type = 'attendance_csv' ";
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            foreach( $rows as $row ){
-                if( $row['setting_keys'] == 'user_id' ){
-                    $userIdKeys = json_decode($row['value'], true);
-                    $userId = true;
+        $row = self::DBfetchRow($runQuery);
+        if( sizeof($row) > 0 ){
+            $attendance_csv_keys = json_decode( $row['value'], true );
+            foreach( $attendance_csv_keys as $key => $atCsvKey ){ 
+                if( $key == 'user_id' ){
+                    $userIdKeys = $atCsvKey;
                 }
-                if( $row['setting_keys'] == 'time' ){
-                    $timingKeys = json_decode($row['value'], true);
-                    $time = true;
+                if( $key == 'time' ){
+                    $timingKeys = $atCsvKey;
                 }
             }
-
-            if( $userId ){
-                if( $userid_key != "" ){
-                    if( in_array( $userid_key, $userIdKeys ) ){
-                        $r_error = 1;
-                        $r_data['message'][] = "UserId key already exist.";
+            if( isset($userid_key) && $userid_key != "" ){
+                if( in_array( $userid_key, $userIdKeys ) ){
+                    $r_error = 1;
+                    $r_data['message'][] = "UserId key already exist.";
+                } else {
+                    array_push( $userIdKeys, $userid_key );  
+                    $keyValue = " {\"user_id\":" . json_encode($userIdKeys) . ", \"time\":" . json_encode($timingKeys) . "}";                  
+                    $q = " UPDATE config SET value = '$keyValue' WHERE type = 'attendance_csv' ";
+                    $runQuery = self::DBrunQuery($q);
+                    if($runQuery){
+                        $r_data['message'][] = "UserId key updated.";
                     } else {
-                        array_push( $userIdKeys, $userid_key );
-                        $userIdKeys = json_encode($userIdKeys);
-                        $q = " UPDATE settings SET value = '$userIdKeys' WHERE setting_keys = 'user_id' ";
-                        $runQuery = self::DBrunQuery($q);
-                        if($runQuery){
-                            $r_data['message'][] = "UserId key updated.";
-                        } else {
-                            $r_error = 1;
-                            $r_data['message'][] = "UserId key updated failed.";
-                        }
+                        $r_error = 1;
+                        $r_data['message'][] = "UserId key updated failed.";
                     }
                 }
             }
-    
-            if( $time ){
-                if( $timing_key != "" ){
-                    if( in_array( $timing_key, $timingKeys ) ){
-                        $r_error = 1;
-                        $r_data['message'][] = "Time key already exist.";
+
+            if( isset($timing_key) && $timing_key != "" ){
+                if( in_array( $timing_key, $timingKeys ) ){
+                    $r_error = 1;
+                    $r_data['message'][] = "Time key already exist.";
+                } else {
+                    array_push( $timingKeys, $timing_key );  
+                    $keyValue = " {\"user_id\":" . json_encode($userIdKeys) . ", \"time\":" . json_encode($timingKeys) . "}";                  
+                    $q = " UPDATE config SET value = '$keyValue' WHERE type = 'attendance_csv' ";
+                    $runQuery = self::DBrunQuery($q);
+                    if($runQuery){
+                        $r_data['message'][] = "Time key updated.";
                     } else {
-                        array_push( $timingKeys, $timing_key );
-                        $timingKeys = json_encode($timingKeys);
-                        $q = " UPDATE settings SET value = '$timingKeys' WHERE setting_keys = 'time' ";
-                        $runQuery = self::DBrunQuery($q);
-                        if($runQuery){
-                            $r_data['message'][] = "Time key updated.";
-                        } else {
-                            $r_error = 1;
-                            $r_data['message'][] = "Time key updated failed.";
-                        }
+                        $r_error = 1;
+                        $r_data['message'][] = "Time key updated failed.";
                     }
                 }
             }
-        } 
-
-        if( $userId == false ){
-            if( isset( $userid_key ) && $userid_key != "" ){
-                $userid_key = "[" . json_encode($userid_key) . "]";
-                $q = " INSERT INTO settings( setting_keys, value ) VALUES( 'user_id', '$userid_key' ) ";
-                $runQuery = self::DBrunQuery($q);
-                if($runQuery){
-                    $r_data['message'] = "UserId key added.";
-                } else {
-                    $r_error = 1;
-                    $r_data['message'] = "UserId key added failed.";
-                }
+            
+        } else {
+            if( isset($userid_key) && $userid_key != "" ){
+                array_push( $userIdKeys, $userid_key );  
             }
-        }
-        
-        if( $time == false ){
-            if( isset( $timing_key ) && $timing_key != "" ){
-                $timing_key = "[" . json_encode($timing_key) . "]";
-                $q = " INSERT INTO settings( setting_keys, value ) VALUES( 'time', '$timing_key' ) ";
-                $runQuery = self::DBrunQuery($q);
-                if($runQuery){
-                    $r_data['message'] = "Time key added.";
-                } else {
-                    $r_error = 1;
-                    $r_data['message'] = "Time key added failed.";
-                }
+            if( isset($timing_key) && $timing_key != "" ){
+                array_push( $timingKeys, $timing_key );  
             }
-        }         
+            $keyValue = " {\"user_id\":" . json_encode($userIdKeys) . ", \"time\":" . json_encode($timingKeys) . "}";
+            $q = " INSERT INTO config( type, value ) VALUES( 'attendance_csv', '$keyValue' ) ";
+            $runQuery = self::DBrunQuery($q);
+            if($runQuery){
+                $r_data['message'][] = "Row created and Key added";
+            } else {
+                $r_error = 1;
+                $r_data['message'][] = "Row creation failed";
+            }
+        }        
         $return = [
             'error' => $r_error,
             'data' => $r_data
@@ -6543,21 +6526,15 @@ class HR extends DATABASE {
         $r_error = 0;
         $r_data = array();
         $attendanceKeys = array();
-        $q = "SELECT * FROM settings";
+        $q = " SELECT * FROM config WHERE type = 'attendance_csv' ";
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            foreach( $rows as $row ){
-                $attendanceKeys[] = [
-                    'setting_id' => $row['id'],
-                    'field' => $row['setting_keys'],
-                    'keys' => json_decode($row['value'], true)
-                ];
-            }
+        $row = self::DBfetchRow($runQuery);        
+        if( sizeof($row) > 0 ){
+            $attendance_csv_keys = json_decode( $row['value'], true );            
         } else{
             $r_data['message'] = "No keys found";
         }
-        $r_data = $attendanceKeys;
+        $r_data = $attendance_csv_keys;
         $return = [
             'error' => $r_error,
             'data' => $r_data
@@ -6565,42 +6542,92 @@ class HR extends DATABASE {
         return $return;
     }
 
-    public static function API_deleteAttendanceKeys( $setting_id, $key_text ){
+    public static function API_deleteAttendanceKeys( $field_name, $key_text ){
         $r_error = 0;
         $r_data = array();
-        $q = " SELECT * FROM settings WHERE id = '$setting_id' ";
+        $q = " SELECT * FROM config WHERE type = 'attendance_csv' ";
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
-        if( sizeof($rows) > 0 ){
-            $keys = json_decode($rows[0]['value'], true);
-            if( in_array( $key_text, $keys ) ) {
-                foreach($keys as $k => $key){                
-                    if( $key == $key_text ){
-                        unset($keys[$k]);
+        $row = self::DBfetchRow($runQuery);
+        if( sizeof($row) > 0 ){
+            $attendance_csv_keys = json_decode( $row['value'], true );
+            foreach( $attendance_csv_keys as $key => $atCsvKey ){ 
+                if( $key == 'user_id' ){
+                    $userIdKeys = $atCsvKey;
+                }
+                if( $key == 'time' ){
+                    $timingKeys = $atCsvKey;
+                }
+            }            
+            if( $field_name == 'user_id' ){    
+                if( in_array( $key_text, $userIdKeys ) ){
+                    $start = "[";
+                    $end = "]";
+                    $userIdKeysString = "";
+                    $timeKeysString = "";
+                    foreach($userIdKeys as $k => $uid){                
+                        if( $uid == $key_text ){
+                            unset($userIdKeys[$k]);
+                            continue;
+                        }
+                        $userIdKeysString = $userIdKeysString . "\"" . $uid . "\","; 
                     }
-                }
-                $start = "[";
-                $end = "]";
-                $keysString = "";
-                foreach( $keys as $k => $key ){
-                    $keysString = $keysString . "\"" . $key . "\","; 
-                }
-                $keysString = $start . rtrim($keysString, ",") . $end;
-                $q = " UPDATE settings SET value = '$keysString' WHERE id = $setting_id ";
-                $runQuery = self::DBrunQuery($q);
-                if( $runQuery ){
-                    $r_data['message'] = "Key deleted";
+                    foreach($timingKeys as $k => $time){                                    
+                        $timeKeysString = $timeKeysString . "\"" . $time . "\","; 
+                    }
+                    $userIdKeysString = $start . rtrim($userIdKeysString, ",") . $end; 
+                    $timeKeysString = $start . rtrim($timeKeysString, ",") . $end; 
+                    
+                    $keyValue = " {\"user_id\":" . $userIdKeysString . ", \"time\":" . $timeKeysString . "}";                
+                    $q = " UPDATE config SET value = '$keyValue' WHERE type = 'attendance_csv' ";
+                    $runQuery = self::DBrunQuery($q);
+                    if($runQuery){
+                        $r_data['message'] = "UserId key deleted";
+                    } else {
+                        $r_error = 1;
+                        $r_data['message'] = "UserId key deletion failed";
+                    }
                 } else {
-                    $r_data['message'] = "Key deletion failed";
+                    $r_data['message'] = "UserId key not found";
+                }            
+                
+            } else if( $field_name == 'time' ){
+                if( in_array( $key_text, $timingKeys ) ){
+                    $start = "[";
+                    $end = "]";
+                    $userIdKeysString = "";
+                    $timeKeysString = "";
+                    foreach($timingKeys as $k => $time){                
+                        if( $time == $key_text ){
+                            unset($timingKeys[$k]);
+                            continue;
+                        }
+                        $timeKeysString = $timeKeysString . "\"" . $time . "\","; 
+                    }
+                    foreach($userIdKeys as $k => $uid){                                    
+                        $userIdKeysString = $userIdKeysString . "\"" . $uid . "\","; 
+                    }
+                    $userIdKeysString = $start . rtrim($userIdKeysString, ",") . $end; 
+                    $timeKeysString = $start . rtrim($timeKeysString, ",") . $end; 
+                    
+                    $keyValue = " {\"user_id\":" . $userIdKeysString . ", \"time\":" . $timeKeysString . "}";                
+                    $q = " UPDATE config SET value = '$keyValue' WHERE type = 'attendance_csv' ";
+                    $runQuery = self::DBrunQuery($q);
+                    if($runQuery){
+                        $r_data['message'] = "Time key deleted";
+                    } else {
+                        $r_error = 1;
+                        $r_data['message'] = "Time key deletion failed";
+                    }
+                } else {
+                    $r_data['message'] = "Time key not found";
                 }
+                
             } else {
-                $r_data['message'] = "Key not found.";
+                $r_data['message'] = "Key not found in both field";
             }
-            
-
         } else {
             $r_data['message'] = "No Data found";
-        }   
+        }
         $return = [
             'error' => $r_error,
             'data' => $r_data
