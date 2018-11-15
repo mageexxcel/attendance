@@ -31,13 +31,35 @@ if (isset($_FILES['image'])) {
         $file = fopen($PF_file_name, "r");
         $i = 0;
         $data = array();
-
+        $dataKeys = array();
+        $attendance_csv = getAttendanceKeys( $link );
+        $attendance_csv_keys = json_decode($attendance_csv['value'], true);
         $toBeInsertData = array();
 
         while (!feof($file)) {
             $line = fgets($file);
             if ($i == 0) {
                 //first row ignore
+                $dataKeys = explode("	", $line);
+                $userIdKey = trim($dataKeys[2]);
+                $timingKey = trim($dataKeys[6]);
+                foreach( $attendance_csv_keys as $key => $atCsvKey ){ 
+                    if( $key == 'user_id' ){
+                        $userIdKeys = $atCsvKey;
+                    }
+                    if( $key == 'time' ){
+                        $timingKeys = $atCsvKey;
+                    }
+                }
+                if( !in_array( $userIdKey, $userIdKeys ) ){
+                    echo $userIdKey . " not found";
+                    die;
+                }
+                if( !in_array( $timingKey, $timingKeys ) ){
+                    echo $timingKey . " not found";
+                    die;
+                }
+                
             } else {
                 $line = trim($line);
                 $line = trim(preg_replace('/\s+/', ' ', $line));
@@ -592,6 +614,13 @@ function getDatesBetweenTwoDates($startDate, $endDate) {
         }
     }
     return $return;
+}
+
+function getAttendanceKeys( $link ){      
+    $q = " SELECT * FROM config WHERE type = 'attendance_csv' ";
+    $res = mysqli_query($link, $q) or die(mysqli_error($link));
+    $row = mysqli_fetch_assoc($res);
+    return $row;
 }
 
 ?>

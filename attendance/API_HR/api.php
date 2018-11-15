@@ -826,6 +826,19 @@ else if ( $action == 'get_employees_monthly_attendance' ){
     $year = $PARAMS['year'];
     $res = HR::API_getEmployeesMonthlyAttendance( $year, $month );
 }
+else if ( $action == 'add_attendance_keys' ){
+    $userid_key = trim($PARAMS['userid_key']);
+    $timing_key = trim($PARAMS['timing_key']);
+    $res = HR::API_addAttendanceKeys( $userid_key, $timing_key );
+}
+else if ( $action == 'get_attendance_keys' ){    
+    $res = HR::API_getAttendanceKeys();
+}
+else if ( $action == 'delete_attendance_keys' ){    
+    $key_text = trim($PARAMS['key_text']);
+    $field_name = trim($PARAMS['field_name']);
+    $res = HR::API_deleteAttendanceKeys( $field_name, $key_text );
+}
 
 echo json_encode($res);
 ?>
