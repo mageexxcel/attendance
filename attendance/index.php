@@ -31,13 +31,34 @@ if (isset($_FILES['image'])) {
         $file = fopen($PF_file_name, "r");
         $i = 0;
         $data = array();
-
+        $dataKeys = array();
+        $attendanceKeys = getAttendanceKeys( $link );
         $toBeInsertData = array();
 
         while (!feof($file)) {
             $line = fgets($file);
             if ($i == 0) {
                 //first row ignore
+                $dataKeys = explode("	", $line);
+                $userIdKey = trim($dataKeys[2]);
+                $timingKey = trim($dataKeys[6]);
+                foreach($attendanceKeys as $atKey){
+                    if( $atKey['setting_keys'] == 'user_id' ){
+                        $userIdKeys = json_decode($atKey['value'], true);
+                    }
+                    if( $atKey['setting_keys'] == 'time' ){
+                        $timingKeys = json_decode($atKey['value'], true);
+                    }
+                }
+                if( !in_array( $userIdKey, $userIdKeys ) ){
+                    echo $userIdKey . " not found";
+                    die;
+                }
+                if( !in_array( $timingKey, $timingKeys ) ){
+                    echo $timingKey . " not found";
+                    die;
+                }
+                
             } else {
                 $line = trim($line);
                 $line = trim(preg_replace('/\s+/', ' ', $line));
@@ -592,6 +613,16 @@ function getDatesBetweenTwoDates($startDate, $endDate) {
         }
     }
     return $return;
+}
+
+function getAttendanceKeys( $link ){      
+    $q = "SELECT * FROM settings";
+    $res = mysqli_query($link, $q) or die(mysqli_error($link));
+    $rows = array();
+    while ($row = mysqli_fetch_assoc($res)) {
+        $rows[] = $row;
+    }
+    return $rows;
 }
 
 ?>
