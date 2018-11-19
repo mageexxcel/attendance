@@ -70,11 +70,14 @@ if (isset($_FILES['image'])) {
                              
             } else {
                 $line = trim($line);
+                $data = array();
                 // $line = trim(preg_replace('/\s+/', ' ', $line));
                 if (!empty($line)) {
                     // $data = explode(" ", $line);
                     $data = preg_split("/[\t]/", $line);
-                }
+                } else {
+                    continue;
+                }              
                 // start old machine format
                 // 06-30-2016 01:19:29PM
                 // $user_id = $data['2'];
@@ -84,7 +87,11 @@ if (isset($_FILES['image'])) {
                 // start new machine format // added by arun on 30th august
                 // 2017/07/10 20:31:57
                 // need to change this
-                $user_id = $data[$userIdKey];
+                $user_id = trim( $data[$userIdKey] );
+                if( strlen($user_id) > 5 ){
+                    echo "Invalid User Id: " . $user_id . "<br>";
+                    continue;
+                }
                 $explodeDateTime = explode( " ", $data[$timingKey] );
                 $raw_date = trim($explodeDateTime[0]);
                 $raw_time = trim($explodeDateTime[1]);
@@ -102,11 +109,11 @@ if (isset($_FILES['image'])) {
                         // mysqli_query($link, $q2) or die(mysqli_error($link));
                         $toBeInsertData[] = '(' . $user_id . ',"' . $datetime . '")';
                     }
-                }
+                }                
             }
             $i++;
         }
-
+        
         // above multiple insert query is changed to single insert query on 22 june 2018 by arun
         if( sizeof($toBeInsertData) > 0 ){
              $q2 = 'INSERT INTO attendance (user_id,timing) VALUES' . implode(',', $toBeInsertData);
