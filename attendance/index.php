@@ -41,7 +41,7 @@ if (isset($_FILES['image'])) {
             if ($i == 0) {
                 //first row ignore
                 $line = trim(preg_replace('/\s+/', ' ', $line));
-                $dataKeys = explode(" ", $line);                
+                $dataKeys = explode(" ", $line);              
                 foreach( $attendance_csv_keys as $key => $atCsvKey ){ 
                     if( $key == 'user_id' ){
                         $userIdKeys = $atCsvKey;
@@ -71,6 +71,7 @@ if (isset($_FILES['image'])) {
             } else {
                 $line = trim($line);
                 $data = array();
+                $datetime = "";
                 // $line = trim(preg_replace('/\s+/', ' ', $line));
                 if (!empty($line)) {
                     // $data = explode(" ", $line);
@@ -92,12 +93,16 @@ if (isset($_FILES['image'])) {
                     echo "Invalid User Id: " . $user_id . "<br>";
                     continue;
                 }
-                $explodeDateTime = explode( " ", $data[$timingKey] );
-                $raw_date = trim($explodeDateTime[0]);
-                $raw_time = trim($explodeDateTime[1]);
-                $final_date = date("m-d-Y", strtotime($raw_date));
-                $final_time = date("h:i:sA", strtotime($raw_time));
-                $datetime = $final_date . " " . $final_time;                
+                if( strpos( $data[$timingKey], "-")  ){
+                    $datetime = trim(preg_replace('/\s+/', ' ', $data[$timingKey]));
+                } else {
+                    $explodeDateTime = explode( " ", $data[$timingKey] );
+                    $raw_date = trim($explodeDateTime[0]);
+                    $raw_time = trim($explodeDateTime[1]);
+                    $final_date = date("m-d-Y", strtotime($raw_date));
+                    $final_time = date("h:i:sA", strtotime($raw_time));
+                    $datetime = $final_date . " " . $final_time;                
+                }
                 // end new machine format
 
                 if (in_array($datetime, $attendance)) {
