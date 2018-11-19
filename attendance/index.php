@@ -11,11 +11,11 @@ if (isset($_FILES['image'])) {
     $file_name = $_FILES['image']['name'];
     $file_size = $_FILES['image']['size'];
     $file_tmp = $_FILES['image']['tmp_name'];
-    $file_type = $_FILES['image']['type'];
+    $file_type = $_FILES['image']['type'];    
     if ($file_name != "AGL_001.TXT") {
         echo "Wrong file inserted";
     } else {
-
+        
         if (!move_uploaded_file($file_tmp, "upload/" . $file_name)) {
             echo "File Not uploaded";
             die;
@@ -27,24 +27,58 @@ if (isset($_FILES['image'])) {
         while ($r = mysqli_fetch_assoc($row)) {
             $attendance[] = $r['timing'];
         }
-        $PF_file_name = "upload/AGL_001.TXT";
+        $PF_file_name = "upload/AGL_001.TXT";        
         $file = fopen($PF_file_name, "r");
         $i = 0;
         $data = array();
-
+        $dataKeys = array();
+        $attendance_csv = getAttendanceKeys( $link );
+        $attendance_csv_keys = json_decode($attendance_csv['value'], true);
         $toBeInsertData = array();
 
         while (!feof($file)) {
             $line = fgets($file);
             if ($i == 0) {
                 //first row ignore
+                $line = trim(preg_replace('/\s+/', ' ', $line));
+                $dataKeys = explode(" ", $line);              
+                foreach( $attendance_csv_keys as $key => $atCsvKey ){ 
+                    if( $key == 'user_id' ){
+                        $userIdKeys = $atCsvKey;
+                    }
+                    if( $key == 'time' ){
+                        $timingKeys = $atCsvKey;
+                    }
+                }                                
+                foreach( $dataKeys as $k => $dtkey ){
+                    $dtkey = trim($dtkey);                    
+                    if( in_array( $dtkey, $userIdKeys ) ){
+                        $userIdKey = $k;                        
+                    }
+                    if( in_array( $dtkey, $timingKeys ) ){
+                        $timingKey = $k;                        
+                    }
+                }
+                if( !is_numeric($userIdKey) ){
+                    echo "UserId key not found";
+                    die;
+                }
+                if( !is_numeric($timingKey) ){
+                    echo "Time key not found";
+                    die;
+                }
+                             
             } else {
                 $line = trim($line);
-                $line = trim(preg_replace('/\s+/', ' ', $line));
+                $data = array();
+                $datetime = "";
+                // $line = trim(preg_replace('/\s+/', ' ', $line));
                 if (!empty($line)) {
-                    $data = explode(" ", $line);
-                }
-
+                    // $data = explode(" ", $line);
+                    $data = preg_split("/[\t]/", $line);
+                } else {
+                    continue;
+                }              
                 // start old machine format
                 // 06-30-2016 01:19:29PM
                 // $user_id = $data['2'];
@@ -54,12 +88,21 @@ if (isset($_FILES['image'])) {
                 // start new machine format // added by arun on 30th august
                 // 2017/07/10 20:31:57
                 // need to change this
-                $user_id = $data['2'];
-                $raw_date = $data['5'];
-                $raw_time = $data['6'];
-                $final_date = date("m-d-Y", strtotime($raw_date));
-                $final_time = date("h:i:sA", strtotime($raw_time));
-                $datetime = $final_date . " " . $final_time;
+                $user_id = trim( $data[$userIdKey] );
+                if( strlen($user_id) > 5 ){
+                    echo "Invalid User Id: " . $user_id . "<br>";
+                    continue;
+                }
+                if( strpos( $data[$timingKey], "-")  ){
+                    $datetime = trim(preg_replace('/\s+/', ' ', $data[$timingKey]));
+                } else {
+                    $explodeDateTime = explode( " ", $data[$timingKey] );
+                    $raw_date = trim($explodeDateTime[0]);
+                    $raw_time = trim($explodeDateTime[1]);
+                    $final_date = date("m-d-Y", strtotime($raw_date));
+                    $final_time = date("h:i:sA", strtotime($raw_time));
+                    $datetime = $final_date . " " . $final_time;                
+                }
                 // end new machine format
 
                 if (in_array($datetime, $attendance)) {
@@ -71,11 +114,11 @@ if (isset($_FILES['image'])) {
                         // mysqli_query($link, $q2) or die(mysqli_error($link));
                         $toBeInsertData[] = '(' . $user_id . ',"' . $datetime . '")';
                     }
-                }
+                }                
             }
             $i++;
         }
-
+        
         // above multiple insert query is changed to single insert query on 22 june 2018 by arun
         if( sizeof($toBeInsertData) > 0 ){
              $q2 = 'INSERT INTO attendance (user_id,timing) VALUES' . implode(',', $toBeInsertData);
@@ -592,6 +635,13 @@ function getDatesBetweenTwoDates($startDate, $endDate) {
         }
     }
     return $return;
+}
+
+function getAttendanceKeys( $link ){      
+    $q = " SELECT * FROM config WHERE type = 'attendance_csv' ";
+    $res = mysqli_query($link, $q) or die(mysqli_error($link));
+    $row = mysqli_fetch_assoc($res);
+    return $row;
 }
 
 ?>

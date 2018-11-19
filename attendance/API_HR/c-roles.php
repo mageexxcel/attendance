@@ -38,6 +38,7 @@ trait Roles {
     static $PAGE_logout = 132;
     static $PAGE_add_documents = 133;
     static $PAGE_health_stats = 134;
+    static $PAGE_settings = 135;
 
 
 
@@ -518,6 +519,13 @@ trait Roles {
             array(
                 'id' => self::$PAGE_health_stats,
                 'name' => 'health_stats',
+                'actions_list' => array(
+                    
+                )
+            ),
+            array(
+                'id' => self::$PAGE_settings,
+                'name' => 'settings',
                 'actions_list' => array(
                     
                 )
