@@ -839,6 +839,14 @@ else if ( $action == 'delete_attendance_keys' ){
     $field_name = trim($PARAMS['field_name']);
     $res = HR::API_deleteAttendanceKeys( $field_name, $key_text );
 }
+else if ( $action == 'add_reset_password_config' ){    
+    $no_of_days = $PARAMS['pwd_reset_interval'];
+    $status = $PARAMS['pwd_reset_status'];
+    $res = HR::API_resetPasswordConfig( $no_of_days, $status );
+}
+else if ( $action == 'get_reset_password_config' ){    
+    $res = HR::API_getResetPasswordConfig();
+}
 
 echo json_encode($res);
 ?>

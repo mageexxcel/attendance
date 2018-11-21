@@ -2564,7 +2564,7 @@ class HR extends DATABASE {
         
         $r_error = 1;
         $r_message = "";
-        $r_data = array();
+        $r_data = array();        
 
         $q = "SELECT * from config where type='email_detail'";
         $r = self::DBrunQuery($q);
@@ -2572,9 +2572,9 @@ class HR extends DATABASE {
 
         // convert this string into associative array
         parse_str($row['value'], $detail);
-        include "phpmailer/PHPMailerAutoload.php";
-
-
+        include_once "phpmailer/PHPMailerAutoload.php";
+        
+        
         if (!empty($data['email'])) {
             
             
@@ -3013,10 +3013,11 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username) { // api call
+    public static function forgotPassword($username, $sendEmail = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+        $emailData = array();
 
         if ($username == 'global_guest') {
             $r_message = "You don't have permission to reset password !!";
@@ -3042,14 +3043,23 @@ class HR extends DATABASE {
                         self::updateUserPassword($userId, $newPassword);
                         $r_error = 0;
                         $r_message = "Password reset Successfully. Check you slack for new password!!";
-
+                        
                         //send slack message
                         $userInfo = self::getUserInfo($userId);
                         $userInfo_name = $userInfo['name'];
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-
+                        
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+                        if( $sendEmail ){
+                            $emailData['email'] = [
+                                'email_id' => $userInfo['work_email'],
+                                'name' => $userInfo['name'],
+                                'subject' => 'Reset Password',
+                                'body' => $message_to_user,                                
+                            ];
+                            self::sendEmail($emailData);                           
+                        }
                     }
                 }
             }
@@ -6633,6 +6643,62 @@ class HR extends DATABASE {
             'data' => $r_data
         ];
         return $return;        
+    }
+
+    public static function API_resetPasswordConfig( $no_of_days, $status ){
+        $r_error = 0;
+        $r_data = array();
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $date = date('d-m-Y');
+        if( sizeof($rows) > 0 ){
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " UPDATE config SET value = '$configValue' WHERE type = 'reset_password' ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config updated successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config updation failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        } else {
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " INSERT INTO config( type, value ) VALUES( 'reset_password', '$configValue' ) ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config inserted successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config insertion failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getResetPasswordConfig(){
+        $r_error = 0;
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);        
+        $row['value'] = json_decode($row['value'], true);
+        $return = [
+            'error' => $r_error,
+            'data' => $row
+        ];
+        return $return;
     }
 
 }
