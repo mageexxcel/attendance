@@ -274,20 +274,11 @@ function resetPasswords(){
 		if( sizeof($dates) > $resetPwdConfig['days'] ){	
 			foreach( $users as $key => $user ){
 				$userid = $user['user_Id'];
-				$role = HR::getUserRole( $userid );
-				if( strtolower($role['name']) != 'admin' ){
-					$password = uniqid(rand());
-					$encrypted_password = md5($password);
-					$q = " UPDATE users SET password = '$encrypted_password' WHERE id = '$userid' ";
-					$runQuery = HR::DBrunQuery($q);
-					if($runQuery){
-						$user_slack_channel_id = $user['slack_channel_id'];
-						HR::sendResetPassword( $userid, $password );
-						$message = "Hello " . $user['name'] . ". Your password has been changed. Your new password is " . $password;
-						HR::sendSlackMessageToUser( $user_slack_channel_id, $message );
-					}
-				}
+				if( strtolower($user['role_name']) != 'admin' ){					
+					HR::forgotPassword( $user['username'], true );
+				}			
 			}
+			HR::API_resetPasswordConfig( $resetPwdConfig['days'], $resetPwdConfig['status'] );
 		}
 	}
 }

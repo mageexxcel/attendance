@@ -2564,7 +2564,7 @@ class HR extends DATABASE {
         
         $r_error = 1;
         $r_message = "";
-        $r_data = array();
+        $r_data = array();        
 
         $q = "SELECT * from config where type='email_detail'";
         $r = self::DBrunQuery($q);
@@ -2572,9 +2572,9 @@ class HR extends DATABASE {
 
         // convert this string into associative array
         parse_str($row['value'], $detail);
-        include "phpmailer/PHPMailerAutoload.php";
-
-
+        include_once "phpmailer/PHPMailerAutoload.php";
+        
+        
         if (!empty($data['email'])) {
             
             
@@ -2726,45 +2726,6 @@ class HR extends DATABASE {
         $data['email']['email_id'] = $work_email;
         self::sendEmail($data);
         $r_message = "Birthday wish sent!!";
-        return $r_message;
-    }
-
-    public static function sendResetPassword($userID, $newPassword){
-        $userInfo = self::getUserInfo($userID);
-
-        // Fetching New Employee Welcome Email template
-        $q = "SELECT * FROM email_templates where name='Reset Password'";
-        $runQuery = self::DBrunQuery($q);
-        $row = self::DBfetchRows($runQuery);
-        if(empty($row)) {
-           $r_message = "Warning - Reset Password template not found!!";
-           return $r_message; 
-        }
-        $mail_body = $row[0]['body'];
-        $mail_subject = $row[0]['subject'];       
-        $work_email = $userInfo['work_email'];
-        $replace_to = array();
-        $replace_to[0] = $userInfo['name'];
-        $replace_to[1] = $newPassword;
-        $replace_from = array('#employee_name', '#new password');
-
-        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
-        
-        // Fetching value of Variables in Template
-        $q2 = 'Select * from template_variables';
-        $runQuery2 = self::DBrunQuery($q2);
-        $row2 = self::DBfetchRows($runQuery2);
-        foreach ($row2 as $s) {
-            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
-        }
-        
-        $data = array();
-        $data['email']['subject'] = $mail_subject;
-        $data['email']['name'] = $userInfo['name'];
-        $data['email']['body'] = $mail_body;
-        $data['email']['email_id'] = $work_email;
-        self::sendEmail($data);
-        $r_message = "Reset Password sent!!";
         return $r_message;
     }
 
@@ -3052,10 +3013,11 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username) { // api call
+    public static function forgotPassword($username, $sendEmail = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+        $emailData = array();
 
         if ($username == 'global_guest') {
             $r_message = "You don't have permission to reset password !!";
@@ -3081,14 +3043,23 @@ class HR extends DATABASE {
                         self::updateUserPassword($userId, $newPassword);
                         $r_error = 0;
                         $r_message = "Password reset Successfully. Check you slack for new password!!";
-
+                        
                         //send slack message
                         $userInfo = self::getUserInfo($userId);
                         $userInfo_name = $userInfo['name'];
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-
+                        
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+                        if( $sendEmail ){
+                            $emailData['email'] = [
+                                'email_id' => $userInfo['work_email'],
+                                'name' => $userInfo['name'],
+                                'subject' => 'Reset Password',
+                                'body' => $message_to_user,                                
+                            ];
+                            self::sendEmail($emailData);                           
+                        }
                     }
                 }
             }
