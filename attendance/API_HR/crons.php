@@ -264,6 +264,34 @@ function sendBirthdayWishes(){
 	}
 }
 
+function resetPasswords(){
+	global $todayDate_Y_m_d;
+	$users = HR::getEnabledUsersList();
+	$config = HR::API_getResetPasswordConfig();	
+	$resetPwdConfig = $config['data']['value'];
+	if( $resetPwdConfig['status'] ){
+		$dates = HR::_getDatesBetweenTwoDates( $resetPwdConfig['last_updated'], $todayDate_Y_m_d );
+		if( sizeof($dates) > $resetPwdConfig['days'] ){	
+			foreach( $users as $key => $user ){
+				$userid = $user['user_Id'];
+				$role = HR::getUserRole( $userid );
+				if( strtolower($role['name']) != 'admin' ){
+					$password = uniqid(rand());
+					$encrypted_password = md5($password);
+					$q = " UPDATE users SET password = '$encrypted_password' WHERE id = '$userid' ";
+					$runQuery = HR::DBrunQuery($q);
+					if($runQuery){
+						$user_slack_channel_id = $user['slack_channel_id'];
+						HR::sendResetPassword( $userid, $password );
+						$message = "Hello " . $user['name'] . ". Your password has been changed. Your new password is " . $password;
+						HR::sendSlackMessageToUser( $user_slack_channel_id, $message );
+					}
+				}
+			}
+		}
+	}
+}
+
 
 switch ($CRON_ACTION) {
 	case 'calculate_previous_month_pending_time':
@@ -276,7 +304,11 @@ switch ($CRON_ACTION) {
 
 	case 'send_birthday_wishes':
 		sendBirthdayWishes();
-		break;		
+		break;
+		
+	case 'reset_passwords':
+		resetPasswords();
+	break;
 	
 	default:
 		break;

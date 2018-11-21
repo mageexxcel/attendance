@@ -2729,6 +2729,45 @@ class HR extends DATABASE {
         return $r_message;
     }
 
+    public static function sendResetPassword($userID, $newPassword){
+        $userInfo = self::getUserInfo($userID);
+
+        // Fetching New Employee Welcome Email template
+        $q = "SELECT * FROM email_templates where name='Reset Password'";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRows($runQuery);
+        if(empty($row)) {
+           $r_message = "Warning - Reset Password template not found!!";
+           return $r_message; 
+        }
+        $mail_body = $row[0]['body'];
+        $mail_subject = $row[0]['subject'];       
+        $work_email = $userInfo['work_email'];
+        $replace_to = array();
+        $replace_to[0] = $userInfo['name'];
+        $replace_to[1] = $newPassword;
+        $replace_from = array('#employee_name', '#new password');
+
+        $mail_body = str_replace($replace_from,$replace_to,$mail_body);
+        
+        // Fetching value of Variables in Template
+        $q2 = 'Select * from template_variables';
+        $runQuery2 = self::DBrunQuery($q2);
+        $row2 = self::DBfetchRows($runQuery2);
+        foreach ($row2 as $s) {
+            $mail_body = str_replace($s['name'], $s['value'], $mail_body);
+        }
+        
+        $data = array();
+        $data['email']['subject'] = $mail_subject;
+        $data['email']['name'] = $userInfo['name'];
+        $data['email']['body'] = $mail_body;
+        $data['email']['email_id'] = $work_email;
+        self::sendEmail($data);
+        $r_message = "Reset Password sent!!";
+        return $r_message;
+    }
+
     //Leave of New Employee
 
     public static function applyNewEmployeeLeaves($userID) {
@@ -6633,6 +6672,62 @@ class HR extends DATABASE {
             'data' => $r_data
         ];
         return $return;        
+    }
+
+    public static function API_resetPasswordConfig( $no_of_days, $status ){
+        $r_error = 0;
+        $r_data = array();
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $date = date('d-m-Y');
+        if( sizeof($rows) > 0 ){
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " UPDATE config SET value = '$configValue' WHERE type = 'reset_password' ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config updated successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config updation failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        } else {
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " INSERT INTO config( type, value ) VALUES( 'reset_password', '$configValue' ) ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config inserted successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config insertion failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getResetPasswordConfig(){
+        $r_error = 0;
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);        
+        $row['value'] = json_decode($row['value'], true);
+        $return = [
+            'error' => $r_error,
+            'data' => $row
+        ];
+        return $return;
     }
 
 }
