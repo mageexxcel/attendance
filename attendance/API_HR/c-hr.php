@@ -1292,6 +1292,7 @@ class HR extends DATABASE {
                 // if in out time is missing
                 if( trim($day['total_time']) == ""){
                     $seconds_to_be_compensate += $day_orignal_total_time;
+                    // storing per day working hours if in out time is missing ( 9 hrs ) 
                     $seconds_for_compensation += $day_orignal_total_time;
                     $hms = self::_secondsToTime($day_orignal_total_time);
                     $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
@@ -1307,6 +1308,7 @@ class HR extends DATABASE {
 
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
+                        // calculate per day compensaton time if less than 4hrs and add it to previous compensation time
                         if( $day_seconds_extra_time < 14400 ){
                             $seconds_for_compensation += $day_seconds_extra_time;
                             $breakUpText = "$date_for_break_up # Addition # $hms_show";                        
@@ -1319,6 +1321,7 @@ class HR extends DATABASE {
                         
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
+                        // calculate per day compensaton time if less than 4hrs and subtract it from previous compensation time
                         if( $day_seconds_extra_time < 14400 ){
                             $seconds_for_compensation -= $day_seconds_extra_time;
                             $breakUpText = "$date_for_break_up # Deduction # $hms_show";
@@ -1336,6 +1339,7 @@ class HR extends DATABASE {
 
             if( $breakUpText != ''){
                 // $hms = self::_secondsToTime($seconds_to_be_compensate);
+                // calculate pending compensation time and skipping 4hr or more compensation time 
                 $hms = self::_secondsToTime($seconds_for_compensation);
                 $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';                
                 $breakUpText = $breakUpText. " ## Pending = $hms_show";
