@@ -1272,6 +1272,7 @@ class HR extends DATABASE {
     // this is added to calculate compensation timings by arun on 29th jan 2018 this accepts final beauty attendance
     public static function _analyseCompensationTime($beautyAttendance){
         $seconds_to_be_compensate = 0;
+        $seconds_for_compensation = 0;
         $compensation_break_up = [];
         $currentDate = date('Y-m-d');
         
@@ -1291,7 +1292,7 @@ class HR extends DATABASE {
                 // if in out time is missing
                 if( trim($day['total_time']) == ""){
                     $seconds_to_be_compensate += $day_orignal_total_time;
-
+                    $seconds_for_compensation += $day_orignal_total_time;
                     $hms = self::_secondsToTime($day_orignal_total_time);
                     $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
 
@@ -1301,23 +1302,27 @@ class HR extends DATABASE {
                     $day_seconds_extra_time = $day['seconds_extra_time'];
                     if( $day_extra_time_status === '-'){
                         // echo "PLUS <br>";
-                        $seconds_to_be_compensate += $day_seconds_extra_time;
+                        $seconds_to_be_compensate += $day_seconds_extra_time;                        
                         // $breakUpText = "$date_for_break_up # Addition in compensation Time : $day_full_date : $day_seconds_extra_time";
 
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
-
-                        $breakUpText = "$date_for_break_up # Addition # $hms_show";
+                        if( $day_seconds_extra_time < 14400 ){
+                            $seconds_for_compensation += $day_seconds_extra_time;
+                            $breakUpText = "$date_for_break_up # Addition # $hms_show";                        
+                        }
                     }
                     if( $day_extra_time_status === '+' && $seconds_to_be_compensate > 0 ){
                         // echo "MINUS <br>";
                         $seconds_to_be_compensate -= $day_seconds_extra_time;
 
-
+                        
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
-
-                        $breakUpText = "$date_for_break_up # Deduction # $hms_show";
+                        if( $day_seconds_extra_time < 14400 ){
+                            $seconds_for_compensation -= $day_seconds_extra_time;
+                            $breakUpText = "$date_for_break_up # Deduction # $hms_show";
+                        }
                     }
                 }
             }
@@ -1325,10 +1330,14 @@ class HR extends DATABASE {
             if( $seconds_to_be_compensate < 0 ){
                 $seconds_to_be_compensate = 0;
             }
+            if( $seconds_for_compensation < 0 ){
+                $seconds_for_compensation = 0;
+            }
 
             if( $breakUpText != ''){
-                $hms = self::_secondsToTime($seconds_to_be_compensate);
-                $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
+                // $hms = self::_secondsToTime($seconds_to_be_compensate);
+                $hms = self::_secondsToTime($seconds_for_compensation);
+                $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';                
                 $breakUpText = $breakUpText. " ## Pending = $hms_show";
             }
             
