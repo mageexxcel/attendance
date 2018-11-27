@@ -1272,6 +1272,7 @@ class HR extends DATABASE {
     // this is added to calculate compensation timings by arun on 29th jan 2018 this accepts final beauty attendance
     public static function _analyseCompensationTime($beautyAttendance){
         $seconds_to_be_compensate = 0;
+        $seconds_for_compensation = 0;
         $compensation_break_up = [];
         $currentDate = date('Y-m-d');
         
@@ -1291,7 +1292,8 @@ class HR extends DATABASE {
                 // if in out time is missing
                 if( trim($day['total_time']) == ""){
                     $seconds_to_be_compensate += $day_orignal_total_time;
-
+                    // storing per day working hours if in out time is missing ( 9 hrs ) 
+                    $seconds_for_compensation += $day_orignal_total_time;
                     $hms = self::_secondsToTime($day_orignal_total_time);
                     $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
 
@@ -1301,23 +1303,29 @@ class HR extends DATABASE {
                     $day_seconds_extra_time = $day['seconds_extra_time'];
                     if( $day_extra_time_status === '-'){
                         // echo "PLUS <br>";
-                        $seconds_to_be_compensate += $day_seconds_extra_time;
+                        $seconds_to_be_compensate += $day_seconds_extra_time;                        
                         // $breakUpText = "$date_for_break_up # Addition in compensation Time : $day_full_date : $day_seconds_extra_time";
 
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
-
-                        $breakUpText = "$date_for_break_up # Addition # $hms_show";
+                        // calculate per day compensaton time if less than 4hrs and add it to previous compensation time
+                        if( $day_seconds_extra_time < 14400 ){
+                            $seconds_for_compensation += $day_seconds_extra_time;
+                            $breakUpText = "$date_for_break_up # Addition # $hms_show";                        
+                        }
                     }
                     if( $day_extra_time_status === '+' && $seconds_to_be_compensate > 0 ){
                         // echo "MINUS <br>";
                         $seconds_to_be_compensate -= $day_seconds_extra_time;
 
-
+                        
                         $hms = self::_secondsToTime($day_seconds_extra_time);
                         $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
-
-                        $breakUpText = "$date_for_break_up # Deduction # $hms_show";
+                        // calculate per day compensaton time if less than 4hrs and subtract it from previous compensation time
+                        if( $day_seconds_extra_time < 14400 ){
+                            $seconds_for_compensation -= $day_seconds_extra_time;
+                            $breakUpText = "$date_for_break_up # Deduction # $hms_show";
+                        }
                     }
                 }
             }
@@ -1325,10 +1333,15 @@ class HR extends DATABASE {
             if( $seconds_to_be_compensate < 0 ){
                 $seconds_to_be_compensate = 0;
             }
+            if( $seconds_for_compensation < 0 ){
+                $seconds_for_compensation = 0;
+            }
 
             if( $breakUpText != ''){
-                $hms = self::_secondsToTime($seconds_to_be_compensate);
-                $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';
+                // $hms = self::_secondsToTime($seconds_to_be_compensate);
+                // calculate pending compensation time and skipping 4hr or more compensation time 
+                $hms = self::_secondsToTime($seconds_for_compensation);
+                $hms_show = $hms['pad_hms']['h']."h:".$hms['pad_hms']['m']."m:".$hms['pad_hms']['s'].'s';                
                 $breakUpText = $breakUpText. " ## Pending = $hms_show";
             }
             
@@ -2564,7 +2577,7 @@ class HR extends DATABASE {
         
         $r_error = 1;
         $r_message = "";
-        $r_data = array();
+        $r_data = array();        
 
         $q = "SELECT * from config where type='email_detail'";
         $r = self::DBrunQuery($q);
@@ -2572,9 +2585,9 @@ class HR extends DATABASE {
 
         // convert this string into associative array
         parse_str($row['value'], $detail);
-        include "phpmailer/PHPMailerAutoload.php";
-
-
+        include_once "phpmailer/PHPMailerAutoload.php";
+        
+        
         if (!empty($data['email'])) {
             
             
@@ -3013,10 +3026,11 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username) { // api call
+    public static function forgotPassword($username, $sendEmail = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
+        $emailData = array();
 
         if ($username == 'global_guest') {
             $r_message = "You don't have permission to reset password !!";
@@ -3042,14 +3056,23 @@ class HR extends DATABASE {
                         self::updateUserPassword($userId, $newPassword);
                         $r_error = 0;
                         $r_message = "Password reset Successfully. Check you slack for new password!!";
-
+                        
                         //send slack message
                         $userInfo = self::getUserInfo($userId);
                         $userInfo_name = $userInfo['name'];
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-
+                        
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
+                        if( $sendEmail ){
+                            $emailData['email'] = [
+                                'email_id' => $userInfo['work_email'],
+                                'name' => $userInfo['name'],
+                                'subject' => 'Reset Password',
+                                'body' => $message_to_user,                                
+                            ];
+                            self::sendEmail($emailData);                           
+                        }
                     }
                 }
             }
@@ -6633,6 +6656,62 @@ class HR extends DATABASE {
             'data' => $r_data
         ];
         return $return;        
+    }
+
+    public static function API_resetPasswordConfig( $no_of_days, $status ){
+        $r_error = 0;
+        $r_data = array();
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        $date = date('d-m-Y');
+        if( sizeof($rows) > 0 ){
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " UPDATE config SET value = '$configValue' WHERE type = 'reset_password' ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config updated successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config updation failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        } else {
+            if( isset($no_of_days) && $no_of_days != "" ){
+                $configValue = " {\"days\":\"" . $no_of_days . "\", \"status\":\"" . $status . "\", \"last_updated\":\"" . $date . "\"}";
+                $q = " INSERT INTO config( type, value ) VALUES( 'reset_password', '$configValue' ) ";
+                $runQuery = self::DBrunQuery($q);
+                if($runQuery){
+                    $r_data['message'] = "Config inserted successfully";     
+                } else {
+                    $r_error = 1;
+                    $r_data['message'] = "Config insertion failed";     
+                }
+            } else {
+                $r_data['message'] = "Please provide interval";     
+            }
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
+    public static function API_getResetPasswordConfig(){
+        $r_error = 0;
+        $q = " SELECT * FROM config WHERE type = 'reset_password' ";
+        $runQuery = self::DBrunQuery($q);
+        $row = self::DBfetchRow($runQuery);        
+        $row['value'] = json_decode($row['value'], true);
+        $return = [
+            'error' => $r_error,
+            'data' => $row
+        ];
+        return $return;
     }
 
 }
