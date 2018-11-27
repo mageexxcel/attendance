@@ -163,6 +163,44 @@ trait Holiday {
         return $return;
     }
 
+    public static function getMyRHLeaves( $year ){
+        $q = " SELECT * FROM holidays WHERE type = " . self::$RESTRICTED_HOLIDAY . " AND date LIKE '$year%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            $rhType = self::getHolidayTypesList();
+            foreach( $rows as $key => $row ){
+                foreach( $rhType as $type ){
+                    if( $row['type'] == $type['type'] ){
+                        $rows[$key]['type_text'] = $type['text'];
+                    }
+                }
+                $rows[$key]['day'] = date('l', strtotime( $row['date'] ));
+                $rows[$key]['month'] = date('F', strtotime( $row['date'] ));
+            }
+        }    
+        return $rows;
+    }
+
+    public static function API_getMyRHLeaves( $year ){
+        $r_error = 0;
+        $r_data = array();
+        if( !isset($year) or $year == "" ){
+            $year = date('Y');
+        }
+        $rhList = self::getMyRHLeaves( $year );
+        if( sizeof($rhList) > 0 ){            
+            $r_data['rh_list'] = $rhList;
+        } else {
+            $r_data['message'] = "Restricted holidays not found for " . $year;
+        }
+        $return = [
+            'error' => $r_error,
+            'data' => $r_data
+        ];
+        return $return;
+    }
+
 }
 
 ?>
