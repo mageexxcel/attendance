@@ -190,7 +190,7 @@ trait Holiday {
         }
         $rhList = self::getMyRHLeaves( $year );
         if( sizeof($rhList) > 0 ){            
-            $r_data[$year] = $rhList;
+            $r_data['rh_list'] = $rhList;
         } else {
             $r_data['message'] = "Restricted holidays not found for " . $year;
         }
