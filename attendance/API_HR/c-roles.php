@@ -192,6 +192,7 @@ trait Roles {
     static $ACTION_get_employee_recent_punch_time = 8027;
     static $ACTION_get_employee_punches_by_date = 8028;
     static $ACTION_get_employees_monthly_attendance = 8029;
+    static $ACTION_get_my_rh_leaves = 8030;    
     
     
 
@@ -308,6 +309,7 @@ trait Roles {
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_my_leaves, 'name' => 'get_my_leaves' ),
                     array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
+                    array( 'id' => self::$ACTION_get_my_rh_leaves, 'name' => 'get_my_rh_leaves' ),                    
                 )
             ),
 
