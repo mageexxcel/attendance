@@ -15,6 +15,8 @@ class HR extends DATABASE {
     use ThirdPartyAPI;
 
     const DEFAULT_WORKING_HOURS = "09:00";
+    const DEFAULT_ENTRY_TIME = "10:30 AM";
+    const DEFAULT_EXIT_TIME = "07:30 PM";
 
     private static $SLACK_client_id = '';
     private static $SLACK_client_secret = '';
@@ -2097,8 +2099,8 @@ class HR extends DATABASE {
                 if( $changeLeaveStatus ){
                     $updatedLeaveDetails = self::getLeaveDetails($leaveid);
                     if( strtolower($updatedLeaveDetails['status']) == 'approved' ){
-                        $entry_time = "10:30 AM";
-                        $exit_time = "07:30 PM";
+                        $entry_time = self::DEFAULT_ENTRY_TIME;
+                        $exit_time = self::DEFAULT_EXIT_TIME;
                         self::insertUserInOutTimeOfDay($leaveDetails['user_Id'], $from_date, $entry_time, $exit_time, $reason);
                     }
                 }
