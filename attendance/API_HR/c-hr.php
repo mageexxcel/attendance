@@ -3026,7 +3026,7 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username, $sendEmail = false) { // api call
+    public static function forgotPassword($username, $sendEmail = false, $regeneratePassword = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -3063,6 +3063,9 @@ class HR extends DATABASE {
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
                         
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
+                        if( $regeneratePassword ){
+                            $message_to_user = "Hi $userInfo_name !!  \n Your HR portal password has been expired! You need to re-generate your password.";
+                        }
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
                         if( $sendEmail ){
                             $emailData['email'] = [

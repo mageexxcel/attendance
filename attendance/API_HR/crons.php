@@ -273,9 +273,10 @@ function resetPasswords(){
 		$dates = HR::_getDatesBetweenTwoDates( $resetPwdConfig['last_updated'], $todayDate_Y_m_d );
 		if( sizeof($dates) > $resetPwdConfig['days'] ){	
 			foreach( $users as $key => $user ){
+				sleep(2);
 				$userid = $user['user_Id'];
 				if( strtolower($user['role_name']) != 'admin' ){					
-					HR::forgotPassword( $user['username'], true );
+					HR::forgotPassword( $user['username'], true, true );
 				}			
 			}
 			HR::API_resetPasswordConfig( $resetPwdConfig['days'], $resetPwdConfig['status'] );
