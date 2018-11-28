@@ -2092,7 +2092,17 @@ class HR extends DATABASE {
             $applied_on = $leaveDetails['applied_on'];
             $reason = $leaveDetails['reason'];
 
-            self::changeLeaveStatus($leaveid, $newstatus);
+            $changeLeaveStatus = self::changeLeaveStatus($leaveid, $newstatus);
+            if( strtolower($leaveDetails['leave_type']) == 'restricted' ){
+                if( $changeLeaveStatus ){
+                    $updatedLeaveDetails = self::getLeaveDetails($leaveid);
+                    if( strtolower($updatedLeaveDetails['status']) == 'approved' ){
+                        $entry_time = "10:30 AM";
+                        $exit_time = "07:30 PM";
+                        self::insertUserInOutTimeOfDay($leaveDetails['user_Id'], $from_date, $entry_time, $exit_time, $reason);
+                    }
+                }
+            }            
 
             $userInfo = self::getUserInfo($leaveDetails['user_Id']);
             $userInfo_name = $userInfo['name'];
