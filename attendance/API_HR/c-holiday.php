@@ -164,7 +164,7 @@ trait Holiday {
     }
 
     public static function getMyRHLeaves( $year ){
-        $q = " SELECT * FROM holidays WHERE type = " . self::$RESTRICTED_HOLIDAY . " AND date LIKE '$year%' ";
+        $q = " SELECT * FROM holidays WHERE type = " . self::$RESTRICTED_HOLIDAY . " AND date LIKE '$year%' ORDER BY date ASC ";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         if( sizeof($rows) > 0 ){
@@ -177,6 +177,8 @@ trait Holiday {
                 }
                 $rows[$key]['day'] = date('l', strtotime( $row['date'] ));
                 $rows[$key]['month'] = date('F', strtotime( $row['date'] ));
+                $explodeRawDate = explode("-", $row['date']);
+                $rows[$key]['date'] = $explodeRawDate[2] . "-" . $rows[$key]['month'] . "-" . $explodeRawDate[0];
             }
         }    
         return $rows;
