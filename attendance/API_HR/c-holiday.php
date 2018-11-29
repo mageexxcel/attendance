@@ -163,10 +163,17 @@ trait Holiday {
         return $return;
     }
 
+    public static function getUserRHLeaves( $userid, $year ){        
+        $q = " SELECT * FROM leaves WHERE leave_type = 'Restricted' AND user_id = '$userid' AND from_date LIKE '$year%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
+
     public static function getMyRHLeaves( $year ){
         $q = " SELECT * FROM holidays WHERE type = " . self::$RESTRICTED_HOLIDAY . " AND date LIKE '$year%' ORDER BY date ASC ";
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
+        $rows = self::DBfetchRows($runQuery);        
         if( sizeof($rows) > 0 ){
             $rhType = self::getHolidayTypesList();
             foreach( $rows as $key => $row ){
@@ -175,6 +182,7 @@ trait Holiday {
                         $rows[$key]['type_text'] = $type['text'];
                     }
                 }
+                $rows[$key]['raw_date'] = $row['date'];
                 $rows[$key]['day'] = date('l', strtotime( $row['date'] ));
                 $rows[$key]['month'] = date('F', strtotime( $row['date'] ));
                 $explodeRawDate = explode("-", $row['date']);
@@ -184,14 +192,23 @@ trait Holiday {
         return $rows;
     }
 
-    public static function API_getMyRHLeaves( $year ){
+    public static function API_getMyRHLeaves( $userid, $year ){
         $r_error = 0;
         $r_data = array();
         if( !isset($year) or $year == "" ){
             $year = date('Y');
         }
         $rhList = self::getMyRHLeaves( $year );
-        if( sizeof($rhList) > 0 ){            
+        $rhLeaves = self::getUserRHLeaves( $userid, $year );
+        if( sizeof($rhList) > 0 ){       
+            foreach( $rhList as $key => $rh ){
+                $rhList[$key]['status'] = "";
+                foreach( $rhLeaves as $rhLeave ){
+                    if( $rhLeave['from_date'] == $rh['raw_date'] ){
+                        $rhList[$key]['status'] = $rhLeave['status'];
+                    }
+                }
+            }     
             $r_data['rh_list'] = $rhList;
         } else {
             $r_data['message'] = "Restricted holidays not found for " . $year;
