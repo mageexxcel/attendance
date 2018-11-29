@@ -569,7 +569,7 @@ class HR extends DATABASE {
     // get month holidays list
 
     public static function getHolidaysOfMonth($year, $month) {
-        $q = "SELECT * FROM holidays";
+        $q = "SELECT * FROM holidays WHERE NOT type = self::$RESTRICTED_HOLIDAY";
         $runQuery = self::DBrunQuery($q);
         $rows = self::DBfetchRows($runQuery);
         $holiday_type = self::getHolidayTypesList();        
