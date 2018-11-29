@@ -442,7 +442,8 @@ else if ($action == 'add_hr_comment') {
     $res = HR::API_getHolidayTypesList();
 } else if ($action == "get_my_rh_leaves") {
     $year = $PARAMS['year'];
-    $res = HR::API_getMyRHLeaves( $year );
+    $userid = $PARAMS['user_id'];
+    $res = HR::API_getMyRHLeaves( $userid, $year );
 } else if ($action == 'show_disabled_users') {  
     $res = HR::getDisabledUsersList($pagination);
 } else if ($action == "working_hours_summary") {
