@@ -3979,9 +3979,9 @@ class HR extends DATABASE {
     public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
-        if ($userid == "") {
+        if ($userid == "" || $userid == 0 || $userid == null) {
             $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
-        } else {
+        } else {            
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
@@ -4008,7 +4008,9 @@ class HR extends DATABASE {
             $r_error = 0;
 
             $message = "Hi $userInfo_name !! \n You have been assigned  " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been assigned by " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
             $r_message = "Machine assigned Successfully !!";
 
             $return = array();
@@ -4160,7 +4162,9 @@ class HR extends DATABASE {
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
             $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been unassigned to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
 
             // save to inventory history
             if( $reason_of_removal == false ){
