@@ -3979,9 +3979,9 @@ class HR extends DATABASE {
     public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
-        if ($userid == "") {
+        if ($userid == "" || $userid == 0) {
             $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
-        } else {
+        } else {            
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
