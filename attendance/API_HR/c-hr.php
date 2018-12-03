@@ -3979,7 +3979,7 @@ class HR extends DATABASE {
     public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
-        if ($userid == "" || $userid == 0) {
+        if ($userid == "" || $userid == 0 || $userid == null) {
             $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
         } else {            
             $userInfo = self::getUserInfo($userid);
