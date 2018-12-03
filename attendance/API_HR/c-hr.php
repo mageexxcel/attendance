@@ -1649,7 +1649,7 @@ class HR extends DATABASE {
     public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
         $paramMessage = $message;
-        
+        sleep(2);
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
         if( $actions != false ){
