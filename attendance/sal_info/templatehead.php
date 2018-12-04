@@ -55,10 +55,12 @@
                 margin: 0px;  
                 padding:0px;
             }
+            p { page-break-after: auto; }
+            p:last-child { page-break-after: never; }
         </style>
     </head>
     <body>
-        <table style="width:100%;position:absolute;top:0px;margin-top:-3px;">
+        <table style="width:100%;position:fixed;top:0px;margin-top:-3px;">
             <tbody>
                 <tr>
                     <td>
@@ -85,7 +87,7 @@
             </tbody>
         </table>
 
-        <table style="width:100%;position:absolute;bottom:100px;font-family: 'proxima-nova', sans-serif;font-size: 0.8em;">
+        <table style="width:100%;position:fixed;bottom:100px;font-family: 'proxima-nova', sans-serif;font-size: 0.8em;">
             <tbody>
                 <tr>
                     <td style="padding-left: 100px; padding-right: 100px;">
