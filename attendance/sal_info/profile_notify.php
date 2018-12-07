@@ -1,5 +1,7 @@
 <?php
 
+// This script has been merged to crons.php on 07-December-2018.
+die('This script has been merged to crons.php on 07-December-2018');
 /*
   Cron file to notify about profile update and bank detail update if empty.
  */
