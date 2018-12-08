@@ -1,11 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <?php
-    /***********************************/
-    /*****without header and footer*****/
-    /***********************************/
+/***********************************/
+/*****without header and footer*****/
+/***********************************/
     if( $include_header_footer == false ) {
-?>
+    ?>
 <html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
@@ -14,7 +14,7 @@
         <style type="text/css">
             @page {
                 margin: 1cm 2cm 2cm;
-                
+
             }
             body {
                 font-family: 'Proxima Nova', Georgia, sans-serif;
@@ -34,29 +34,22 @@
 </html>
 
 <?php
-    }
-    else {
+} 
+else {
     /***********************************/
     /*****with header and footer*****/
     /***********************************/
-?>
+    ?>
 
 <html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
         <title>Header and Footer example</title>
         <style>
-            @page { 
+            @page {
                 size:210mm 297mm;
-                margin: 0px; 
+                margin: 0px;
             }
-
-            body { 
-                margin: 0px;  
-                padding:0px;
-            }
-            p { page-break-after: auto; }
-            p:last-child { page-break-after: never; }
         </style>
     </head>
     <body>
@@ -75,17 +68,7 @@
                     <td align="right"><img src="Excelogo-black.jpg" style="height:45px;margin-top: 50px;padding-right: 40px;"></td>
                 </tr>
             </tbody>
-        </table>
-
-        <table style="margin-top: 40px; width: 100%;padding-left: 100px;padding-right: 100px;">
-            <tbody>
-                <tr>
-                    <td>
-                        #page_content
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        </table>     
 
         <table style="width:100%;position:fixed;bottom:100px;font-family: 'proxima-nova', sans-serif;font-size: 0.8em;">
             <tbody>
@@ -105,13 +88,23 @@
                     </td>
                 </tr>
             <tbody>
+        </table>   
+        
+        <table style="margin-top: 40px; width: 100%;padding-left: 100px;padding-right: 100px;">
+            <tbody>
+                <tr>
+                    <td>
+                        #page_content
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </body>
 </html>
 <?php
-    }
+}
 ?>
 
 
-    
-   
+
+
