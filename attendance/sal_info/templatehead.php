@@ -50,6 +50,7 @@ else {
                 size:210mm 297mm;
                 margin: 0px;
             }
+            p { text-align: justify; }
         </style>
     </head>
     <body>
@@ -57,18 +58,14 @@ else {
             <tbody>
                 <tr>
                     <td>
-                        <div style="height: 22px;background-color: #5f9baa; margin-left: -10px;width: 105%;"></div>
+                        <div style="height: 22px;background-color: #5f9baa; margin-left: -10px;width: 105%;"></div>                        
                     </td>
                 </tr>
-            <tbody>
-        </table>
-        <table style="width:100%;margin:0px;">
-            <tbody>
                 <tr>
-                    <td align="right"><img src="Excelogo-black.jpg" style="height:45px;margin-top: 50px;padding-right: 40px;"></td>
+                    <td align="right"><img src="Excelogo-black.jpg" style="height:45px;margin-top: 30px;padding-right: 40px;"></td>
                 </tr>
             </tbody>
-        </table>     
+        </table>
 
         <table style="width:100%;position:fixed;bottom:100px;font-family: 'proxima-nova', sans-serif;font-size: 0.8em;">
             <tbody>
@@ -87,10 +84,10 @@ else {
                         <div style="height: 5px;background-color: #5f9baa;margin-left: -10px;width: 105%;"></div>
                     </td>
                 </tr>
-            <tbody>
+            </tbody>
         </table>   
         
-        <table style="margin-top: 40px; width: 100%;padding-left: 100px;padding-right: 100px;">
+        <table style="margin-top: 140px;margin-bottom:50px;width: 100%;padding-left: 100px;padding-right: 100px;">
             <tbody>
                 <tr>
                     <td>
