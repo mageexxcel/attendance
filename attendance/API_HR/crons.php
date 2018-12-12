@@ -390,6 +390,39 @@ function notificationUpdateProfile(){
 					$assign_machine_msg.= $username."\n";
 				}
 				
+				// notification for updating profile fields added on 12-Dec-2018
+				if ( $slackinfo['deleted'] == "" && $slackinfo['is_primary_owner'] == "" && $slackinfo['id'] != "USLACKBOT" && $slackinfo['is_bot'] == false && (!array_key_exists("image_original", $slackinfo['profile'])) ) {
+					// update phone number
+					$update_msg = "Hi " . $val['name'] . "\n You have not added your \n";
+					if ( $slackinfo['profile']['phone'] == "" ) {
+						$ph_no = " phone number ";
+					}
+					if( $slackinfo['profile']['phone'] != "" ){
+						if( $val['mobile_ph'] != $slackinfo['profile']['phone'] && $val['home_ph'] != $slackinfo['profile']['phone'] ){
+							$ph_no = " phone number (same as in hr system) ";
+						}
+					}
+
+					// update profile image on slack
+					if (!array_key_exists("image_original", $slackinfo['profile'])) {
+						$image = "profile picture";
+					}
+
+					if ( !empty($ph_no) || !empty($image) ) {
+						if (!empty($ph_no)) {
+							$update_msg = $update_msg . $ph_no . "\n";
+						}
+						if (!empty($image)) {
+							$update_msg = $update_msg . $image . "\n";
+						}
+						$update_msg = $update_msg . " in your slack profile. Please do that asap. ";
+						echo "$update_msg";
+						echo "<br><br>";
+						$slackMessageStatus = Salary::sendSlackMessageToUser($slack_channel_id, $update_msg);   // send slack notification to employee						
+					}
+				}
+				
+
 			}
 		}
 		
