@@ -6721,6 +6721,11 @@ class HR extends DATABASE {
         return $return;
     }
 
+    public static function getEnabledEmployeesBriefDetails(){
+        $users = self::getEnabledUsersListWithoutPass();
+        return $users; 
+    }
+
 }
 
 new HR();
