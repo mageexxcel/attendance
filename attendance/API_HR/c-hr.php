@@ -3144,7 +3144,7 @@ class HR extends DATABASE {
         $status = $data['status'];
 
         $doFurtherProcess = true;
-
+        
         // check for if elc is completed or not
         if( strtolower( $status ) == 'disabled' ){
             $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
@@ -3159,7 +3159,7 @@ class HR extends DATABASE {
 
         if( $doFurtherProcess == true ){
             $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
-            $res = self::DBrunQuery($q);
+            $res = self::DBrunQuery($q);            
             if ($res == false) {
                 $r_error = 1;
                 $r_message = "Error occured while updating employee status";
@@ -3168,13 +3168,47 @@ class HR extends DATABASE {
 
                 $r_error = 0;
                 $r_message = "Employee Status Updated";
+                try {
+                    self::backupBankAccountDetails( $data['user_id'] );
+                    $r_message .= " - Backup Done";
+                } catch( Exception $ex ){
+                    $r_message .= " - " . $ex->getMessage();
+                }
                 $r_data['message'] = $r_message;
-            }
+            }            
         }
         $return = array();
 
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function backupBankAccountDetails( $userid ){
+        $return = false;
+        $q = " SELECT * FROM user_bank_details WHERE user_Id = $userid ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $bankName = $bankAddress = $bankAccountNo = $bankIFSC = "";
+                $bankName = $row['bank_name'];
+                $bankAddress = $row['bank_address'];
+                $bankAccountNo = $row['bank_account_no'];
+                $bankIFSC = $row['ifsc'];                
+                if( $bankName != "" && $bankAddress != "" && $bankAccountNo != "" ){
+                    $q = " UPDATE user_bank_details SET bank_name = '', bank_address = '', bank_account_no = '', ifsc = '$bankIFSC, $bankName, $bankAddress, $bankAccountNo' WHERE user_Id = $userid AND bank_account_no = '$bankAccountNo' ";
+                    $runQry = self::DBrunQuery($q);
+                }
+                if( $runQry ){
+                    $return = true;
+                } else {
+                    throw new Exception("Backup Failed");
+                }
+            }
+        } else {
+            throw new Exception("No Bank Details Found for User Id: " . $userid);
+        }
         return $return;
     }
 

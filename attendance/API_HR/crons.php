@@ -435,6 +435,18 @@ function notificationUpdateProfile(){
 	}
 }
 
+// Below function will be used for only one time and after that you can comment it and its action case also.
+function backupBankDetailsOfDisabledEmployees(){
+	$disabledUsers = HR::getDisabledUsersList();
+	foreach( $disabledUsers as $disUser ){
+		try {
+			HR::backupBankAccountDetails( $disUser['user_Id'] );			
+		} catch( Exception $ex ){
+			echo $ex->getMessage() . "\n";                    
+		}
+	}
+}
+
 
 switch ($CRON_ACTION) {
 	case 'calculate_previous_month_pending_time':
@@ -455,6 +467,11 @@ switch ($CRON_ACTION) {
 	
 	case 'notification_update_profile':
 		notificationUpdateProfile();
+		break;
+
+	// Below case will be used only one time after that you can comment it. 
+	case 'backup_bank_details_of_disabled_employees':
+		backupBankDetailsOfDisabledEmployees();
 		break;
 
 	default:
