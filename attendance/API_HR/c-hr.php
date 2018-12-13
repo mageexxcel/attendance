@@ -3140,7 +3140,6 @@ class HR extends DATABASE {
     public static function changeEmployeeStatus($data) {
         $r_error = 1;
         $r_message = "";
-        $r_exception = "";
         $r_data = array();
         $status = $data['status'];
 
@@ -3167,15 +3166,15 @@ class HR extends DATABASE {
                 $r_data['message'] = $r_message;
             } else {
 
-                try {
-                    self::backupBankAccountDetails( $data['user_id'] );
-                } catch( Exception $ex ){
-                    $r_exception = $ex->getMessage();
-                }
                 $r_error = 0;
                 $r_message = "Employee Status Updated";
+                try {
+                    self::backupBankAccountDetails( $data['user_id'] );
+                    $r_message .= " - Backup Done";
+                } catch( Exception $ex ){
+                    $r_message .= " - " . $ex->getMessage();
+                }
                 $r_data['message'] = $r_message;
-                $r_data['exception'] = $r_exception;
             }            
         }
         $return = array();
@@ -3204,7 +3203,7 @@ class HR extends DATABASE {
                 if( $runQry ){
                     $return = true;
                 } else {
-                    throw new Exception("Update Bank Details Failed for User Id: " . $userid);
+                    throw new Exception("Backup Failed");
                 }
             }
         } else {
