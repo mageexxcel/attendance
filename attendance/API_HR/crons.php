@@ -435,6 +435,17 @@ function notificationUpdateProfile(){
 	}
 }
 
+function backupBankDetailsOfDisabledEmployees(){
+	$disabledUsers = HR::getDisabledUsersList();
+	foreach( $disabledUsers as $disUser ){
+		try {
+			HR::backupBankAccountDetails( $disUser['user_Id'] );			
+		} catch( Exception $ex ){
+			echo $ex->getMessage() . "\n";                    
+		}
+	}
+}
+
 
 switch ($CRON_ACTION) {
 	case 'calculate_previous_month_pending_time':
@@ -455,6 +466,10 @@ switch ($CRON_ACTION) {
 	
 	case 'notification_update_profile':
 		notificationUpdateProfile();
+		break;
+
+	case 'backup_bank_details_of_disabled_employees':
+		backupBankDetailsOfDisabledEmployees();
 		break;
 
 	default:
