@@ -86,9 +86,7 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
             if ($message != "") {
                 echo $message;
                 echo "<br>";
-                if ($val['slack_msg'] == 0) {
-                    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_channel_id, $message);   // send slack notification to employee
-                }
+                $slackMessageStatus = Salary::sendSlackMessageToUser($slack_channel_id, $message);   // send slack notification to employee
             }
 
             $datediff = strtotime($cmonth) - strtotime($upload_date);
@@ -97,9 +95,7 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
                 $message2 = "Hey $username !!  \nYou have not read some policy document in HR System. Login into your HR System to view document\n";
                 echo $message2;
                 echo "<br>";
-                if ($val['slack_msg'] == 0) {
-                    $slackMessageStatus = Salary::sendSlackMessageToUser($slack_channel_id, $message2);   // send slack notification to employee
-                }
+                $slackMessageStatus = Salary::sendSlackMessageToUser($slack_channel_id, $message2);   // send slack notification to employee
             }
 
             // date of birth alert slack notification 

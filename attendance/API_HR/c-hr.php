@@ -600,7 +600,7 @@ class HR extends DATABASE {
 
         $firstSatOff = false;
 
-        if( $year >= 2018 && $month >= 03 ){
+        if( ( $year == 2018 && $month >= 03) || $year > 2018 ){
             $firstSatOff = true;            
         }
 
