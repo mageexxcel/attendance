@@ -52,10 +52,30 @@ function calculate_previous_month_pending_time(){
 	// 	die;
 	// }
 
+	// added on 28th march 2019 to forcefully calculate for a month.
+	if( isset($_GET['month']) && isset($_GET['year']) ){
+		$fpm = $_GET['month'];
+		$fpmy = $_GET['year'];
+		if( is_numeric($fpm) && $fpm > 0 && $fpm < 13 && is_numeric($fpmy) ){
+			if( $fpm < 10 ){
+				if( substr($fpm, 0, 1) != 0 ){
+					$fpm = '0'.$fpm;	
+				}
+			}
+			$prev_month = $fpm;
+			$prev_month_year = $fpmy;
+		} else {
+			echo "Invalid forced parmeters";
+			die;
+		}
+	}
+
 	echo "current_month :: $current_month<br>";
 	echo "prev_month :: $prev_month<br>";
 	echo "prev_month_year :: $prev_month_year<br>";
 	$enabledUsersList = HR::getEnabledUsersList();
+
+	// die;
 
 	foreach( $enabledUsersList as $employee ){
 		$employee_id = $employee['user_Id'];
