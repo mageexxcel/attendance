@@ -23,6 +23,7 @@ trait Holiday {
 
         } else {
             
+            $date = date('Y-m-d', strtotime($date));
             $q = "SELECT * from holidays where date = '$date'";
             $runQuery = self::DBrunQuery($q);
             $rows = self::DBfetchRows($runQuery);
