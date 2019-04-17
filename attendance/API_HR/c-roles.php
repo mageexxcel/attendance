@@ -748,6 +748,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_user_meta_data, 'name' => 'get_user_meta_data' ),                        
             array( 'id' => self::$ACTION_get_employee_punches_by_date, 'name' => 'get_employee_punches_by_date' ),  
             array( 'id' => self::$ACTION_get_employees_monthly_attendance, 'name' => 'get_employees_monthly_attendance' ),
+            array( 'id' => self::$ACTION_month_attendance, 'name' => 'month_attendance' ),
         );
         return $array;
     }
