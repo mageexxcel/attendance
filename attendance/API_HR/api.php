@@ -851,6 +851,9 @@ else if ( $action == 'add_reset_password_config' ){
 else if ( $action == 'get_reset_password_config' ){    
     $res = HR::API_getResetPasswordConfig();
 }
+else if ( $action == 'get_enabled_users_brief_details' ){    
+    $res = HR::getEnabledEmployeesBriefDetails();
+}
 
 echo json_encode($res);
 ?>

@@ -186,10 +186,22 @@ class Salary extends DATABASE {
     }
 
     //get all payslips info of a employee
-    public function getUserPayslipInfo($userid) {
+    public function getUserPayslipInfo($userid, $hidePayslip = false) {
         $q = "select * from payslips where user_Id = $userid ORDER by id DESC";
         $runQuery = self::DBrunQuery($q);
         $row = self::DBfetchRows($runQuery);
+        if( $hidePayslip == true ){
+            if( sizeof($row) > 0 ){
+                foreach ($row as $key => $value) {
+                    if( isset($value['payslip_url'])){
+                        unset( $row[$key]['payslip_url']);    
+                    }
+                    if( isset($value['payslip_file_id'])){
+                        unset( $row[$key]['payslip_file_id']);    
+                    }
+                }
+            }
+        }
         return $row;
     }
 
@@ -1463,7 +1475,7 @@ class Salary extends DATABASE {
 
         $firstSatOff = false;
 
-        if( $year >= 2018 && $month >= 03 ){
+        if( ( $year == 2018 && $month >= 03) || $year > 2018 ){
             $firstSatOff = true;            
         }
 

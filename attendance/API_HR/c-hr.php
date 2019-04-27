@@ -602,7 +602,7 @@ class HR extends DATABASE {
 
         $firstSatOff = false;
 
-        if( $year >= 2018 && $month >= 03 ){
+        if( ( $year == 2018 && $month >= 03) || $year > 2018 ){
             $firstSatOff = true;            
         }
 
@@ -1651,7 +1651,7 @@ class HR extends DATABASE {
     public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
         $paramMessage = $message;
-        
+        sleep(2);
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
         if( $actions != false ){
@@ -3038,7 +3038,7 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username, $sendEmail = false) { // api call
+    public static function forgotPassword($username, $sendEmail = false, $regeneratePassword = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -3075,6 +3075,9 @@ class HR extends DATABASE {
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
                         
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
+                        if( $regeneratePassword ){
+                            $message_to_user = "Hi $userInfo_name !!  \n Your HR portal password has been expired! You need to re-generate your password.";
+                        }
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
                         if( $sendEmail ){
                             $emailData['email'] = [
@@ -3153,7 +3156,7 @@ class HR extends DATABASE {
         $status = $data['status'];
 
         $doFurtherProcess = true;
-
+        
         // check for if elc is completed or not
         if( strtolower( $status ) == 'disabled' ){
             $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
@@ -3168,7 +3171,7 @@ class HR extends DATABASE {
 
         if( $doFurtherProcess == true ){
             $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
-            $res = self::DBrunQuery($q);
+            $res = self::DBrunQuery($q);            
             if ($res == false) {
                 $r_error = 1;
                 $r_message = "Error occured while updating employee status";
@@ -3177,13 +3180,47 @@ class HR extends DATABASE {
 
                 $r_error = 0;
                 $r_message = "Employee Status Updated";
+                try {
+                    self::backupBankAccountDetails( $data['user_id'] );
+                    $r_message .= " - Backup Done";
+                } catch( Exception $ex ){
+                    $r_message .= " - " . $ex->getMessage();
+                }
                 $r_data['message'] = $r_message;
-            }
+            }            
         }
         $return = array();
 
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function backupBankAccountDetails( $userid ){
+        $return = false;
+        $q = " SELECT * FROM user_bank_details WHERE user_Id = $userid ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $bankName = $bankAddress = $bankAccountNo = $bankIFSC = "";
+                $bankName = $row['bank_name'];
+                $bankAddress = $row['bank_address'];
+                $bankAccountNo = $row['bank_account_no'];
+                $bankIFSC = $row['ifsc'];                
+                if( $bankName != "" && $bankAddress != "" && $bankAccountNo != "" ){
+                    $q = " UPDATE user_bank_details SET bank_name = '', bank_address = '', bank_account_no = '', ifsc = '$bankIFSC, $bankName, $bankAddress, $bankAccountNo' WHERE user_Id = $userid AND bank_account_no = '$bankAccountNo' ";
+                    $runQry = self::DBrunQuery($q);
+                }
+                if( $runQry ){
+                    $return = true;
+                } else {
+                    throw new Exception("Backup Failed");
+                }
+            }
+        } else {
+            throw new Exception("No Bank Details Found for User Id: " . $userid);
+        }
         return $return;
     }
 
@@ -3988,9 +4025,9 @@ class HR extends DATABASE {
     public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
-        if ($userid == "") {
+        if ($userid == "" || $userid == 0 || $userid == null) {
             $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
-        } else {
+        } else {            
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
@@ -4016,8 +4053,10 @@ class HR extends DATABASE {
             self::DBrunQuery($q);
             $r_error = 0;
 
-            $message = "Hi $userInfo_name !! \n You have been assigned  " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
+            $message = "Hi $userInfo_name !! \n You have been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
             $r_message = "Machine assigned Successfully !!";
 
             $return = array();
@@ -4168,8 +4207,10 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
+            $message = "Hi $userInfo_name !! \n You have been unassigned device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been unassigned to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
 
             // save to inventory history
             if( $reason_of_removal == false ){
@@ -6724,6 +6765,11 @@ class HR extends DATABASE {
             'data' => $row
         ];
         return $return;
+    }
+
+    public static function getEnabledEmployeesBriefDetails(){
+        $users = self::getEnabledUsersListWithoutPass();
+        return $users; 
     }
 
 }
