@@ -457,7 +457,8 @@ else if ($action == 'add_hr_comment') {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $role = $loggedUserInfo->role;
     }
-    $res = HR::getEnabledUsersListWithoutPass($role);
+    $sorted_by = isset($PARAMS['sorted_by']) ? $PARAMS['sorted_by'] : false;
+    $res = HR::getEnabledUsersListWithoutPass($role, $sorted_by);
 } else if ($action == 'add_roles') { 
     $base_role_id = false;
     if( isset( $PARAMS['base_role_id']) && !empty( $PARAMS['base_role_id']) ){
