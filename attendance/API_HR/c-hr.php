@@ -326,6 +326,7 @@ class HR extends DATABASE {
         $rows = self::DBfetchRows($runQuery);        
         $newRows = array();
         foreach ($rows as $pp) {
+            unset($pp['total_salary']);
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
 
             } else {
