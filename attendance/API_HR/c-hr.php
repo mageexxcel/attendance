@@ -1882,12 +1882,6 @@ class HR extends DATABASE {
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
-        $alert_message = "";
-        $check = self::checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date );
-        if( $check ){
-            $alert_message = "Another team member already has applied during this period so leave approve will depend on project.";
-        }
-        
         // Check for Approved RH 
         $year = date('Y', strtotime($from_date));
         $rh_dates = self::getMyRHLeaves( $year );
@@ -1899,11 +1893,17 @@ class HR extends DATABASE {
             if( sizeof($user_rh_leaves) >= 5 ){
                 return [
                     'error' => 1,
-                    'message' => 'You have already taken 5 RH this year.'
+                    'data' => [ 'message' => 'You have already taken 5 RH this year.' ]
                 ];
             }
         }
 
+        $alert_message = "";
+        $check = self::checkLeavesClashOfSameTeamMember( $userid, $from_date, $to_date );
+        if( $check ){
+            $alert_message = "Another team member already has applied during this period so leave approve will depend on project.";
+        }
+        
         $applied_date = date('Y-m-d');
         $reason = self::DBescapeString($reason);
         $q = "INSERT into leaves ( user_Id, from_date, to_date, no_of_days, reason, status, applied_on, day_status,leave_type,late_reason ) VALUES ( $userid, '$from_date', '$to_date', $no_of_days, '$reason', 'Pending', '$applied_date', '$day_status','$leave_type','$late_reason' )";
