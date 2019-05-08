@@ -293,22 +293,40 @@ class HR extends DATABASE {
         return $row;
     }
 
-    public static function getEnabledUsersList() {
-        $q = "SELECT
-                users.*,
-                user_profile.*,
-                roles.id as role_id,
-                roles.name as role_name
-                FROM users
-                LEFT JOIN user_profile ON users.id = user_profile.user_id
-                LEFT JOIN user_roles ON users.id = user_roles.user_id
-                LEFT JOIN roles ON user_roles.role_id = roles.id
-                where
-                users.status = 'Enabled' ";
+    public static function getEnabledUsersList( $sorted_by = false ) {
+        if( $sorted_by == 'salary' ){
+            $q = "SELECT
+                    users.*,
+                    user_profile.*,
+                    salary.total_salary,
+                    roles.id as role_id,
+                    roles.name as role_name
+                    FROM users
+                    LEFT JOIN user_profile ON users.id = user_profile.user_id
+                    LEFT JOIN user_roles ON users.id = user_roles.user_id
+                    LEFT JOIN roles ON user_roles.role_id = roles.id
+                    LEFT JOIN ( SELECT user_Id, MAX(total_salary) as total_salary FROM salary GROUP BY user_Id ) as salary ON users.id = salary.user_Id
+                    where
+                    users.status = 'Enabled' ORDER BY salary.total_salary DESC";
+        } else {
+            $q = "SELECT
+                    users.*,
+                    user_profile.*,
+                    roles.id as role_id,
+                    roles.name as role_name
+                    FROM users
+                    LEFT JOIN user_profile ON users.id = user_profile.user_id
+                    LEFT JOIN user_roles ON users.id = user_roles.user_id
+                    LEFT JOIN roles ON user_roles.role_id = roles.id
+                    where
+                    users.status = 'Enabled' ";
+        }
+        
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
+        $rows = self::DBfetchRows($runQuery);        
         $newRows = array();
         foreach ($rows as $pp) {
+            unset($pp['total_salary']);
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
 
             } else {
@@ -359,9 +377,9 @@ class HR extends DATABASE {
         return $newRows;
     }
 
-    public static function getEnabledUsersListWithoutPass($role = false) {
+    public static function getEnabledUsersListWithoutPass($role = false, $sorted_by = false) {
 
-        $row = self::getEnabledUsersList();
+        $row = self::getEnabledUsersList( $sorted_by );
         $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];        
         foreach ($row as $val) {
             unset($val['password']);
