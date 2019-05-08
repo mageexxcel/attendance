@@ -3435,6 +3435,7 @@ class HR extends DATABASE {
         $r_data = array();
         $userid = $data['user_id'];
         $leave_start_date = date('Y-m-d', strtotime($data['date']));
+        $year = date('Y', strtotime($data['date']));
         $current_date = date("Y-m-d");
         if ((strtotime($current_date) < strtotime($leave_start_date)) || isset($data['role'])) {
             $q = "SELECT * FROM leaves WHERE user_Id= $userid  AND from_date= '$leave_start_date' AND (status = 'Approved' OR status = 'Pending')";
@@ -3442,11 +3443,19 @@ class HR extends DATABASE {
             $runQuery = self::DBrunQuery($q);
             $row2 = self::DBfetchRows($runQuery);
             $no_of_rows = self::DBnumRows($runQuery);
+            $users_rh_leaves = self::getUserRHLeaves($userid, $year);
+            $users_rh_leaves = array_map(function($iter){
+                return $iter['from_date'];
+            }, $users_rh_leaves);
 
             if ($no_of_rows > 0) {
                 foreach ($row2 as $val) {
                     $q2 = "UPDATE leaves SET status = 'Cancelled Request' WHERE id=" . $val['id'];
                     $runQuery2 = self::DBrunQuery($q2);
+                    if( in_array( $leave_start_date, $users_rh_leaves ) ){
+                        $q3 = "DELETE FROM leaves WHERE id = " . $val['id'];
+                        $runQuery3 = self::DBrunQuery($q3);
+                    }
                 }
                 $r_error = 0;
                 $r_message = "Your applied leave for " . $data['date'] . " has been cancelled";
