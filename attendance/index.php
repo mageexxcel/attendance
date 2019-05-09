@@ -355,11 +355,11 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     if (current($value['timing']) == "") {
                         $d1 = 0;
                     }
-                    if ($d1 == 0 && $slack_msg == 0) {
+                    if ($d1 == 0) {
                         $msg = $msg . "You have not entered time Today ";
                         send_slack_message($c_id, $token, $msg);
                     }
-                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM') && $slack_msg == 0) {
+                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
                         $s = getLateComingInfo($e, $link);
                         if ($s != "") {
                             $msg = $msg . $s;
@@ -367,7 +367,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
                               send_slack_message($c_id, $token, $msg, $hr6);
-                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30') && $slack_msg == 0) {
+                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                             send_slack_message($c_id, $token, $msg);
                     }

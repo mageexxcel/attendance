@@ -423,7 +423,7 @@ else if( $action == 'get_user_salary_info' ){
     $res['data'] = $userinfo;
     $userSalaryInfo = Salary::getSalaryInfo($user_id);
     $res3 = Salary::getHoldingDetail($user_id);
-    $res4 = Salary::getUserPayslipInfo($user_id);
+    $res4 = Salary::getUserPayslipInfo($user_id, true ); // true is passed to hide payslip data
     $i = 0;
     foreach ($userSalaryInfo as $val) {
 

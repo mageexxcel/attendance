@@ -461,7 +461,8 @@ else if ($action == 'add_hr_comment') {
         $loggedUserInfo = JWT::decode($token, HR::JWT_SECRET_KEY);
         $role = $loggedUserInfo->role;
     }
-    $res = HR::getEnabledUsersListWithoutPass($role);
+    $sorted_by = isset($PARAMS['sorted_by']) ? $PARAMS['sorted_by'] : false;
+    $res = HR::getEnabledUsersListWithoutPass($role, $sorted_by);
 } else if ($action == 'add_roles') { 
     $base_role_id = false;
     if( isset( $PARAMS['base_role_id']) && !empty( $PARAMS['base_role_id']) ){
@@ -850,6 +851,9 @@ else if ( $action == 'add_reset_password_config' ){
 }
 else if ( $action == 'get_reset_password_config' ){    
     $res = HR::API_getResetPasswordConfig();
+}
+else if ( $action == 'get_enabled_users_brief_details' ){    
+    $res = HR::getEnabledEmployeesBriefDetails();
 }
 
 echo json_encode($res);
