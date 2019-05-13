@@ -169,6 +169,13 @@ trait Holiday {
         $rows = self::DBfetchRows($runQuery);
         return $rows;
     }
+    
+    public static function getUserRHCompensationLeaves( $userid, $year ) {
+        $q = " SELECT * FROM leaves WHERE leave_type = 'RH Compensation' AND user_id = '$userid' AND from_date LIKE '$year%' ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        return $rows;
+    }
 
     public static function getUserRHLeaves( $userid, $year ){        
         $q = " SELECT * FROM leaves WHERE leave_type = 'Restricted' AND user_id = '$userid' AND from_date LIKE '$year%' ";
