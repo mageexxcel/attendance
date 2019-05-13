@@ -1890,26 +1890,22 @@ class HR extends DATABASE {
         if( sizeof($rh_leaves) > 0 ){
             foreach( $rh_leaves as $rh_leave ){
                 if( strtolower($rh_leave['status']) == 'rejected' ){
-                    $rh_rejected += 1;
+                    $rh_rejected++;
                 }
             }
             if( $rh_approved < $rh_can_be_taken ){
                 $total_rh_taken = $rh_approved + $rh_compensation_used;
                 if( $total_rh_taken < $rh_can_be_taken ){
                     $left = $rh_can_be_taken - $total_rh_taken;
-                    if( sizeof($rh_leaves) >= sizeof($rh_list) ){
-                        $rh_compensation_pending = $rh_can_be_taken - $total_rh_taken;
+                    $rh_left =  $left;
+                    if( $rh_rejected <= $left ){
+                        $rh_compensation_pending = $rh_rejected;
                     } else {
-                        $rh_leaves_left = sizeof($rh_list) - sizeof($rh_leaves);
-                        if( $rh_leaves_left >= $left  ){
-                            $rh_left =  $left;
-                        } else {
-                            $rh_left = $rh_leaves_left;
-                            $rh_compensation_pending = abs($rh_leaves_left - $left);
-                        }
+                        $rh_compensation_pending = $left;
                     }
                 }
             }
+            
 
         } else {
             $rh_left = $rh_can_be_taken;
@@ -1923,7 +1919,7 @@ class HR extends DATABASE {
                 'rh_left' => $rh_left,
                 'rh_compensation_used' => $rh_compensation_used,
                 'rh_compensation_pending' => $rh_compensation_pending
-            ]            
+            ]
         ];
         
         return $return;
