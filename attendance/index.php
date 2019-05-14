@@ -366,7 +366,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                         }
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                              send_slack_message($c_id, $token, $msg, $hr6);
+                              send_slack_message($c_id = 'hr', $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
                         $msg = $msg . "Today's Entry Time " . $d1;
                             send_slack_message($c_id, $token, $msg);
