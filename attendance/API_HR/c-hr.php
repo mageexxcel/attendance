@@ -4037,6 +4037,7 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_user_id = $userInfo['slack_profile']['id'];
             $machine_info = self::getMachineDetail($machine_id);
             $date = date("Y-m-d");
             //check user name exists
@@ -4061,8 +4062,8 @@ class HR extends DATABASE {
 
             $message = "Hi $userInfo_name !! \n You have been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
             $message_to_hr = "Hi HR !!  \n $userInfo_name has been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
-            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_user_id, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr_system', $message_to_hr);
             $r_message = "Machine assigned Successfully !!";
 
             $return = array();
@@ -4213,10 +4214,11 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_user_id = $userInfo['slack_profile']['id'];
             $message = "Hi $userInfo_name !! \n You have been unassigned device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
             $message_to_hr = "Hi HR !!  \n $userInfo_name has been unassigned to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
-            $slackMessageStatus = self::sendSlackMessageToUser('hr', $message_to_hr);
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_user_id, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr_system', $message_to_hr);
 
             // save to inventory history
             if( $reason_of_removal == false ){
