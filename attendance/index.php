@@ -306,6 +306,8 @@ if (isset($sendmessage) && $sendmessage == 1) {
             $id = $value['id'];
             foreach ($fresult['members'] as $foo) {
                 $msg = "";
+                $username = isset($foo['real_name']) ? ucwords($foo['real_name']) : ucwords($foo['name']);
+                
                 if ($e == $foo['profile']['email'] && $e != "") {
                     $are[] = $e;
                     $f = $foo['id'];
@@ -357,7 +359,8 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     }
                     if ($d1 == 0) {
                         $msg = $msg . "You have not entered time Today ";
-                        send_slack_message($c_id, $token, $msg);
+                        $msg = "Hi " . $username . " ! \n" . $msg;
+                        send_slack_message($c_id = 'random', $token, $msg);
                     }
                     if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
                         $s = getLateComingInfo($e, $link);
@@ -365,11 +368,13 @@ if (isset($sendmessage) && $sendmessage == 1) {
                             $msg = $msg . $s;
                         }
                         $msg = $msg . "Today's Entry Time " . $d1;
+                        $msg = "Hi " . $username . " ! \n" . $msg;
                         $hr6 = "hrfile6";
-                              send_slack_message($c_id = 'hr_system', $token, $msg, $hr6);
+                        send_slack_message($c_id = 'random', $token, $msg, $hr6);
                     } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
-                        $msg = $msg . "Today's Entry Time " . $d1;
-                            send_slack_message($c_id, $token, $msg);
+                        $msg = $msg . "Today's Entry Time " . $d1;   
+                        $msg = "Hi " . $username . " ! \n" . $msg;                     
+                        send_slack_message($c_id = 'random', $token, $msg);
                     }
 
                 }
