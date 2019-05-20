@@ -1931,23 +1931,157 @@ class HR extends DATABASE {
         return $stats;
     }
 
+    public static function getQuarterByMonth( $month = false ) {
+        $month = $month ? $month : date('m');
+        $current_quarter = false;
+        $quarters = [
+            1 => [ 1, 2, 3 ],
+            2 => [ 4, 5, 6 ],
+            3 => [ 7, 8, 9 ],
+            4 => [ 10, 11, 12 ]
+        ];        
+        foreach( $quarters as $key => $quarter ){
+            if( in_array( $month, $quarter ) ){
+                $current_quarter['quarter'] = $key;
+                $current_quarter['months'] = $quarter;
+                break;
+            }
+        }
+
+        return $current_quarter;
+    }
+
+    public static function checkRHQuarterWise( $userid, $from_date ) {
+        $check = false;
+        $return = [];
+        $no_of_quaters = 4;
+        $rh_can_be_taken = 5;
+        $rh_can_be_taken_per_quarter = 1;
+
+        $user = self::getUserInfo($userid);    
+
+        if( $user['training_completion_date'] != '0000-00-00' && $user['training_completion_date'] != '1970-01-01' ) {
+            
+            $from_date_year = date('Y', strtotime($from_date));
+            $from_date_month = date('m', strtotime($from_date));
+            $current_date = date('Y-m-d');
+            $current_year = date('Y');
+            $current_month = date('m');
+            $current_quarter = self::getQuarterByMonth();
+            $confirm_year = date('Y', strtotime($user['training_completion_date']));
+            $confirm_month = date('m', strtotime($user['training_completion_date']));
+            $confirm_quarter = self::getQuarterByMonth($confirm_month);
+            $from_date_quarter = self::getQuarterByMonth( $from_date_month );
+            $rh_list = array_map( function($iter){ return $iter['raw_date']; }, self::getMyRHLeaves($current_year) );
+            $rh_leaves = array_map( function($iter){ return $iter['from_date']; }, self::getUserRHLeaves($userid, $current_year) );
+            $rh_approved = array_map( function($iter){ return $iter['from_date']; }, self::getUserApprovedRHLeaves($userid, $current_year) );
+            $rh_compensated = array_map( function($iter){ return $iter['from_date']; }, self::getUserRHCompensationLeaves($userid, $current_year) );
+            $total_rh_taken = sizeof($rh_approved) + sizeof($rh_compensated);
+            
+            $two_rh_quarter = false;
+            $rh_taken_per_quarter = [];
+            foreach( $rh_approved as $rh_approve ){
+                $quarter = self::getQuarterByMonth( date('m', strtotime($rh_approve)) );
+                if( isset( $rh_taken_per_quarter[$quarter['quarter']] ) ){
+                    $rh_taken_per_quarter[$quarter['quarter']]++;
+                } else {
+                    $rh_taken_per_quarter[$quarter['quarter']] = 1;
+                }
+            }        
+            foreach( $rh_taken_per_quarter as $quarter => $rh_taken ){
+                if( $rh_taken_per_quarter[$quarter] >= 2 ){
+                    $two_rh_quarter = true;
+                    break;
+                }
+            }
+            
+            if( $from_date_year < $current_year || strtotime($from_date) < strtotime($current_date) ){
+                $message = 'You cannot apply previous RH.';                
+
+            } else {
+                
+                if( in_array( $from_date, $rh_list ) ){
+                    if( $confirm_year != $current_year ){ 
+                        if( $total_rh_taken >= $rh_can_be_taken ){
+                            $message = 'You have reached the RH quota. You are not eligible for other RH this year.';
+                            
+                        } else {
+                            if( $from_date_quarter['quarter'] >= $current_quarter['quarter'] ){
+                                if( array_key_exists( $from_date_quarter['quarter'], $rh_taken_per_quarter ) ){
+                                    if( $rh_taken_per_quarter[$from_date_quarter['quarter']] > 0 ) {
+                                        if( $two_rh_quarter ){
+                                            $message = 'You are not allowed take 2nd RH this quarter as you have taken 2 RH already in single quarter.';
+                                        } else {
+                                            $check = true;
+                                        }
+                                    }
+                                } else {
+                                    $check = true;
+                                }
+                            } else {
+                                $message = 'You cannot apply previous quarter RH.';
+                            }
+                        }
+                    } else {
+
+                        $remaining_quarters = $no_of_quaters - $confirm_quarter['quarter'];
+                        $eligible_for_confirm_quarter_rh = false;
+                        if( $confirm_quarter['months'][0] == $confirm_month ){
+                            $eligible_for_confirm_quarter_rh = true;
+                        }
+                        if( $eligible_for_confirm_quarter_rh ){
+                            $rh_can_be_taken = $remaining_quarters + 2;
+                        } else {
+                            $rh_can_be_taken = $remaining_quarters + 1;
+                        }
+
+                        if( $total_rh_taken >= $rh_can_be_taken ){
+                            $message = 'You have reached the RH quota. You are not eligible for other RH this year.';
+                            
+                        } else {
+                            if( $from_date_quarter['quarter'] >= $current_quarter['quarter'] ){
+                                if( array_key_exists( $from_date_quarter['quarter'], $rh_taken_per_quarter ) ){
+                                    if( $rh_taken_per_quarter[$from_date_quarter['quarter']] > 0 ) {
+                                        if( $two_rh_quarter ){
+                                            $message = 'You are not allowed take 2nd RH this quarter as you have taken 2 RH already in single quarter.';
+                                        } else {
+                                            $check = true;
+                                        }
+                                    }
+                                } else {
+                                    $check = true;
+                                }
+                            } else {
+                                $message = 'You cannot apply previous quarter RH.';
+                            }
+                        }
+                    }
+                } else {
+                    $message = 'The date is not yet added in the RH list.';
+                } 
+            }
+
+        } else {
+            $message = 'You are not a confirm employee so you are not eligible for RH';
+        }
+
+        $return['check'] = $check;
+        $return['message'] = $message;
+
+        return $return;
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $db = self::getInstance();
         $mysqli = $db->getConnection();
 
-        // Check for Approved RH 
-        $year = date('Y', strtotime($from_date));
-        $rh_dates = self::getMyRHLeaves( $year );
-        $rh_dates = array_map( function($iter){ 
-            return $iter['raw_date']; 
-        }, $rh_dates );
-        if( in_array( $from_date, $rh_dates ) ){
-            $user_rh_leaves = self::getUserApprovedRHLeaves( $userid, $year );
-            if( sizeof($user_rh_leaves) >= 5 ){
+        if( strtolower($leave_type) == 'restricted' ){
+            $rh_check = self::checkRHQuarterWise($userid, $from_date);
+            if( !$rh_check['check'] ){
                 return [
                     'error' => 1,
-                    'data' => [ 'message' => 'You have already taken 5 RH this year.' ]
+                    'data' => [ 'message' => $rh_check['message'] ]
                 ];
             }
         }
