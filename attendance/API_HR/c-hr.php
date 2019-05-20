@@ -5515,7 +5515,7 @@ class HR extends DATABASE {
             $last_inserted_id = mysqli_insert_id($mysqli);
             $userInfo = self::getUserInfo($user_id);
             $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_userChannelid = $userInfo['slack_profile']['id'];
 
             $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
@@ -5552,7 +5552,7 @@ class HR extends DATABASE {
             }
             $slackMessageActions .= "]";
 
-            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+            $slackMessageStatus = self::sendSlackMessageToUser("hr_system", $message_to_hr, false, $slackMessageActions);
 
             // $return['error'] = 0;
             // $return['message'] = 'Successfully Updated!!';
@@ -5572,11 +5572,11 @@ class HR extends DATABASE {
 
             $userInfo = self::getUserInfo($user_id);
             $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_userChannelid = $userInfo['slack_profile']['id'];
 
             $message_to_hr = "Hi HR !!  \n $userInfo_name had requested manual $time_type time : $final_date_time which is already exist.";
 
-            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false);
+            $slackMessageStatus = self::sendSlackMessageToUser("hr_system", $message_to_hr, false);
 
             return "Time $checkTime already exists. No Need to update!!";
         }
