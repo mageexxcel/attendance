@@ -193,6 +193,7 @@ trait Roles {
     static $ACTION_get_employee_punches_by_date = 8028;
     static $ACTION_get_employees_monthly_attendance = 8029;
     static $ACTION_get_my_rh_leaves = 8030;    
+    static $ACTION_get_user_rh_stats = 8031;    
     
     
 
@@ -309,7 +310,8 @@ trait Roles {
                 'actions_list' => array(
                     array( 'id' => self::$ACTION_get_my_leaves, 'name' => 'get_my_leaves' ),
                     array( 'id' => self::$ACTION_cancel_applied_leave, 'name' => 'cancel_applied_leave' ),
-                    array( 'id' => self::$ACTION_get_my_rh_leaves, 'name' => 'get_my_rh_leaves' ),                    
+                    array( 'id' => self::$ACTION_get_my_rh_leaves, 'name' => 'get_my_rh_leaves' ), 
+                    array( 'id' => self::$ACTION_get_user_rh_stats, 'name' => 'get_user_rh_stats' ),                   
                 )
             ),
 
@@ -742,6 +744,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_user_meta_data, 'name' => 'get_user_meta_data' ),                        
             array( 'id' => self::$ACTION_get_employee_punches_by_date, 'name' => 'get_employee_punches_by_date' ),  
             array( 'id' => self::$ACTION_get_employees_monthly_attendance, 'name' => 'get_employees_monthly_attendance' ),
+            array( 'id' => self::$ACTION_get_user_rh_stats, 'name' => 'get_user_rh_stats' ),
         );
         return $array;
     }

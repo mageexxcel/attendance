@@ -1877,6 +1877,60 @@ class HR extends DATABASE {
         return $check;
     }
 
+    public static function getEmployeeRHStats( $userid, $year ) {
+        $return = [];
+        $rh_can_be_taken = 5;
+        $rh_approved = $rh_rejected = $rh_left = $rh_compensation_used = $rh_compensation_pending = 0;
+        $rh_leaves = self::getUserRHLeaves( $userid, $year );
+        $rh_compensation_leaves = self::getUserRHCompensationLeaves( $userid, $year );
+        $rh_approved_leaves = self::getUserApprovedRHLeaves( $userid, $year );
+        $rh_list = self::getMyRHLeaves( $year );
+        $rh_approved = sizeof($rh_approved_leaves);
+        $rh_compensation_used = sizeof($rh_compensation_leaves);
+        if( sizeof($rh_leaves) > 0 ){
+            foreach( $rh_leaves as $rh_leave ){
+                if( strtolower($rh_leave['status']) == 'rejected' ){
+                    $rh_rejected++;
+                }
+            }
+            if( $rh_approved < $rh_can_be_taken ){
+                $total_rh_taken = $rh_approved + $rh_compensation_used;
+                if( $total_rh_taken < $rh_can_be_taken ){
+                    $left = $rh_can_be_taken - $total_rh_taken;
+                    $rh_left =  $left;
+                    if( $rh_rejected <= $left ){
+                        $rh_compensation_pending = $rh_rejected;
+                    } else {
+                        $rh_compensation_pending = $left;
+                    }
+                }
+            }
+            
+
+        } else {
+            $rh_left = $rh_can_be_taken;
+        }
+
+        $return = [
+            'error' => 0,
+            'data' => [
+                'rh_approved' => $rh_approved,
+                'rh_rejected' => $rh_rejected,
+                'rh_left' => $rh_left,
+                'rh_compensation_used' => $rh_compensation_used,
+                'rh_compensation_pending' => $rh_compensation_pending
+            ]
+        ];
+        
+        return $return;
+    }
+
+    public static function API_getEmployeeRHStats( $userid, $year = false ) {
+        $year = $year ? $year : date('Y');
+        $stats = self::getEmployeeRHStats($userid, $year);
+        return $stats;
+    }
+
     public static function applyLeave($userid, $from_date, $to_date, $no_of_days, $reason, $day_status, $leave_type, $late_reason, $pending_id = false) {
         //date format = Y-m-d
         $db = self::getInstance();

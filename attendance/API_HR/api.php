@@ -851,6 +851,16 @@ else if ( $action == 'add_reset_password_config' ){
 else if ( $action == 'get_reset_password_config' ){    
     $res = HR::API_getResetPasswordConfig();
 }
+else if ( $action == 'get_user_rh_stats' ) {    
+    if( !isset( $PARAMS['user_id'] ) || $PARAMS['user_id'] == "" ){
+        $res['error'] = 1;
+        $res['data']['message'] = "User id not found";
+    } else {
+        $userid = $PARAMS['user_id'];
+        $year = $PARAMS['year'];
+        $res = HR::API_getEmployeeRHStats( $userid, $year );
+    }
+}
 
 echo json_encode($res);
 ?>
