@@ -39,6 +39,7 @@ trait Roles {
     static $PAGE_add_documents = 133;
     static $PAGE_health_stats = 134;
     static $PAGE_settings = 135;
+    static $PAGE_all_employee = 136;
 
 
 
@@ -534,6 +535,13 @@ trait Roles {
                     
                 )
             ),
+            array(
+                'id' => self::$PAGE_all_employee,
+                'name' => 'all_employee',
+                'actions_list' => array(
+                    
+                )
+            ),
 
         );
 
@@ -745,6 +753,7 @@ trait Roles {
             array( 'id' => self::$ACTION_get_employee_punches_by_date, 'name' => 'get_employee_punches_by_date' ),  
             array( 'id' => self::$ACTION_get_employees_monthly_attendance, 'name' => 'get_employees_monthly_attendance' ),
             array( 'id' => self::$ACTION_get_user_rh_stats, 'name' => 'get_user_rh_stats' ),
+            array( 'id' => self::$ACTION_month_attendance, 'name' => 'month_attendance' ),
         );
         return $array;
     }

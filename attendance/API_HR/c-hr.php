@@ -295,22 +295,40 @@ class HR extends DATABASE {
         return $row;
     }
 
-    public static function getEnabledUsersList() {
-        $q = "SELECT
-                users.*,
-                user_profile.*,
-                roles.id as role_id,
-                roles.name as role_name
-                FROM users
-                LEFT JOIN user_profile ON users.id = user_profile.user_id
-                LEFT JOIN user_roles ON users.id = user_roles.user_id
-                LEFT JOIN roles ON user_roles.role_id = roles.id
-                where
-                users.status = 'Enabled' ";
+    public static function getEnabledUsersList( $sorted_by = false ) {
+        if( $sorted_by == 'salary' ){
+            $q = "SELECT
+                    users.*,
+                    user_profile.*,
+                    salary.total_salary,
+                    roles.id as role_id,
+                    roles.name as role_name
+                    FROM users
+                    LEFT JOIN user_profile ON users.id = user_profile.user_id
+                    LEFT JOIN user_roles ON users.id = user_roles.user_id
+                    LEFT JOIN roles ON user_roles.role_id = roles.id
+                    LEFT JOIN ( SELECT user_Id, MAX(total_salary) as total_salary FROM salary GROUP BY user_Id ) as salary ON users.id = salary.user_Id
+                    where
+                    users.status = 'Enabled' ORDER BY salary.total_salary DESC";
+        } else {
+            $q = "SELECT
+                    users.*,
+                    user_profile.*,
+                    roles.id as role_id,
+                    roles.name as role_name
+                    FROM users
+                    LEFT JOIN user_profile ON users.id = user_profile.user_id
+                    LEFT JOIN user_roles ON users.id = user_roles.user_id
+                    LEFT JOIN roles ON user_roles.role_id = roles.id
+                    where
+                    users.status = 'Enabled' ";
+        }
+        
         $runQuery = self::DBrunQuery($q);
-        $rows = self::DBfetchRows($runQuery);
+        $rows = self::DBfetchRows($runQuery);        
         $newRows = array();
         foreach ($rows as $pp) {
+            unset($pp['total_salary']);
             if ($pp['username'] == 'Admin' || $pp['username'] == 'admin') {
 
             } else {
@@ -361,9 +379,9 @@ class HR extends DATABASE {
         return $newRows;
     }
 
-    public static function getEnabledUsersListWithoutPass($role = false) {
+    public static function getEnabledUsersListWithoutPass($role = false, $sorted_by = false) {
 
-        $row = self::getEnabledUsersList();
+        $row = self::getEnabledUsersList( $sorted_by );
         $secureKeys = [ 'bank_account_num', 'blood_group', 'address1', 'address2', 'emergency_ph1', 'emergency_ph2', 'medical_condition', 'dob', 'marital_status', 'city', 'state', 'zip_postal', 'country', 'home_ph', 'mobile_ph', 'work_email', 'other_email', 'special_instructions', 'pan_card_num', 'permanent_address', 'current_address', 'slack_id', 'policy_document', 'training_completion_date', 'termination_date', 'training_month', 'slack_msg', 'signature', 'role_id', 'role_name', 'eth_token' ];        
         foreach ($row as $val) {
             unset($val['password']);
@@ -602,7 +620,7 @@ class HR extends DATABASE {
 
         $firstSatOff = false;
 
-        if( $year >= 2018 && $month >= 03 ){
+        if( ( $year == 2018 && $month >= 03) || $year > 2018 ){
             $firstSatOff = true;            
         }
 
@@ -1651,7 +1669,7 @@ class HR extends DATABASE {
     public static function sendSlackMessageToUser($channelid, $message, $auth_array = false, $actions = false ) {
         $return = false;
         $paramMessage = $message;
-        
+        sleep(2);
         $message = '[{"text": "' . $message . '", "fallback": "Message Send to Employee", "color": "#36a64f" }]';
 
         if( $actions != false ){
@@ -3242,7 +3260,7 @@ class HR extends DATABASE {
         return true;
     }
 
-    public static function forgotPassword($username, $sendEmail = false) { // api call
+    public static function forgotPassword($username, $sendEmail = false, $regeneratePassword = false) { // api call
         $r_error = 1;
         $r_message = "";
         $r_data = array();
@@ -3279,6 +3297,9 @@ class HR extends DATABASE {
                         $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
                         
                         $message_to_user = "Hi $userInfo_name !!  \n Your new password for HR portal is : $newPassword";
+                        if( $regeneratePassword ){
+                            $message_to_user = "Hi $userInfo_name !!  \n Your HR portal password has been expired! You need to re-generate your password.";
+                        }
                         $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
                         if( $sendEmail ){
                             $emailData['email'] = [
@@ -3357,7 +3378,7 @@ class HR extends DATABASE {
         $status = $data['status'];
 
         $doFurtherProcess = true;
-
+        
         // check for if elc is completed or not
         if( strtolower( $status ) == 'disabled' ){
             $checkElcCompleted = self::isUserElcCompleted( $data['user_id'] );
@@ -3372,7 +3393,7 @@ class HR extends DATABASE {
 
         if( $doFurtherProcess == true ){
             $q = "UPDATE users SET status = '$status'  WHERE id =" . $data['user_id'];
-            $res = self::DBrunQuery($q);
+            $res = self::DBrunQuery($q);            
             if ($res == false) {
                 $r_error = 1;
                 $r_message = "Error occured while updating employee status";
@@ -3381,13 +3402,47 @@ class HR extends DATABASE {
 
                 $r_error = 0;
                 $r_message = "Employee Status Updated";
+                try {
+                    self::backupBankAccountDetails( $data['user_id'] );
+                    $r_message .= " - Backup Done";
+                } catch( Exception $ex ){
+                    $r_message .= " - " . $ex->getMessage();
+                }
                 $r_data['message'] = $r_message;
-            }
+            }            
         }
         $return = array();
 
         $return['error'] = $r_error;
         $return['data'] = $r_data;
+        return $return;
+    }
+
+    public static function backupBankAccountDetails( $userid ){
+        $return = false;
+        $q = " SELECT * FROM user_bank_details WHERE user_Id = $userid ";
+        $runQuery = self::DBrunQuery($q);
+        $rows = self::DBfetchRows($runQuery);
+        if( sizeof($rows) > 0 ){
+            foreach( $rows as $key => $row ){
+                $bankName = $bankAddress = $bankAccountNo = $bankIFSC = "";
+                $bankName = $row['bank_name'];
+                $bankAddress = $row['bank_address'];
+                $bankAccountNo = $row['bank_account_no'];
+                $bankIFSC = $row['ifsc'];                
+                if( $bankName != "" && $bankAddress != "" && $bankAccountNo != "" ){
+                    $q = " UPDATE user_bank_details SET bank_name = '', bank_address = '', bank_account_no = '', ifsc = '$bankIFSC, $bankName, $bankAddress, $bankAccountNo' WHERE user_Id = $userid AND bank_account_no = '$bankAccountNo' ";
+                    $runQry = self::DBrunQuery($q);
+                }
+                if( $runQry ){
+                    $return = true;
+                } else {
+                    throw new Exception("Backup Failed");
+                }
+            }
+        } else {
+            throw new Exception("No Bank Details Found for User Id: " . $userid);
+        }
         return $return;
     }
 
@@ -4201,12 +4256,13 @@ class HR extends DATABASE {
     public static function assignUserMachine($machine_id, $userid, $logged_user_id = null ) {
         $r_error = 1;
         $r_message = "";
-        if ($userid == "") {
+        if ($userid == "" || $userid == 0 || $userid == null) {
             $return = self::removeMachineAssignToUser($machine_id, $logged_user_id);
-        } else {
+        } else {            
             $userInfo = self::getUserInfo($userid);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_user_id = $userInfo['slack_profile']['id'];
             $machine_info = self::getMachineDetail($machine_id);
             $date = date("Y-m-d");
             //check user name exists
@@ -4229,8 +4285,10 @@ class HR extends DATABASE {
             self::DBrunQuery($q);
             $r_error = 0;
 
-            $message = "Hi $userInfo_name !! \n You have been assigned  " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $message = "Hi $userInfo_name !! \n You have been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been assigned " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_user_id, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr_system', $message_to_hr);
             $r_message = "Machine assigned Successfully !!";
 
             $return = array();
@@ -4381,8 +4439,11 @@ class HR extends DATABASE {
             $userInfo = self::getUserInfo($machine_info['data']['user_Id']);
             $userInfo_name = $userInfo['name'];
             $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
-            $message = "Hi $userInfo_name !! \n You have been unassigned  to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
-            $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message);
+            $slack_user_id = $userInfo['slack_profile']['id'];
+            $message = "Hi $userInfo_name !! \n You have been unassigned device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'] . " by HR ";
+            $message_to_hr = "Hi HR !!  \n $userInfo_name has been unassigned to device " . $machine_info['data']['machine_name'] . " " . $machine_info['data']['machine_type'];
+            $slackMessageStatus = self::sendSlackMessageToUser($slack_user_id, $message);
+            $slackMessageStatus = self::sendSlackMessageToUser('hr_system', $message_to_hr);
 
             // save to inventory history
             if( $reason_of_removal == false ){
@@ -5679,7 +5740,7 @@ class HR extends DATABASE {
             $last_inserted_id = mysqli_insert_id($mysqli);
             $userInfo = self::getUserInfo($user_id);
             $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_userChannelid = $userInfo['slack_profile']['id'];
 
             $message_to_user = "Hi $userInfo_name !!  \n You had requested for manual $time_type time : $final_date_time \n Reason - $reason \n You will be notified once it is approved/declined";
             $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid, $message_to_user);
@@ -5716,7 +5777,7 @@ class HR extends DATABASE {
             }
             $slackMessageActions .= "]";
 
-            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false, $slackMessageActions);
+            $slackMessageStatus = self::sendSlackMessageToUser("hr_system", $message_to_hr, false, $slackMessageActions);
 
             // $return['error'] = 0;
             // $return['message'] = 'Successfully Updated!!';
@@ -5736,11 +5797,11 @@ class HR extends DATABASE {
 
             $userInfo = self::getUserInfo($user_id);
             $userInfo_name = $userInfo['name'];
-            $slack_userChannelid = $userInfo['slack_profile']['slack_channel_id'];
+            $slack_userChannelid = $userInfo['slack_profile']['id'];
 
             $message_to_hr = "Hi HR !!  \n $userInfo_name had requested manual $time_type time : $final_date_time which is already exist.";
 
-            $slackMessageStatus = self::sendSlackMessageToUser("hr", $message_to_hr, false);
+            $slackMessageStatus = self::sendSlackMessageToUser("hr_system", $message_to_hr, false);
 
             return "Time $checkTime already exists. No Need to update!!";
         }
@@ -6937,6 +6998,11 @@ class HR extends DATABASE {
             'data' => $row
         ];
         return $return;
+    }
+
+    public static function getEnabledEmployeesBriefDetails(){
+        $users = self::getEnabledUsersListWithoutPass();
+        return $users; 
     }
 
 }

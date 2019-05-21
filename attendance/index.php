@@ -348,6 +348,7 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     $ff = saveUserMonthPunching($id, $e, $link);
                     $ffprev = saveUserMonthPunching($id, $e, $link, $prev_year, $prev_month);
                     $c_id = get_channel_id($f, $cid_array);
+                    $u_id = get_slack_user_id($f, $cid_array);
 
                     $d = str_replace("PM", "", current($value['timing']));
                     $d = strtotime(str_replace("-", "/", $d));
@@ -355,21 +356,27 @@ if (isset($sendmessage) && $sendmessage == 1) {
                     if (current($value['timing']) == "") {
                         $d1 = 0;
                     }
-                    if ($d1 == 0 && $slack_msg == 0) {
+                    if ($d1 == 0) {
                         $msg = $msg . "You have not entered time Today ";
-                        send_slack_message($c_id, $token, $msg);
+                        $msg = "Hi <@" . $u_id . "> \n" . $msg;
+                        send_slack_message($u_id, $token, $msg);
+                        send_slack_message($c_id = 'hr_system', $token, $msg);
                     }
-                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM') && $slack_msg == 0) {
+                    if ($d1 != 0 && strtotime($d1) > strtotime('10:30 AM')) {
                         $s = getLateComingInfo($e, $link);
                         if ($s != "") {
                             $msg = $msg . $s;
                         }
                         $msg = $msg . "Today's Entry Time " . $d1;
                         $hr6 = "hrfile6";
-                              send_slack_message($c_id, $token, $msg, $hr6);
-                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30') && $slack_msg == 0) {
+                        $msg = "Hi <@" . $u_id . "> \n" . $msg;
+                        send_slack_message($u_id, $token, $msg, $hr6);
+                        send_slack_message($c_id = 'hr_system', $token, $msg, $hr6);
+                    } if ($d1 != 0 && strtotime($d1) <= strtotime('10:30')) {
                         $msg = $msg . "Today's Entry Time " . $d1;
-                            send_slack_message($c_id, $token, $msg);
+                        $msg = "Hi <@" . $u_id . "> \n" . $msg;
+                        send_slack_message($u_id, $token, $msg);
+                        send_slack_message($c_id = 'hr_system', $token, $msg);
                     }
 
                 }
@@ -422,6 +429,15 @@ function get_channel_id($data, $array) {
     foreach ($array as $val) {
         if ($data == $val['user']) {
             return $val['id'];
+            break;
+        }
+    }
+}
+
+function get_slack_user_id($data, $array) {
+    foreach ($array as $val) {
+        if ($data == $val['user']) {
+            return $val['user'];
             break;
         }
     }
