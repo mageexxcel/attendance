@@ -101,7 +101,7 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
             // date of birth alert slack notification 
             if (is_null($val['dob']) || $val['dob'] == "0000-00-00") {
                 $m4 = "Hi HR. Please update the date of birth of $username in hr-system";
-                $slackMessageStatus = Salary::sendSlackMessageToUser('hr', $m4);   // send slack notification to employee
+                $slackMessageStatus = Salary::sendSlackMessageToUser('hr_system', $m4);   // send slack notification to employee
             }
             if (!is_null($val['dob']) && $val['dob'] != "0000-00-00") {
                 $dob = explode("-", $val['dob']);
@@ -125,7 +125,7 @@ if ($current_day != weekoff && $cmonth != $second_sat && $cmonth != $fourth_sat)
     if(!empty($assign_machine_msg)){
         $m = "Hi HR!\n Following employee assigned machine details are not store in database:\n";
         $m.= $assign_machine_msg."Please save them asap";
-        $slackMessageStatus = Salary::sendSlackMessageToUser('hr', $m);
+        $slackMessageStatus = Salary::sendSlackMessageToUser('hr_system', $m);
        
     }
 }

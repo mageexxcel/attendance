@@ -48,7 +48,7 @@ if ($_FILES) {
                 $q = "UPDATE leaves set doc_link= '".$ar['path']."' WHERE id = $leaveid ";
                 HR::DBrunQuery($q);
                 $message = "Hi HR !!\n $userInfo_name has uploaded document for leave applied from $from_date to $to_date .\nCheck here ".$ar['path'];
-                $slackMessageStatus = HR::sendSlackMessageToUser('hr', $message);
+                $slackMessageStatus = HR::sendSlackMessageToUser('hr_system', $message);
                 
             }
         } else {

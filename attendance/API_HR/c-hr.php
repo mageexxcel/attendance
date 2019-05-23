@@ -3968,7 +3968,7 @@ class HR extends DATABASE {
                             $message = $message . "$key = " . $valu . "\n";
                         }
 
-                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr', $message); // send slack message
+                        $slackMessageStatus = self::sendSlackMessageToUser($slack_userChannelid = 'hr_system', $message); // send slack message
                     }
                 }
                 $r_error = 0;
