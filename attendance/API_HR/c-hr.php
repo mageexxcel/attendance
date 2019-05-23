@@ -1879,41 +1879,70 @@ class HR extends DATABASE {
 
     public static function getEmployeeRHStats( $userid, $year ) {
         $return = [];
-        $rh_can_be_taken = 5;
+        $rh_can_be_taken = 0;
+        $no_of_quaters = 4;
         $rh_approved = $rh_rejected = $rh_left = $rh_compensation_used = $rh_compensation_pending = 0;
-        $rh_leaves = self::getUserRHLeaves( $userid, $year );
-        $rh_compensation_leaves = self::getUserRHCompensationLeaves( $userid, $year );
-        $rh_approved_leaves = self::getUserApprovedRHLeaves( $userid, $year );
-        $rh_list = self::getMyRHLeaves( $year );
-        $rh_approved = sizeof($rh_approved_leaves);
-        $rh_compensation_used = sizeof($rh_compensation_leaves);
-        if( sizeof($rh_leaves) > 0 ){
-            foreach( $rh_leaves as $rh_leave ){
-                if( strtolower($rh_leave['status']) == 'rejected' ){
-                    $rh_rejected++;
+
+        $user = self::getUserInfo($userid);
+
+        if( $user['training_completion_date'] != '0000-00-00' && $user['training_completion_date'] != '1970-01-01' ) {
+
+            $current_year = date('Y');
+            $confirm_year = date('Y', strtotime($user['training_completion_date']));
+
+            if( $confirm_year == $current_year ){
+
+                $confirm_month = date('m', strtotime($user['training_completion_date']));
+                $confirm_quarter = self::getQuarterByMonth($confirm_month);
+                $remaining_quarters = $no_of_quaters - $confirm_quarter['quarter'];
+                $eligible_for_confirm_quarter_rh = false;
+                if( $confirm_quarter['months'][0] == $confirm_month ){
+                    $eligible_for_confirm_quarter_rh = true;
                 }
+                if( $eligible_for_confirm_quarter_rh ){
+                    $rh_can_be_taken = $remaining_quarters + 2;
+                } else {
+                    $rh_can_be_taken = $remaining_quarters + 1;
+                }    
+
+            } else {
+                $rh_can_be_taken = 5;
             }
-            if( $rh_approved < $rh_can_be_taken ){
-                $total_rh_taken = $rh_approved + $rh_compensation_used;
-                if( $total_rh_taken < $rh_can_be_taken ){
-                    $left = $rh_can_be_taken - $total_rh_taken;
-                    $rh_left =  $left;
-                    if( $rh_rejected <= $left ){
-                        $rh_compensation_pending = $rh_rejected;
-                    } else {
-                        $rh_compensation_pending = $left;
+
+            $rh_leaves = self::getUserRHLeaves( $userid, $year );
+            $rh_compensation_leaves = self::getUserRHCompensationLeaves( $userid, $year );
+            $rh_approved_leaves = self::getUserApprovedRHLeaves( $userid, $year );
+            $rh_list = self::getMyRHLeaves( $year );
+            $rh_approved = sizeof($rh_approved_leaves);
+            $rh_compensation_used = sizeof($rh_compensation_leaves);
+            if( sizeof($rh_leaves) > 0 ){
+                foreach( $rh_leaves as $rh_leave ){
+                    if( strtolower($rh_leave['status']) == 'rejected' ){
+                        $rh_rejected++;
                     }
                 }
+                if( $rh_approved < $rh_can_be_taken ){
+                    $total_rh_taken = $rh_approved + $rh_compensation_used;
+                    if( $total_rh_taken < $rh_can_be_taken ){
+                        $left = $rh_can_be_taken - $total_rh_taken;
+                        $rh_left =  $left;
+                        if( $rh_rejected <= $left ){
+                            $rh_compensation_pending = $rh_rejected;
+                        } else {
+                            $rh_compensation_pending = $left;
+                        }
+                    }
+                }                
+    
+            } else {
+                $rh_left = $rh_can_be_taken;
             }
-            
-
-        } else {
-            $rh_left = $rh_can_be_taken;
         }
-
+        
         $return = [
             'error' => 0,
             'data' => [
+                'rh_can_be_taken' => $rh_can_be_taken,
                 'rh_approved' => $rh_approved,
                 'rh_rejected' => $rh_rejected,
                 'rh_left' => $rh_left,
